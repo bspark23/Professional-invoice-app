@@ -12,6 +12,30 @@ interface InvoicePreviewProps {
   calculateTotal: () => number;
 }
 
+const TEMPLATE_STYLES = {
+  minimalist: "shadow-none border border-gray-200 dark:border-gray-700",
+  bordered: "border-4 border-blue-400 dark:border-blue-600",
+  modern: "ring-4 ring-purple-200 dark:ring-green-700"
+};
+
+const COLOR_CLASSES = {
+  blue: {
+    header: "text-blue-600 dark:text-blue-400",
+    badge: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+    bg: "bg-blue-50 dark:bg-blue-950"
+  },
+  green: {
+    header: "text-green-600 dark:text-green-400",
+    badge: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+    bg: "bg-green-50 dark:bg-green-950"
+  },
+  gray: {
+    header: "text-gray-800 dark:text-gray-200",
+    badge: "bg-gray-200 text-gray-800 dark:bg-gray-900 dark:text-gray-100",
+    bg: "bg-gray-50 dark:bg-gray-950"
+  }
+};
+
 const InvoicePreview = ({
   invoiceData,
   formatCurrency,
@@ -19,13 +43,17 @@ const InvoicePreview = ({
   calculateTax,
   calculateTotal,
 }: InvoicePreviewProps) => {
+  const template = invoiceData.template || "minimalist";
+  const colorTheme = invoiceData.colorTheme || "blue";
+  const color = COLOR_CLASSES[colorTheme];
+
   return (
-    <Card>
+    <Card className={TEMPLATE_STYLES[template]}>
       <CardHeader>
-        <CardTitle className="text-lg">Invoice Preview</CardTitle>
+        <CardTitle className={`text-lg ${color.header}`}>Invoice Preview</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="bg-white dark:bg-gray-800 border rounded-lg p-6 space-y-6">
+        <div className={`${color.bg} border rounded-lg p-6 space-y-6`}>
           {/* Invoice Header */}
           <div className="flex justify-between items-start">
             <div className="flex items-center gap-4">
@@ -37,18 +65,17 @@ const InvoicePreview = ({
                 />
               )}
               <div>
-                <h2 className="text-2xl font-bold text-blue-600 dark:text-blue-400">{invoiceData.businessName}</h2>
+                <h2 className={`text-2xl font-bold ${color.header}`}>{invoiceData.businessName}</h2>
               </div>
             </div>
             <div className="text-right">
               <h3 className="text-xl font-semibold">INVOICE</h3>
               <p className="text-gray-600 dark:text-gray-300">#{invoiceData.invoiceNumber}</p>
-              <Badge variant={invoiceData.status === 'paid' ? 'default' : 'destructive'} className="mt-2">
+              <Badge variant={invoiceData.status === 'paid' ? 'default' : 'destructive'} className={color.badge + " mt-2"}>
                 {invoiceData.status === 'paid' ? '✅ Paid' : '❌ Unpaid'}
               </Badge>
             </div>
           </div>
-
           <Separator />
 
           {/* Client and Date Info */}

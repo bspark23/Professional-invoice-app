@@ -141,6 +141,18 @@ const Index = () => {
     );
   }
 
+  // Template and color change handlers
+  const templateOptions = [
+    { value: "minimalist", label: "Minimalist" },
+    { value: "bordered", label: "Bordered" },
+    { value: "modern", label: "Modern" }
+  ];
+  const colorThemeOptions = [
+    { value: "blue", label: "Blue" },
+    { value: "green", label: "Green" },
+    { value: "gray", label: "Gray" },
+  ];
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/30 dark:bg-gradient-to-br dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-4">
       <div className="max-w-6xl mx-auto space-y-6">
@@ -230,6 +242,34 @@ const Index = () => {
           savedInvoices={savedInvoices} 
           formatCurrency={getFormatCurrency}
         />
+
+        {/* Template/Theme Customization */}
+        <div className="flex flex-wrap gap-4 items-center bg-white dark:bg-gray-800 rounded-xl p-4 shadow border mb-4">
+          <div>
+            <label className="block text-sm font-semibold mb-1">Invoice Layout</label>
+            <select
+              className="rounded border px-4 py-2 bg-gray-50 dark:bg-gray-700 focus:outline-none"
+              value={invoiceData.template || "minimalist"}
+              onChange={e => setInvoiceData(prev => ({ ...prev, template: e.target.value as 'minimalist' | 'bordered' | 'modern' }))}
+            >
+              {templateOptions.map(opt => (
+                <option value={opt.value} key={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-semibold mb-1">Color Theme</label>
+            <select
+              className="rounded border px-4 py-2 bg-gray-50 dark:bg-gray-700 focus:outline-none"
+              value={invoiceData.colorTheme || "blue"}
+              onChange={e => setInvoiceData(prev => ({ ...prev, colorTheme: e.target.value as 'blue' | 'green' | 'gray' }))}
+            >
+              {colorThemeOptions.map(opt => (
+                <option value={opt.value} key={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          </div>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left Column - Invoice Form */}

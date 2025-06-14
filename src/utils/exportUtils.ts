@@ -1,4 +1,3 @@
-
 import jsPDF from 'jspdf';
 import { InvoiceData, currencies } from "@/types/invoice";
 
@@ -13,13 +12,35 @@ export const exportToPDF = (
   try {
     const pdf = new jsPDF('p', 'mm', 'a4');
     
+    // Set colors based on theme
+    const themeMap: any = {
+      blue:   { header: [59, 130, 246], badge: [59, 130, 246] }, // blue-600
+      green:  { header: [34, 197, 94], badge: [34, 197, 94] },   // green-500
+      gray:   { header: [55, 65, 81], badge: [107, 114, 128] },  // gray-800 / gray-500
+    };
+    const colorTheme = invoiceData.colorTheme || "blue";
+    const template = invoiceData.template || "minimalist";
+    const colors = themeMap[colorTheme];
+
+    let yPosition = 20;
+    
+    // Add border if template == "bordered"
+    if (template === "bordered") {
+      pdf.setDrawColor(...colors.header);
+      pdf.setLineWidth(3);
+      pdf.rect(8, 8, 194, 281); // thick border around full page
+    } else if (template === "modern") {
+      // Modern: subtle shade, maybe colored rectangles at top/bottom
+      pdf.setFillColor(...colors.header, 0.10);
+      pdf.rect(0, 0, 210, 30, 'F');
+      pdf.rect(0, 280, 210, 18, 'F');
+    }
     // Set consistent colors for PDF
     const primaryColor = [0, 0, 0]; // Black text
     const blueColor = [59, 130, 246]; // Blue for business name
     const greenColor = [34, 197, 94]; // Green for paid status
     const redColor = [239, 68, 68]; // Red for unpaid status
     
-    let yPosition = 20;
     
     // Add logo and business name section
     if (invoiceData.businessLogo) {
@@ -37,7 +58,7 @@ export const exportToPDF = (
     // Business name
     pdf.setFont('helvetica', 'bold');
     pdf.setFontSize(20);
-    pdf.setTextColor(blueColor[0], blueColor[1], blueColor[2]);
+    pdf.setTextColor(colors.header[0], colors.header[1], colors.header[2]);
     pdf.text(invoiceData.businessName, invoiceData.businessLogo ? 60 : 20, yPosition + 15);
     
     // Invoice title and details on the right

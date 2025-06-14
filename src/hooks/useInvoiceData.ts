@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { InvoiceData, LineItem } from "@/types/invoice";
 import { useToast } from "@/hooks/use-toast";
@@ -20,11 +19,13 @@ export const useInvoiceData = () => {
     discountAmount: 0,
     businessName: "Your Business Name",
     businessLogo: "",
-    businessEmail: "",  // <--- Added
-    businessAddress: "", // <--- Added
+    businessEmail: "",
+    businessAddress: "",
     currency: 'USD',
     notes: '',
-    status: 'unpaid'
+    status: 'unpaid',
+    template: 'minimalist',
+    colorTheme: 'blue'
   });
 
   // Generate auto invoice number
@@ -150,11 +151,13 @@ export const useInvoiceData = () => {
       discountAmount: 0,
       businessName: invoiceData.businessName,
       businessLogo: invoiceData.businessLogo,
-      businessEmail: invoiceData.businessEmail,    // <-- Fix: preserve or set default
-      businessAddress: invoiceData.businessAddress, // <-- Fix: preserve or set default
+      businessEmail: invoiceData.businessEmail,
+      businessAddress: invoiceData.businessAddress,
       currency: invoiceData.currency,
       notes: '',
-      status: 'unpaid'
+      status: 'unpaid',
+      template: invoiceData.template || 'minimalist',
+      colorTheme: invoiceData.colorTheme || 'blue'
     });
   };
 

@@ -1,4 +1,3 @@
-
 export interface LineItem {
   id: string;
   description: string;
@@ -26,6 +25,8 @@ export interface InvoiceData {
   notes: string;
   status: 'paid' | 'unpaid';
   createdAt?: string;
+  template?: 'minimalist' | 'bordered' | 'modern';
+  colorTheme?: 'blue' | 'green' | 'gray';
 }
 
 export const currencies = [
@@ -36,4 +37,3 @@ export const currencies = [
   { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar' },
   { code: 'AUD', symbol: 'A$', name: 'Australian Dollar' },
 ];
-
