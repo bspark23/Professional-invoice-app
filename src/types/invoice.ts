@@ -27,7 +27,21 @@ export interface InvoiceData {
   createdAt?: string;
   template?: 'minimalist' | 'bordered' | 'modern';
   colorTheme?: 'blue' | 'green' | 'gray';
+  signatureImage?: string; // New field for the signature image
 }
+
+export const colorThemes = [
+  { value: 'blue', name: 'Blue', type: 'plain', color: '#2563eb' },
+  { value: 'green', name: 'Green', type: 'plain', color: '#16a34a' },
+  { value: 'gray', name: 'Gray', type: 'plain', color: '#4b5563' },
+  { value: 'purple', name: 'Purple', type: 'plain', color: '#7c3aed' },
+  { value: 'red', name: 'Red', type: 'plain', color: '#ef4444' },
+  { value: 'orange', name: 'Orange', type: 'plain', color: '#f59e42' },
+  { value: 'teal', name: 'Teal', type: 'plain', color: '#14b8a6' },
+  // Gradients
+  { value: 'gradient-blue', name: 'Gradient Blue', type: 'gradient', gradient: 'linear-gradient(90deg, #3b82f6 0%, #6366f1 100%)' },
+  { value: 'gradient-purple', name: 'Gradient Purple', type: 'gradient', gradient: 'linear-gradient(90deg, #a78bfa 0%, #818cf8 100%)' },
+];
 
 export const currencies = [
   { code: 'USD', symbol: '$', name: 'US Dollar' },

@@ -1,8 +1,7 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { InvoiceData, currencies } from "@/types/invoice";
+import { InvoiceData, currencies, colorThemes } from "@/types/invoice";
 
 interface InvoicePreviewProps {
   invoiceData: InvoiceData;
@@ -18,22 +17,18 @@ const TEMPLATE_STYLES = {
   modern: "ring-4 ring-purple-200 dark:ring-green-700"
 };
 
+const getTheme = (key: string) => colorThemes.find(ct => ct.value === key) || colorThemes[0];
+
 const COLOR_CLASSES = {
-  blue: {
-    header: "text-blue-600 dark:text-blue-400",
-    badge: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-    bg: "bg-blue-50 dark:bg-blue-950"
-  },
-  green: {
-    header: "text-green-600 dark:text-green-400",
-    badge: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-    bg: "bg-green-50 dark:bg-green-950"
-  },
-  gray: {
-    header: "text-gray-800 dark:text-gray-200",
-    badge: "bg-gray-200 text-gray-800 dark:bg-gray-900 dark:text-gray-100",
-    bg: "bg-gray-50 dark:bg-gray-950"
-  }
+  blue: { header: "text-blue-600", badge: "bg-blue-100 text-blue-800", bg: "bg-blue-50" },
+  green: { header: "text-green-600", badge: "bg-green-100 text-green-800", bg: "bg-green-50" },
+  gray: { header: "text-gray-800", badge: "bg-gray-200 text-gray-800", bg: "bg-gray-50" },
+  purple: { header: "text-purple-600", badge: "bg-purple-100 text-purple-800", bg: "bg-purple-50" },
+  red: { header: "text-red-600", badge: "bg-red-100 text-red-800", bg: "bg-red-50" },
+  orange: { header: "text-orange-600", badge: "bg-orange-100 text-orange-800", bg: "bg-orange-50" },
+  teal: { header: "text-teal-600", badge: "bg-teal-100 text-teal-800", bg: "bg-teal-50" },
+  "gradient-blue": { header: "text-blue-700", badge: "bg-blue-100 text-blue-800", bg: "" },
+  "gradient-purple": { header: "text-purple-800", badge: "bg-purple-100 text-purple-900", bg: "" },
 };
 
 const InvoicePreview = ({
@@ -45,15 +40,19 @@ const InvoicePreview = ({
 }: InvoicePreviewProps) => {
   const template = invoiceData.template || "minimalist";
   const colorTheme = invoiceData.colorTheme || "blue";
-  const color = COLOR_CLASSES[colorTheme];
+  const color = COLOR_CLASSES[colorTheme as keyof typeof COLOR_CLASSES] || COLOR_CLASSES.blue;
+  const themeObj = getTheme(colorTheme);
 
   return (
-    <Card className={TEMPLATE_STYLES[template]}>
+    <Card className={TEMPLATE_STYLES[template]} style={themeObj.type === "gradient"
+      ? { background: themeObj.gradient }
+      : {}
+    }>
       <CardHeader>
         <CardTitle className={`text-lg ${color.header}`}>Invoice Preview</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className={`${color.bg} border rounded-lg p-6 space-y-6`}>
+        <div className={`${color.bg} border rounded-lg p-6 space-y-6`} style={themeObj.type === "gradient" ? { background: themeObj.gradient } : {}}>
           {/* Invoice Header */}
           <div className="flex justify-between items-start">
             <div className="flex items-center gap-4">
@@ -147,6 +146,14 @@ const InvoicePreview = ({
             <div>
               <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">Notes:</h4>
               <p className="text-gray-600 dark:text-gray-300 text-sm whitespace-pre-line">{invoiceData.notes}</p>
+            </div>
+          )}
+
+          {/* At the end, render a signature display if invoiceData.signatureImage */}
+          {invoiceData.signatureImage && (
+            <div className="mt-8 flex flex-col items-end">
+              <span className="text-gray-500 text-xs mb-2">Signature:</span>
+              <img src={invoiceData.signatureImage} alt="Signature" className="w-48 h-16 object-contain border rounded bg-white" />
             </div>
           )}
         </div>

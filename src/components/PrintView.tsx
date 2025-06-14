@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Download, FileText, Printer, ChevronDown } from "lucide-react";
-import { InvoiceData, currencies } from "@/types/invoice";
+import { InvoiceData, currencies, colorThemes } from "@/types/invoice";
 
 interface PrintViewProps {
   invoiceData: InvoiceData;
@@ -37,6 +37,46 @@ const COLOR_CLASSES = {
   }
 };
 
+const COLOR_CLASSES_EXTENDED = {
+  ...COLOR_CLASSES,
+  purple: {
+    header: "text-purple-700",
+    badge: "bg-purple-100 text-purple-800",
+    accentBg: "bg-purple-50",
+    border: "border-purple-300",
+  },
+  red: {
+    header: "text-red-700",
+    badge: "bg-red-100 text-red-800",
+    accentBg: "bg-red-50",
+    border: "border-red-300"
+  },
+  orange: {
+    header: "text-orange-700",
+    badge: "bg-orange-100 text-orange-800",
+    accentBg: "bg-orange-50",
+    border: "border-orange-300"
+  },
+  teal: {
+    header: "text-teal-700",
+    badge: "bg-teal-100 text-teal-800",
+    accentBg: "bg-teal-50",
+    border: "border-teal-300"
+  },
+  "gradient-blue": {
+    header: "text-blue-700",
+    badge: "bg-blue-100 text-blue-800",
+    accentBg: "",
+    border: "border-blue-300"
+  },
+  "gradient-purple": {
+    header: "text-purple-700",
+    badge: "bg-purple-100 text-purple-900",
+    accentBg: "",
+    border: "border-purple-300"
+  }
+};
+
 const PrintView = ({
   invoiceData,
   formatCurrency,
@@ -48,10 +88,11 @@ const PrintView = ({
   setViewMode,
 }: PrintViewProps) => {
   const colorTheme = invoiceData.colorTheme || "blue";
-  const color = COLOR_CLASSES[colorTheme];
+  const color = COLOR_CLASSES_EXTENDED[colorTheme as keyof typeof COLOR_CLASSES_EXTENDED] || COLOR_CLASSES.blue;
+  const themeObj = colorThemes.find(ct => ct.value === colorTheme);
 
   return (
-    <div className={`min-h-screen bg-white print:bg-white ${color.accentBg}`}>
+    <div className={`min-h-screen bg-white print:bg-white`} style={themeObj?.type === "gradient" ? { background: themeObj.gradient } : themeObj?.color ? { background: themeObj.color } : {}}>
       <div className="max-w-4xl mx-auto p-8 print:p-0">
         {/* PRINT CONTROLS */}
         <div className="flex justify-between items-center mb-8 print:hidden">
@@ -202,6 +243,16 @@ const PrintView = ({
             <p className="text-gray-600 whitespace-pre-line text-sm">{invoiceData.notes}</p>
           </div>
         )}
+
+        {/* Signature area at the end of the invoice */}
+        <div className="mt-16 flex flex-col items-end print:items-end">
+          <span className="text-gray-500 text-xs mb-2">Signature:</span>
+          {invoiceData.signatureImage ? (
+            <img src={invoiceData.signatureImage} alt="Signature" className="w-48 h-16 object-contain border rounded bg-white" />
+          ) : (
+            <div className="w-48 h-16 border-b-2 border-gray-400 mb-2"></div>
+          )}
+        </div>
       </div>
     </div>
   );

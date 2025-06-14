@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import { InvoiceData, currencies } from "@/types/invoice";
+import { InvoiceData, currencies, colorThemes } from "@/types/invoice";
 
 export const exportToPDF = (
   invoiceData: InvoiceData,
@@ -203,6 +203,35 @@ export const exportToPDF = (
         yPosition += 8;
       });
     }
+
+    const themeObj = colorThemes.find(ct => ct.value === invoiceData.colorTheme) || colorThemes[0];
+    const applyPdfBg = () => {
+      if (themeObj.type === 'gradient') {
+        // Approximating gradients in jsPDF
+        pdf.setFillColor(230, 240, 255); // fallback pale background
+        pdf.rect(0, 0, 210, 297, 'F');
+      } else if (themeObj.color) {
+        const hex = themeObj.color.replace('#','');
+        const r = parseInt(hex.substring(0,2),16), g = parseInt(hex.substring(2,4),16), b = parseInt(hex.substring(4,6),16);
+        pdf.setFillColor(r, g, b);
+        pdf.rect(0, 0, 210, 297, 'F');
+      }
+    };
+
+    applyPdfBg();
+
+    let yPos = pdf.internal.pageSize.getHeight()-45;
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(11);
+    pdf.text('Signature:', 20, yPos);
+
+    if (invoiceData.signatureImage) {
+      try {
+        pdf.addImage(invoiceData.signatureImage, 'PNG', 50, yPos-10, 60, 20);
+      } catch {}
+    } else {
+      pdf.line(50, yPos, 120, yPos); // blank signature line
+    }
     
     pdf.save(`invoice-${invoiceData.invoiceNumber}.pdf`);
     
@@ -264,6 +293,18 @@ export const exportToImage = (
     }
     
     function continueImageGeneration() {
+      const themeObj2 = colorThemes.find(ct => ct.value === invoiceData.colorTheme) || colorThemes[0];
+
+      // In continueImageGeneration(), at the top:
+      if (themeObj2.type === "gradient") {
+        // Simple fallback for gradients - average color
+        ctx.fillStyle = "#e0e7ff";
+      } else if (themeObj2.color) {
+        ctx.fillStyle = themeObj2.color;
+      } else {
+        ctx.fillStyle = "#fff";
+      }
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
       // Business name
       ctx.fillStyle = '#3b82f6';
       ctx.font = 'bold 24px Arial';
@@ -374,25 +415,53 @@ export const exportToImage = (
           ctx.fillText(line, 50, currentY + 85 + (index * 20));
         });
       }
-      
-      // Convert to blob and download
-      canvas.toBlob((blob) => {
-        if (blob) {
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `invoice-${invoiceData.invoiceNumber}.${format}`;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-          
-          toast({
-            title: "Image Generated",
-            description: `Invoice has been downloaded as ${format.toUpperCase()}.`,
-          });
-        }
-      }, `image/${format}`);
+
+      ctx.font = '11px Arial';
+      ctx.fillStyle = '#555';
+      ctx.fillText("Signature:", 60, canvas.height - 60);
+
+      if (invoiceData.signatureImage) {
+        const img = new window.Image();
+        img.src = invoiceData.signatureImage;
+        img.onload = () => ctx.drawImage(img, 120, canvas.height-80, 120, 36);
+        // If signature image: append after download
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `invoice-${invoiceData.invoiceNumber}.${format}`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            toast({ title: "Image Generated", description: `Invoice has been downloaded as ${format.toUpperCase()}.`, });
+          }
+        }, `image/${format}`);
+      } else {
+        ctx.strokeStyle = '#a3a3a3';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(120, canvas.height - 66);
+        ctx.lineTo(260, canvas.height - 66);
+        ctx.stroke();
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `invoice-${invoiceData.invoiceNumber}.${format}`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            toast({
+              title: "Image Generated",
+              description: `Invoice has been downloaded as ${format.toUpperCase()}.`,
+            });
+          }
+        }, `image/${format}`);
+      }
     }
     
   } catch (error) {

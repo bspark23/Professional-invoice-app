@@ -16,6 +16,8 @@ import DashboardWelcome from "@/components/DashboardWelcome";
 import { useInvoiceData } from "@/hooks/useInvoiceData";
 import { formatCurrency, calculateSubtotal, calculateTax, calculateTotal } from "@/utils/invoiceUtils";
 import { exportToPDF, exportToImage } from "@/utils/exportUtils";
+import { colorThemes } from "@/types/invoice";
+import SignatureInput from "@/components/SignatureInput";
 
 const Index = () => {
   const { toast } = useToast();
@@ -147,11 +149,8 @@ const Index = () => {
     { value: "bordered", label: "Bordered" },
     { value: "modern", label: "Modern" }
   ];
-  const colorThemeOptions = [
-    { value: "blue", label: "Blue", bg: "bg-blue-500" },
-    { value: "green", label: "Green", bg: "bg-green-500" },
-    { value: "gray", label: "Gray", bg: "bg-gray-500" },
-  ];
+
+  const colorThemeOptions = colorThemes;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/30 dark:bg-gradient-to-br dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-4">
@@ -259,19 +258,19 @@ const Index = () => {
           </div>
           <div>
             <label className="block text-sm font-semibold mb-1">Color Theme</label>
-            {/* Custom color select with color dots for visual feedback */}
-            <div className="flex gap-2 mt-1">
+            <div className="flex gap-2 mt-1 flex-wrap">
               {colorThemeOptions.map(opt => (
                 <button
                   key={opt.value}
                   type="button"
-                  className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition 
-                    ${opt.bg} 
-                    ${invoiceData.colorTheme === opt.value ? "ring-2 ring-offset-2 ring-black dark:ring-white scale-110" : "opacity-70"}
+                  className={`w-10 h-10 rounded-full border-2 flex items-center justify-center transition
+                    ${invoiceData.colorTheme === opt.value ? "ring-2 ring-offset-2 ring-black dark:ring-white scale-110" : "opacity-80"}
                   `}
-                  aria-label={opt.label}
-                  onClick={() => setInvoiceData(prev => ({ ...prev, colorTheme: opt.value as 'blue' | 'green' | 'gray' }))}
-                  style={{ outline: "none" }}
+                  aria-label={opt.name}
+                  style={{
+                    background: opt.type === 'gradient' ? opt.gradient : opt.color
+                  }}
+                  onClick={() => setInvoiceData(prev => ({ ...prev, colorTheme: opt.value as any }))}
                 >
                   {invoiceData.colorTheme === opt.value && (
                     <span className="text-white font-bold text-lg">✓</span>
@@ -304,6 +303,14 @@ const Index = () => {
               calculateTotal={getCalculateTotal}
             />
           </div>
+        </div>
+
+        {/* Signature section config */}
+        <div className="bg-white dark:bg-gray-800 p-4 mt-6 rounded-xl shadow border">
+          <SignatureInput
+            value={invoiceData.signatureImage}
+            onChange={sig => setInvoiceData(prev => ({ ...prev, signatureImage: sig }))}
+          />
         </div>
       </div>
     </div>
