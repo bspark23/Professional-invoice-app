@@ -20,6 +20,8 @@ export const useInvoiceData = () => {
     discountAmount: 0,
     businessName: "Your Business Name",
     businessLogo: "",
+    businessEmail: "",  // <--- Added
+    businessAddress: "", // <--- Added
     currency: 'USD',
     notes: '',
     status: 'unpaid'

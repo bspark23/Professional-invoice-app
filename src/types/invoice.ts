@@ -20,6 +20,8 @@ export interface InvoiceData {
   discountAmount: number;
   businessName: string;
   businessLogo?: string;
+  businessEmail: string;    // <--- Added
+  businessAddress: string;  // <--- Added
   currency: string;
   notes: string;
   status: 'paid' | 'unpaid';
@@ -34,3 +36,4 @@ export const currencies = [
   { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar' },
   { code: 'AUD', symbol: 'A$', name: 'Australian Dollar' },
 ];
+
