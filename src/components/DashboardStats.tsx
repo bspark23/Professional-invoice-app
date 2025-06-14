@@ -35,7 +35,7 @@ const DashboardStats = ({ savedInvoices, formatCurrency }: DashboardStatsProps) 
       title: "Total Revenue",
       value: formatCurrency(totalAmount),
       change: totalInvoices > 0 ? `${currentMonth} ${currentYear}` : "Start creating invoices",
-      changeType: totalInvoices > 0 ? "positive" as const : "neutral" as const,
+      changeType: totalInvoices > 0 ? "positive" : "neutral",
       icon: <DollarSign className="w-5 h-5" />,
       bgColor: "bg-gradient-to-r from-green-500 to-emerald-600",
       subtitle: totalInvoices > 0 ? `Last updated: ${currentTime}` : "Your revenue will appear here"
@@ -44,7 +44,7 @@ const DashboardStats = ({ savedInvoices, formatCurrency }: DashboardStatsProps) 
       title: "Total Invoices",
       value: totalInvoices.toString(),
       change: totalInvoices > 0 ? `${currentMonth} ${currentYear}` : "Get started",
-      changeType: totalInvoices > 0 ? "positive" as const : "neutral" as const,
+      changeType: totalInvoices > 0 ? "positive" : "neutral",
       icon: <FileText className="w-5 h-5" />,
       bgColor: "bg-gradient-to-r from-blue-500 to-blue-600",
       subtitle: totalInvoices > 0 ? `As of ${currentTime}` : "Create your first invoice"
@@ -53,7 +53,7 @@ const DashboardStats = ({ savedInvoices, formatCurrency }: DashboardStatsProps) 
       title: "Paid Invoices",
       value: paidInvoices.toString(),
       change: totalInvoices > 0 ? `${Math.round((paidInvoices / Math.max(totalInvoices, 1)) * 100)}% rate` : "No invoices yet",
-      changeType: totalInvoices > 0 ? "neutral" as const : "neutral" as const,
+      changeType: "neutral",
       icon: <CheckCircle className="w-5 h-5" />,
       bgColor: "bg-gradient-to-r from-purple-500 to-purple-600",
       subtitle: totalInvoices > 0 ? `Success rate this ${currentMonth.toLowerCase()}` : "Track payment status"
@@ -62,7 +62,7 @@ const DashboardStats = ({ savedInvoices, formatCurrency }: DashboardStatsProps) 
       title: "Pending",
       value: pendingInvoices.toString(),
       change: totalInvoices > 0 ? (pendingInvoices > 0 ? "Needs attention" : "All clear") : "No pending invoices",
-      changeType: totalInvoices > 0 ? (pendingInvoices > 0 ? "negative" : "positive") as const : "neutral" as const,
+      changeType: totalInvoices > 0 ? (pendingInvoices > 0 ? "negative" : "positive") : "neutral",
       icon: <Clock className="w-5 h-5" />,
       bgColor: "bg-gradient-to-r from-orange-500 to-orange-600",
       subtitle: totalInvoices > 0 ? `Updated ${currentTime}` : "Pending invoices appear here"
