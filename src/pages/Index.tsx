@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,7 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Trash2, Download, Save, Eye, FileText, Printer, Moon, Sun, Check, X } from "lucide-react";
+import { Plus, Trash2, Download, Save, Eye, FileText, Printer, Moon, Sun, Check, X, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import jsPDF from 'jspdf';
 
@@ -33,6 +32,7 @@ interface InvoiceData {
   taxRate: number;
   discountAmount: number;
   businessName: string;
+  businessLogo?: string;
   currency: string;
   notes: string;
   status: 'paid' | 'unpaid';
@@ -67,10 +67,24 @@ const Index = () => {
     taxRate: 0,
     discountAmount: 0,
     businessName: "Your Business Name",
+    businessLogo: "",
     currency: 'USD',
     notes: '',
     status: 'unpaid'
   });
+
+  // Handle logo upload
+  const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        setInvoiceData(prev => ({ ...prev, businessLogo: result }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   // Generate auto invoice number
   const generateInvoiceNumber = () => {
@@ -220,6 +234,7 @@ const Index = () => {
       taxRate: 0,
       discountAmount: 0,
       businessName: invoiceData.businessName,
+      businessLogo: invoiceData.businessLogo,
       currency: invoiceData.currency,
       notes: '',
       status: 'unpaid'
@@ -286,12 +301,22 @@ const Index = () => {
     try {
       const pdf = new jsPDF();
       
+      // Add logo if available
+      if (invoiceData.businessLogo) {
+        try {
+          pdf.addImage(invoiceData.businessLogo, 'JPEG', 20, 15, 30, 20);
+        } catch (error) {
+          console.log('Error adding logo to PDF:', error);
+        }
+      }
+      
+      // Business name
       pdf.setFont('helvetica', 'bold');
       pdf.setFontSize(24);
       pdf.setTextColor(59, 130, 246);
+      pdf.text(invoiceData.businessName, invoiceData.businessLogo ? 60 : 20, 30);
       
-      pdf.text(invoiceData.businessName, 20, 30);
-      
+      // Invoice title and number
       pdf.setFontSize(18);
       pdf.setTextColor(0, 0, 0);
       pdf.text('INVOICE', 150, 30);
@@ -299,41 +324,52 @@ const Index = () => {
       pdf.setFontSize(12);
       pdf.text(`#${invoiceData.invoiceNumber}`, 150, 40);
       
+      // Status badge
+      pdf.setFontSize(10);
+      pdf.setTextColor(invoiceData.status === 'paid' ? 34, 197, 94 : 239, 68, 68);
+      pdf.text(invoiceData.status === 'paid' ? '✅ Paid' : '❌ Unpaid', 150, 50);
+      
+      // Bill to section
       pdf.setFont('helvetica', 'bold');
       pdf.setFontSize(12);
-      pdf.text('Bill To:', 20, 60);
+      pdf.setTextColor(0, 0, 0);
+      pdf.text('Bill To:', 20, 70);
       pdf.setFont('helvetica', 'normal');
-      pdf.text(invoiceData.clientName, 20, 70);
-      pdf.text(invoiceData.clientEmail, 20, 80);
+      pdf.text(invoiceData.clientName, 20, 80);
+      pdf.text(invoiceData.clientEmail, 20, 90);
       
       const addressLines = invoiceData.clientAddress.split('\n');
       addressLines.forEach((line, index) => {
-        pdf.text(line, 20, 90 + (index * 10));
+        pdf.text(line, 20, 100 + (index * 10));
       });
       
+      // Date information
       pdf.text(`Invoice Date: ${invoiceData.invoiceDate}`, 150, 70);
       pdf.text(`Due Date: ${invoiceData.dueDate}`, 150, 80);
+      pdf.text(`Currency: ${currencies.find(c => c.code === invoiceData.currency)?.name}`, 150, 90);
       
-      let yPosition = 120;
+      // Line items table
+      let yPosition = 130;
       pdf.setFont('helvetica', 'bold');
-      pdf.text('Description', 20, yPosition);
+      pdf.setFillColor(249, 250, 251);
+      pdf.rect(20, yPosition - 8, 170, 15, 'F');
+      pdf.text('Description', 25, yPosition);
       pdf.text('Qty', 120, yPosition);
       pdf.text('Rate', 140, yPosition);
       pdf.text('Amount', 170, yPosition);
-      
-      pdf.line(20, yPosition + 2, 190, yPosition + 2);
       
       pdf.setFont('helvetica', 'normal');
       yPosition += 15;
       
       invoiceData.lineItems.forEach((item) => {
-        pdf.text(item.description || 'No description', 20, yPosition);
-        pdf.text(item.quantity.toString(), 120, yPosition);
+        pdf.text(item.description || 'No description', 25, yPosition);
+        pdf.text(item.quantity.toString(), 125, yPosition);
         pdf.text(formatCurrency(item.rate), 140, yPosition);
         pdf.text(formatCurrency(item.amount), 170, yPosition);
         yPosition += 15;
       });
       
+      // Totals section
       yPosition += 10;
       pdf.line(120, yPosition, 190, yPosition);
       yPosition += 10;
@@ -351,10 +387,15 @@ const Index = () => {
         yPosition += 10;
       }
       
+      // Draw separator line for total
+      pdf.line(120, yPosition, 190, yPosition);
+      yPosition += 10;
+      
       pdf.setFont('helvetica', 'bold');
       pdf.setFontSize(14);
       pdf.text(`Total: ${formatCurrency(calculateTotal())}`, 120, yPosition);
       
+      // Notes section
       if (invoiceData.notes) {
         yPosition += 20;
         pdf.setFont('helvetica', 'bold');
@@ -434,8 +475,17 @@ const Index = () => {
           <div className="bg-white border rounded-lg p-8 print:border-0 print:shadow-none">
             {/* Invoice Header */}
             <div className="flex justify-between items-start mb-8">
-              <div>
-                <h2 className="text-3xl font-bold text-blue-600">{invoiceData.businessName}</h2>
+              <div className="flex items-center gap-4">
+                {invoiceData.businessLogo && (
+                  <img 
+                    src={invoiceData.businessLogo} 
+                    alt="Company Logo" 
+                    className="w-16 h-16 object-contain"
+                  />
+                )}
+                <div>
+                  <h2 className="text-3xl font-bold text-blue-600">{invoiceData.businessName}</h2>
+                </div>
               </div>
               <div className="text-right">
                 <h3 className="text-2xl font-semibold">INVOICE</h3>
@@ -668,6 +718,25 @@ const Index = () => {
                       value={invoiceData.businessName}
                       onChange={(e) => setInvoiceData(prev => ({ ...prev, businessName: e.target.value }))}
                     />
+                  </div>
+                  <div>
+                    <Label htmlFor="business-logo">Company Logo</Label>
+                    <div className="flex items-center gap-4">
+                      <Input
+                        id="business-logo"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleLogoUpload}
+                        className="flex-1"
+                      />
+                      {invoiceData.businessLogo && (
+                        <img 
+                          src={invoiceData.businessLogo} 
+                          alt="Logo Preview" 
+                          className="w-12 h-12 object-contain border rounded"
+                        />
+                      )}
+                    </div>
                   </div>
                   <div>
                     <Label htmlFor="currency">Currency</Label>
@@ -909,8 +978,17 @@ const Index = () => {
                 <div className="bg-white dark:bg-gray-800 border rounded-lg p-6 space-y-6">
                   {/* Invoice Header */}
                   <div className="flex justify-between items-start">
-                    <div>
-                      <h2 className="text-2xl font-bold text-blue-600 dark:text-blue-400">{invoiceData.businessName}</h2>
+                    <div className="flex items-center gap-4">
+                      {invoiceData.businessLogo && (
+                        <img 
+                          src={invoiceData.businessLogo} 
+                          alt="Company Logo" 
+                          className="w-12 h-12 object-contain"
+                        />
+                      )}
+                      <div>
+                        <h2 className="text-2xl font-bold text-blue-600 dark:text-blue-400">{invoiceData.businessName}</h2>
+                      </div>
                     </div>
                     <div className="text-right">
                       <h3 className="text-xl font-semibold">INVOICE</h3>
