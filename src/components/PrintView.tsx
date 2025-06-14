@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -91,8 +92,16 @@ const PrintView = ({
   const color = COLOR_CLASSES_EXTENDED[colorTheme as keyof typeof COLOR_CLASSES_EXTENDED] || COLOR_CLASSES.blue;
   const themeObj = colorThemes.find(ct => ct.value === colorTheme);
 
+  // Invoice container: where color/gradient backgrounds should apply
+  const invoiceCardStyles = themeObj?.type === "gradient"
+    ? { background: themeObj.gradient }
+    : themeObj?.color
+      ? { background: themeObj.color }
+      : { background: "" };
+
   return (
-    <div className={`min-h-screen bg-white print:bg-white`} style={themeObj?.type === "gradient" ? { background: themeObj.gradient } : themeObj?.color ? { background: themeObj.color } : {}}>
+    // Outer page - always white
+    <div className="min-h-screen bg-white print:bg-white">
       <div className="max-w-4xl mx-auto p-8 print:p-0">
         {/* PRINT CONTROLS */}
         <div className="flex justify-between items-center mb-8 print:hidden">
@@ -131,127 +140,135 @@ const PrintView = ({
           </div>
         </div>
 
-        {/* DISTINCT INVOICE HEADER */}
-        <div className={`flex flex-col md:flex-row md:justify-between md:items-center mb-10 print:mb-8`}>
-          <div className="flex items-center gap-4 mb-6 md:mb-0">
-            {invoiceData.businessLogo && (
-              <img 
-                src={invoiceData.businessLogo}
-                alt="Company Logo"
-                className="w-20 h-20 object-contain border rounded-lg bg-gray-100"
-              />
-            )}
-            <div>
-              <h2 className={`text-3xl font-bold ${color.header}`}>{invoiceData.businessName}</h2>
-              {invoiceData.businessName && (
-                <div className="text-sm text-gray-600 mt-1">{invoiceData.businessEmail}</div>
+        {/* INVOICE CONTENT AREA - Themed */}
+        <div
+          className="rounded-2xl mx-auto shadow border print:shadow-none print:border print:border-gray-200 transition-all"
+          style={{
+            ...invoiceCardStyles,
+            // Only color the invoice area, not the entire page (including on print)
+          }}
+        >
+          <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-10 print:mb-8 p-8">
+            <div className="flex items-center gap-4 mb-6 md:mb-0">
+              {invoiceData.businessLogo && (
+                <img 
+                  src={invoiceData.businessLogo}
+                  alt="Company Logo"
+                  className="w-20 h-20 object-contain border rounded-lg bg-gray-100"
+                />
               )}
-              <div className="text-sm text-gray-500">{invoiceData.businessAddress}</div>
-            </div>
-          </div>
-          <div className="text-right">
-            <div className={`mb-2`}>
-              <span className={`inline-block px-3 py-1 ${color.badge} text-xs font-semibold rounded uppercase tracking-wide`}>
-                Invoice
-              </span>
-            </div>
-            <div className="text-xl font-semibold text-gray-800 mb-1">
-              #{invoiceData.invoiceNumber}
-            </div>
-            <Badge variant={invoiceData.status === 'paid' ? 'default' : 'destructive'} className={`print:bg-white print:text-black print:border print:border-gray-400 ${color.badge}`}>
-              {invoiceData.status === 'paid' ? '✅ Paid' : invoiceData.status === "unpaid" ? '❌ Unpaid' : invoiceData.status}
-            </Badge>
-          </div>
-        </div>
-
-        <Separator className={`mb-8 print:border-gray-300 ${color.border}`} />
-
-        {/* CLIENT AND DATE/AMOUNT INFO */}
-        <div className={`grid grid-cols-1 md:grid-cols-2 gap-8 mb-10 text-gray-700`}>
-          <div>
-            <h4 className="font-semibold mb-2">Bill To:</h4>
-            <div>
-              <div className="font-medium">{invoiceData.clientName}</div>
-              <div>{invoiceData.clientEmail}</div>
-              <div className="whitespace-pre-line">{invoiceData.clientAddress}</div>
-            </div>
-          </div>
-          <div className="text-right space-y-1">
-            <div>
-              <span className="font-medium">Invoice Date: </span>
-              {invoiceData.invoiceDate}
-            </div>
-            <div>
-              <span className="font-medium">Due Date: </span>
-              {invoiceData.dueDate}
-            </div>
-            <div>
-              <span className="font-medium">Currency: </span>
-              {currencies.find(c => c.code === invoiceData.currency)?.name || 'USD'}
-            </div>
-          </div>
-        </div>
-
-        {/* INVOICE LINE ITEMS */}
-        <div className="mb-8">
-          <div className={`border rounded-lg overflow-hidden print:border-gray-400 ${color.border}`}>
-            <div className={`bg-gray-50 grid grid-cols-12 gap-2 p-4 text-sm font-medium text-gray-700 border-b ${color.border}`}>
-              <div className="col-span-6">Description</div>
-              <div className="col-span-2 text-center">Qty</div>
-              <div className="col-span-2 text-center">Rate</div>
-              <div className="col-span-2 text-right">Amount</div>
-            </div>
-            {invoiceData.lineItems.map((item, index) => (
-              <div key={item.id} className={`grid grid-cols-12 gap-2 p-4 text-sm ${index < invoiceData.lineItems.length - 1 ? 'border-b border-gray-200' : ''}`}>
-                <div className="col-span-6">{item.description}</div>
-                <div className="col-span-2 text-center">{item.quantity}</div>
-                <div className="col-span-2 text-center">{formatCurrency(item.rate)}</div>
-                <div className="col-span-2 text-right">{formatCurrency(item.amount)}</div>
+              <div>
+                <h2 className={`text-3xl font-bold ${color.header}`}>{invoiceData.businessName}</h2>
+                {invoiceData.businessName && (
+                  <div className="text-sm text-gray-600 mt-1">{invoiceData.businessEmail}</div>
+                )}
+                <div className="text-sm text-gray-500">{invoiceData.businessAddress}</div>
               </div>
-            ))}
+            </div>
+            <div className="text-right">
+              <div className={`mb-2`}>
+                <span className={`inline-block px-3 py-1 ${color.badge} text-xs font-semibold rounded uppercase tracking-wide`}>
+                  Invoice
+                </span>
+              </div>
+              <div className="text-xl font-semibold text-gray-800 mb-1">
+                #{invoiceData.invoiceNumber}
+              </div>
+              <Badge variant={invoiceData.status === 'paid' ? 'default' : 'destructive'} className={`print:bg-white print:text-black print:border print:border-gray-400 ${color.badge}`}>
+                {invoiceData.status === 'paid' ? '✅ Paid' : invoiceData.status === "unpaid" ? '❌ Unpaid' : invoiceData.status}
+              </Badge>
+            </div>
           </div>
-        </div>
 
-        {/* TOTALS AND NOTES */}
-        <div className="space-y-3 mb-8 text-gray-900">
-          <div className="flex justify-between">
-            <span>Subtotal:</span>
-            <span>{formatCurrency(calculateSubtotal())}</span>
+          <Separator className={`mb-8 print:border-gray-300 ${color.border}`} />
+
+          {/* CLIENT AND DATE/AMOUNT INFO */}
+          <div className={`grid grid-cols-1 md:grid-cols-2 gap-8 mb-10 text-gray-700 px-8`}>
+            <div>
+              <h4 className="font-semibold mb-2">Bill To:</h4>
+              <div>
+                <div className="font-medium">{invoiceData.clientName}</div>
+                <div>{invoiceData.clientEmail}</div>
+                <div className="whitespace-pre-line">{invoiceData.clientAddress}</div>
+              </div>
+            </div>
+            <div className="text-right space-y-1">
+              <div>
+                <span className="font-medium">Invoice Date: </span>
+                {invoiceData.invoiceDate}
+              </div>
+              <div>
+                <span className="font-medium">Due Date: </span>
+                {invoiceData.dueDate}
+              </div>
+              <div>
+                <span className="font-medium">Currency: </span>
+                {currencies.find(c => c.code === invoiceData.currency)?.name || 'USD'}
+              </div>
+            </div>
           </div>
-          {invoiceData.taxRate > 0 && (
+
+          {/* INVOICE LINE ITEMS */}
+          <div className="mb-8 px-8">
+            <div className={`border rounded-lg overflow-hidden print:border-gray-400 ${color.border}`}>
+              <div className={`bg-gray-50 grid grid-cols-12 gap-2 p-4 text-sm font-medium text-gray-700 border-b ${color.border}`}>
+                <div className="col-span-6">Description</div>
+                <div className="col-span-2 text-center">Qty</div>
+                <div className="col-span-2 text-center">Rate</div>
+                <div className="col-span-2 text-right">Amount</div>
+              </div>
+              {invoiceData.lineItems.map((item, index) => (
+                <div key={item.id} className={`grid grid-cols-12 gap-2 p-4 text-sm ${index < invoiceData.lineItems.length - 1 ? 'border-b border-gray-200' : ''}`}>
+                  <div className="col-span-6">{item.description}</div>
+                  <div className="col-span-2 text-center">{item.quantity}</div>
+                  <div className="col-span-2 text-center">{formatCurrency(item.rate)}</div>
+                  <div className="col-span-2 text-right">{formatCurrency(item.amount)}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* TOTALS AND NOTES */}
+          <div className="space-y-3 mb-8 text-gray-900 px-8">
             <div className="flex justify-between">
-              <span>Tax ({invoiceData.taxRate}%):</span>
-              <span>{formatCurrency(calculateTax())}</span>
+              <span>Subtotal:</span>
+              <span>{formatCurrency(calculateSubtotal())}</span>
+            </div>
+            {invoiceData.taxRate > 0 && (
+              <div className="flex justify-between">
+                <span>Tax ({invoiceData.taxRate}%):</span>
+                <span>{formatCurrency(calculateTax())}</span>
+              </div>
+            )}
+            {invoiceData.discountAmount > 0 && (
+              <div className="flex justify-between">
+                <span>Discount:</span>
+                <span>-{formatCurrency(invoiceData.discountAmount)}</span>
+              </div>
+            )}
+            <Separator className="print:border-gray-300" />
+            <div className="flex justify-between text-xl font-bold">
+              <span>Total:</span>
+              <span>{formatCurrency(calculateTotal())}</span>
+            </div>
+          </div>
+
+          {invoiceData.notes && (
+            <div className="mt-6 px-8">
+              <h4 className="font-semibold mb-1">Notes:</h4>
+              <p className="text-gray-600 whitespace-pre-line text-sm">{invoiceData.notes}</p>
             </div>
           )}
-          {invoiceData.discountAmount > 0 && (
-            <div className="flex justify-between">
-              <span>Discount:</span>
-              <span>-{formatCurrency(invoiceData.discountAmount)}</span>
-            </div>
-          )}
-          <Separator className="print:border-gray-300" />
-          <div className="flex justify-between text-xl font-bold">
-            <span>Total:</span>
-            <span>{formatCurrency(calculateTotal())}</span>
-          </div>
-        </div>
 
-        {invoiceData.notes && (
-          <div className="mt-6">
-            <h4 className="font-semibold mb-1">Notes:</h4>
-            <p className="text-gray-600 whitespace-pre-line text-sm">{invoiceData.notes}</p>
+          {/* Signature area at the end of the invoice */}
+          <div className="mt-16 flex flex-col items-end print:items-end px-8 pb-12">
+            <span className="text-gray-500 text-xs mb-2">Signature:</span>
+            {invoiceData.signatureImage ? (
+              <img src={invoiceData.signatureImage} alt="Signature" className="w-48 h-16 object-contain border rounded bg-white" />
+            ) : (
+              <div className="w-48 h-16 border-b-2 border-gray-400 mb-2"></div>
+            )}
           </div>
-        )}
-
-        {/* Signature area at the end of the invoice */}
-        <div className="mt-16 flex flex-col items-end print:items-end">
-          <span className="text-gray-500 text-xs mb-2">Signature:</span>
-          {invoiceData.signatureImage ? (
-            <img src={invoiceData.signatureImage} alt="Signature" className="w-48 h-16 object-contain border rounded bg-white" />
-          ) : (
-            <div className="w-48 h-16 border-b-2 border-gray-400 mb-2"></div>
-          )}
         </div>
       </div>
     </div>
@@ -259,3 +276,4 @@ const PrintView = ({
 };
 
 export default PrintView;
+
