@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -92,15 +91,22 @@ const PrintView = ({
   const color = COLOR_CLASSES_EXTENDED[colorTheme as keyof typeof COLOR_CLASSES_EXTENDED] || COLOR_CLASSES.blue;
   const themeObj = colorThemes.find(ct => ct.value === colorTheme);
 
-  // Invoice container: where color/gradient backgrounds should apply
-  const invoiceCardStyles = themeObj?.type === "gradient"
-    ? { background: themeObj.gradient }
-    : themeObj?.color
-      ? { background: themeObj.color }
-      : { background: "" };
+  // Compute the invoice card background
+  let invoiceCardStyles: React.CSSProperties = {};
+  if (themeObj?.type === "gradient" && themeObj.gradient) {
+    // For gradients, use the gradient but overlay a semi-transparent white for readability
+    invoiceCardStyles = {
+      background: `linear-gradient(0deg, rgba(255,255,255,0.90), rgba(255,255,255,0.90)), ${themeObj.gradient}`
+    };
+  } else if (themeObj?.type === "plain" && themeObj.color) {
+    // For plain, use a much lighter version (background with alpha) or soft light color
+    invoiceCardStyles = {
+      background: `linear-gradient(0deg, ${themeObj.color}1A 0%, #fff 100%)` // '1A' = 10% alpha in hex
+    };
+  }
 
   return (
-    // Outer page - always white
+    // Outer page (always white, including print)
     <div className="min-h-screen bg-white print:bg-white">
       <div className="max-w-4xl mx-auto p-8 print:p-0">
         {/* PRINT CONTROLS */}
@@ -140,13 +146,10 @@ const PrintView = ({
           </div>
         </div>
 
-        {/* INVOICE CONTENT AREA - Themed */}
+        {/* INVOICE CONTENT AREA - Themed card background and dark text */}
         <div
           className="rounded-2xl mx-auto shadow border print:shadow-none print:border print:border-gray-200 transition-all"
-          style={{
-            ...invoiceCardStyles,
-            // Only color the invoice area, not the entire page (including on print)
-          }}
+          style={invoiceCardStyles}
         >
           <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-10 print:mb-8 p-8">
             <div className="flex items-center gap-4 mb-6 md:mb-0">
@@ -158,11 +161,11 @@ const PrintView = ({
                 />
               )}
               <div>
-                <h2 className={`text-3xl font-bold ${color.header}`}>{invoiceData.businessName}</h2>
+                <h2 className={`text-3xl font-bold text-gray-900`}>{invoiceData.businessName}</h2>
                 {invoiceData.businessName && (
-                  <div className="text-sm text-gray-600 mt-1">{invoiceData.businessEmail}</div>
+                  <div className="text-sm text-gray-700 mt-1">{invoiceData.businessEmail}</div>
                 )}
-                <div className="text-sm text-gray-500">{invoiceData.businessAddress}</div>
+                <div className="text-sm text-gray-700">{invoiceData.businessAddress}</div>
               </div>
             </div>
             <div className="text-right">
@@ -171,7 +174,7 @@ const PrintView = ({
                   Invoice
                 </span>
               </div>
-              <div className="text-xl font-semibold text-gray-800 mb-1">
+              <div className="text-xl font-semibold text-gray-900 mb-1">
                 #{invoiceData.invoiceNumber}
               </div>
               <Badge variant={invoiceData.status === 'paid' ? 'default' : 'destructive'} className={`print:bg-white print:text-black print:border print:border-gray-400 ${color.badge}`}>
@@ -183,7 +186,7 @@ const PrintView = ({
           <Separator className={`mb-8 print:border-gray-300 ${color.border}`} />
 
           {/* CLIENT AND DATE/AMOUNT INFO */}
-          <div className={`grid grid-cols-1 md:grid-cols-2 gap-8 mb-10 text-gray-700 px-8`}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10 text-gray-700 px-8">
             <div>
               <h4 className="font-semibold mb-2">Bill To:</h4>
               <div>
@@ -276,4 +279,3 @@ const PrintView = ({
 };
 
 export default PrintView;
-
