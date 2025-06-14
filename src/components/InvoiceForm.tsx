@@ -1,4 +1,4 @@
-
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,10 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Plus, Trash2 } from "lucide-react";
 import { InvoiceData, LineItem, currencies } from "@/types/invoice";
+import { Client } from "@/types/client";
+import ClientSelector from "./ClientSelector";
+import ClientDialog from "./ClientDialog";
+import { useClients } from "@/hooks/useClients";
 
 interface InvoiceFormProps {
   invoiceData: InvoiceData;
@@ -25,6 +29,25 @@ const InvoiceForm = ({
   removeLineItem,
   updateLineItem,
 }: InvoiceFormProps) => {
+  const { clients, addClient } = useClients();
+  const [clientDialogOpen, setClientDialogOpen] = useState(false);
+  const [selectedClientId, setSelectedClientId] = useState<string>();
+
+  const handleSelectClient = (client: Client) => {
+    setSelectedClientId(client.id);
+    setInvoiceData(prev => ({
+      ...prev,
+      clientName: client.name,
+      clientEmail: client.email,
+      clientAddress: client.address,
+    }));
+  };
+
+  const handleAddClient = (clientData: any) => {
+    const newClient = addClient(clientData);
+    handleSelectClient(newClient);
+  };
+
   return (
     <div className="space-y-6">
       {/* Business Info */}
@@ -90,13 +113,22 @@ const InvoiceForm = ({
         </CardContent>
       </Card>
 
-      {/* Client Details */}
+      {/* Client Details with Selector */}
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">Client Information</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
+            <div>
+              <Label>Select Client</Label>
+              <ClientSelector
+                clients={clients}
+                selectedClientId={selectedClientId}
+                onSelectClient={handleSelectClient}
+                onAddNewClient={() => setClientDialogOpen(true)}
+              />
+            </div>
             <div>
               <Label htmlFor="client-name">Client Name</Label>
               <Input
@@ -299,6 +331,12 @@ const InvoiceForm = ({
           </div>
         </CardContent>
       </Card>
+
+      <ClientDialog
+        open={clientDialogOpen}
+        onOpenChange={setClientDialogOpen}
+        onSave={handleAddClient}
+      />
     </div>
   );
 };
