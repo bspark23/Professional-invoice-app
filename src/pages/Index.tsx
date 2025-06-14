@@ -326,7 +326,11 @@ const Index = () => {
       
       // Status badge
       pdf.setFontSize(10);
-      pdf.setTextColor(invoiceData.status === 'paid' ? 34, 197, 94 : 239, 68, 68);
+      if (invoiceData.status === 'paid') {
+        pdf.setTextColor(34, 197, 94);
+      } else {
+        pdf.setTextColor(239, 68, 68);
+      }
       pdf.text(invoiceData.status === 'paid' ? '✅ Paid' : '❌ Unpaid', 150, 50);
       
       // Bill to section
