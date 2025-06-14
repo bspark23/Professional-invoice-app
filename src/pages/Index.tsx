@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,7 @@ const Index = () => {
     addLineItem,
     removeLineItem,
     updateLineItem,
+    generateInvoiceNumber
   } = useInvoiceData();
 
   // Toggle dark mode
@@ -209,11 +211,17 @@ const Index = () => {
         <DashboardWelcome 
           businessName={invoiceData.businessName} 
           onCreateNew={() => {
-            // Reset form for new invoice
+            const newLineItem = {
+              id: Date.now().toString(),
+              description: '',
+              quantity: 1,
+              rate: 0,
+              amount: 0
+            };
             setInvoiceData(prev => ({
               ...prev,
-              invoiceNumber: `INV-${String(savedInvoices.length + 1).padStart(3, '0')}`,
-              lineItems: [{ description: '', quantity: 1, rate: 0 }]
+              invoiceNumber: generateInvoiceNumber(),
+              lineItems: [newLineItem]
             }));
           }}
         />

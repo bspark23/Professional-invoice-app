@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useNavigate, useLocation, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import LanguageSelector from "./pages/LanguageSelector";
 import Welcome from "./pages/Welcome";
 import Index from "./pages/Index";
@@ -20,45 +20,52 @@ const AppContent = () => {
   const location = useLocation();
 
   useEffect(() => {
-    // Always check localStorage on mount and route changes
-    const hasVisited = localStorage.getItem('invoicecraft-has-visited') === 'true';
-    console.log('Checking localStorage - hasVisited:', hasVisited, 'path:', location.pathname);
+    console.log('App initializing - checking localStorage...');
+    const hasVisited = localStorage.getItem('invoicecraft-has-visited');
+    console.log('localStorage value:', hasVisited);
     
-    if (!hasVisited) {
-      // Force landing page to show if user hasn't visited
+    // Force landing page if never visited before
+    if (hasVisited !== 'true') {
+      console.log('User has not visited - showing landing page');
       setShowLandingPage(true);
     } else {
+      console.log('User has visited before - allowing app access');
       setShowLandingPage(false);
     }
+    
     setIsInitialized(true);
-  }, [location.pathname]);
+  }, []);
 
   const handleGetStarted = () => {
-    console.log('Get Started clicked - setting localStorage and hiding landing page');
+    console.log('Get Started clicked - setting localStorage and navigating');
     localStorage.setItem('invoicecraft-has-visited', 'true');
     setShowLandingPage(false);
-    // Navigate to language selector after landing page
     navigate('/');
   };
 
-  // Don't render anything until we've checked localStorage
+  // Show loading while checking localStorage
   if (!isInitialized) {
-    return <div className="min-h-screen bg-gray-50 dark:bg-gray-900"></div>;
+    console.log('App initializing...');
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-lg text-gray-600">Loading...</div>
+      </div>
+    );
   }
 
-  // FORCE landing page to show if user hasn't visited, regardless of current route
+  // ALWAYS show landing page if user hasn't visited
   if (showLandingPage) {
-    console.log('Rendering landing page');
+    console.log('Showing landing page');
     return <AppLandingPage onGetStarted={handleGetStarted} />;
   }
 
-  console.log('Rendering app routes');
+  // Only show app routes if user has completed landing
+  console.log('Showing app routes');
   return (
     <Routes>
       <Route path="/" element={<LanguageSelector />} />
       <Route path="/welcome" element={<Welcome />} />
       <Route path="/dashboard" element={<Index />} />
-      {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

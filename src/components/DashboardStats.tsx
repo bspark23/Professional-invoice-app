@@ -19,22 +19,34 @@ const DashboardStats = ({ savedInvoices, formatCurrency }: DashboardStatsProps) 
     return sum + subtotal + tax;
   }, 0);
 
+  // Get current year and month for context
+  const currentDate = new Date();
+  const currentYear = currentDate.getFullYear();
+  const currentMonth = currentDate.toLocaleDateString('en-US', { month: 'long' });
+  const currentTime = currentDate.toLocaleTimeString('en-US', { 
+    hour: '2-digit', 
+    minute: '2-digit',
+    hour12: true 
+  });
+
   const stats = [
     {
       title: "Total Revenue",
       value: formatCurrency(totalAmount),
-      change: "+12.5%",
+      change: `${currentMonth} ${currentYear}`,
       changeType: "positive" as const,
       icon: <DollarSign className="w-5 h-5" />,
-      bgColor: "bg-gradient-to-r from-green-500 to-emerald-600"
+      bgColor: "bg-gradient-to-r from-green-500 to-emerald-600",
+      subtitle: `Last updated: ${currentTime}`
     },
     {
       title: "Total Invoices",
       value: totalInvoices.toString(),
-      change: "+3 this month",
+      change: `${currentMonth} ${currentYear}`,
       changeType: "positive" as const,
       icon: <FileText className="w-5 h-5" />,
-      bgColor: "bg-gradient-to-r from-blue-500 to-blue-600"
+      bgColor: "bg-gradient-to-r from-blue-500 to-blue-600",
+      subtitle: `As of ${currentTime}`
     },
     {
       title: "Paid Invoices",
@@ -42,15 +54,17 @@ const DashboardStats = ({ savedInvoices, formatCurrency }: DashboardStatsProps) 
       change: `${Math.round((paidInvoices / Math.max(totalInvoices, 1)) * 100)}% rate`,
       changeType: "neutral" as const,
       icon: <CheckCircle className="w-5 h-5" />,
-      bgColor: "bg-gradient-to-r from-purple-500 to-purple-600"
+      bgColor: "bg-gradient-to-r from-purple-500 to-purple-600",
+      subtitle: `Success rate this ${currentMonth.toLowerCase()}`
     },
     {
       title: "Pending",
       value: pendingInvoices.toString(),
-      change: "Needs attention",
+      change: pendingInvoices > 0 ? "Needs attention" : "All clear",
       changeType: pendingInvoices > 0 ? "negative" : "positive" as const,
       icon: <Clock className="w-5 h-5" />,
-      bgColor: "bg-gradient-to-r from-orange-500 to-orange-600"
+      bgColor: "bg-gradient-to-r from-orange-500 to-orange-600",
+      subtitle: `Updated ${currentTime}`
     }
   ];
 
@@ -74,8 +88,11 @@ const DashboardStats = ({ savedInvoices, formatCurrency }: DashboardStatsProps) 
               <p className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
                 {stat.value}
               </p>
-              <p className="text-sm text-gray-600 dark:text-gray-300">
+              <p className="text-sm text-gray-600 dark:text-gray-300 mb-1">
                 {stat.title}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {stat.subtitle}
               </p>
             </div>
           </CardContent>
