@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ interface LandingPageProps {
   total: string;
   status: 'paid' | 'unpaid';
   currency: string;
+  onGetStarted: () => void;
 }
 
 const LandingPage = ({ 
@@ -36,7 +38,8 @@ const LandingPage = ({
   clientName, 
   total, 
   status,
-  currency 
+  currency,
+  onGetStarted
 }: LandingPageProps) => {
   const features = [
     {
@@ -149,7 +152,11 @@ const LandingPage = ({
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 text-lg rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300">
+              <Button 
+                size="lg" 
+                onClick={onGetStarted}
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 text-lg rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
+              >
                 Start Creating Invoices
                 <ChevronRight className="w-5 h-5 ml-2" />
               </Button>
@@ -387,7 +394,11 @@ const LandingPage = ({
           <p className="text-xl text-gray-600 dark:text-gray-300 mb-8">
             Join thousands of professionals who trust our platform for their invoicing needs
           </p>
-          <Button size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-12 py-6 text-xl rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300">
+          <Button 
+            size="lg" 
+            onClick={onGetStarted}
+            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-12 py-6 text-xl rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
+          >
             Get Started Now - It's Free!
             <Sparkles className="w-6 h-6 ml-3" />
           </Button>

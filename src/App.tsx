@@ -9,7 +9,7 @@ import LanguageSelector from "./pages/LanguageSelector";
 import Welcome from "./pages/Welcome";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
-import AppLandingPage from "@/components/AppLandingPage";
+import LandingPage from "@/components/LandingPage";
 
 const queryClient = new QueryClient();
 
@@ -23,8 +23,9 @@ const AppContent = () => {
     console.log('App initializing - checking localStorage...');
     const hasVisited = localStorage.getItem('invoicecraft-has-visited');
     console.log('localStorage value:', hasVisited);
+    console.log('Current location:', location.pathname);
     
-    // Force landing page if never visited before
+    // Always show landing page if user hasn't visited, regardless of URL
     if (hasVisited !== 'true') {
       console.log('User has not visited - showing landing page');
       setShowLandingPage(true);
@@ -34,7 +35,7 @@ const AppContent = () => {
     }
     
     setIsInitialized(true);
-  }, []);
+  }, [location]);
 
   const handleGetStarted = () => {
     console.log('Get Started clicked - setting localStorage and navigating');
@@ -53,10 +54,20 @@ const AppContent = () => {
     );
   }
 
-  // ALWAYS show landing page if user hasn't visited
+  // ALWAYS show landing page if user hasn't visited - override any route
   if (showLandingPage) {
-    console.log('Showing landing page');
-    return <AppLandingPage onGetStarted={handleGetStarted} />;
+    console.log('Showing custom landing page');
+    return (
+      <LandingPage
+        businessName="InvoiceCraft Pro"
+        invoiceNumber="INV-001"
+        clientName="Acme Corporation"
+        total="$2,500.00"
+        status="paid"
+        currency="USD"
+        onGetStarted={handleGetStarted}
+      />
+    );
   }
 
   // Only show app routes if user has completed landing

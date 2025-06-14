@@ -9,6 +9,7 @@ interface DashboardStatsProps {
 }
 
 const DashboardStats = ({ savedInvoices, formatCurrency }: DashboardStatsProps) => {
+  // User-specific calculations - these will be 0 for new users
   const totalInvoices = savedInvoices.length;
   const paidInvoices = savedInvoices.filter(inv => inv.status === 'paid').length;
   const pendingInvoices = savedInvoices.filter(inv => inv.status === 'pending').length;
@@ -33,38 +34,38 @@ const DashboardStats = ({ savedInvoices, formatCurrency }: DashboardStatsProps) 
     {
       title: "Total Revenue",
       value: formatCurrency(totalAmount),
-      change: `${currentMonth} ${currentYear}`,
-      changeType: "positive" as const,
+      change: totalInvoices > 0 ? `${currentMonth} ${currentYear}` : "Start creating invoices",
+      changeType: totalInvoices > 0 ? "positive" as const : "neutral" as const,
       icon: <DollarSign className="w-5 h-5" />,
       bgColor: "bg-gradient-to-r from-green-500 to-emerald-600",
-      subtitle: `Last updated: ${currentTime}`
+      subtitle: totalInvoices > 0 ? `Last updated: ${currentTime}` : "Your revenue will appear here"
     },
     {
       title: "Total Invoices",
       value: totalInvoices.toString(),
-      change: `${currentMonth} ${currentYear}`,
-      changeType: "positive" as const,
+      change: totalInvoices > 0 ? `${currentMonth} ${currentYear}` : "Get started",
+      changeType: totalInvoices > 0 ? "positive" as const : "neutral" as const,
       icon: <FileText className="w-5 h-5" />,
       bgColor: "bg-gradient-to-r from-blue-500 to-blue-600",
-      subtitle: `As of ${currentTime}`
+      subtitle: totalInvoices > 0 ? `As of ${currentTime}` : "Create your first invoice"
     },
     {
       title: "Paid Invoices",
       value: paidInvoices.toString(),
-      change: `${Math.round((paidInvoices / Math.max(totalInvoices, 1)) * 100)}% rate`,
-      changeType: "neutral" as const,
+      change: totalInvoices > 0 ? `${Math.round((paidInvoices / Math.max(totalInvoices, 1)) * 100)}% rate` : "No invoices yet",
+      changeType: totalInvoices > 0 ? "neutral" as const : "neutral" as const,
       icon: <CheckCircle className="w-5 h-5" />,
       bgColor: "bg-gradient-to-r from-purple-500 to-purple-600",
-      subtitle: `Success rate this ${currentMonth.toLowerCase()}`
+      subtitle: totalInvoices > 0 ? `Success rate this ${currentMonth.toLowerCase()}` : "Track payment status"
     },
     {
       title: "Pending",
       value: pendingInvoices.toString(),
-      change: pendingInvoices > 0 ? "Needs attention" : "All clear",
-      changeType: pendingInvoices > 0 ? "negative" : "positive" as const,
+      change: totalInvoices > 0 ? (pendingInvoices > 0 ? "Needs attention" : "All clear") : "No pending invoices",
+      changeType: totalInvoices > 0 ? (pendingInvoices > 0 ? "negative" : "positive") as const : "neutral" as const,
       icon: <Clock className="w-5 h-5" />,
       bgColor: "bg-gradient-to-r from-orange-500 to-orange-600",
-      subtitle: `Updated ${currentTime}`
+      subtitle: totalInvoices > 0 ? `Updated ${currentTime}` : "Pending invoices appear here"
     }
   ];
 
