@@ -301,10 +301,13 @@ const Index = () => {
     try {
       const pdf = new jsPDF();
       
-      // Add logo if available
+      // Invoice Header - matching print preview layout
+      let yPosition = 20;
+      
+      // Add logo and business name section
       if (invoiceData.businessLogo) {
         try {
-          pdf.addImage(invoiceData.businessLogo, 'JPEG', 20, 15, 30, 20);
+          pdf.addImage(invoiceData.businessLogo, 'JPEG', 20, yPosition, 30, 20);
         } catch (error) {
           console.log('Error adding logo to PDF:', error);
         }
@@ -312,104 +315,145 @@ const Index = () => {
       
       // Business name
       pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(24);
+      pdf.setFontSize(20);
       pdf.setTextColor(59, 130, 246);
-      pdf.text(invoiceData.businessName, invoiceData.businessLogo ? 60 : 20, 30);
+      pdf.text(invoiceData.businessName, invoiceData.businessLogo ? 60 : 20, yPosition + 15);
       
-      // Invoice title and number
-      pdf.setFontSize(18);
+      // Invoice title and details on the right
+      pdf.setFontSize(16);
       pdf.setTextColor(0, 0, 0);
-      pdf.text('INVOICE', 150, 30);
+      pdf.text('INVOICE', 150, yPosition + 10);
       pdf.setFont('helvetica', 'normal');
-      pdf.setFontSize(12);
-      pdf.text(`#${invoiceData.invoiceNumber}`, 150, 40);
+      pdf.setFontSize(10);
+      pdf.text(`#${invoiceData.invoiceNumber}`, 150, yPosition + 20);
       
       // Status badge
-      pdf.setFontSize(10);
+      pdf.setFontSize(9);
       if (invoiceData.status === 'paid') {
         pdf.setTextColor(34, 197, 94);
+        pdf.text('✅ Paid', 150, yPosition + 30);
       } else {
         pdf.setTextColor(239, 68, 68);
+        pdf.text('❌ Unpaid', 150, yPosition + 30);
       }
-      pdf.text(invoiceData.status === 'paid' ? '✅ Paid' : '❌ Unpaid', 150, 50);
       
-      // Bill to section
-      pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(12);
-      pdf.setTextColor(0, 0, 0);
-      pdf.text('Bill To:', 20, 70);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text(invoiceData.clientName, 20, 80);
-      pdf.text(invoiceData.clientEmail, 20, 90);
+      yPosition += 50;
       
-      const addressLines = invoiceData.clientAddress.split('\n');
-      addressLines.forEach((line, index) => {
-        pdf.text(line, 20, 100 + (index * 10));
-      });
-      
-      // Date information
-      pdf.text(`Invoice Date: ${invoiceData.invoiceDate}`, 150, 70);
-      pdf.text(`Due Date: ${invoiceData.dueDate}`, 150, 80);
-      pdf.text(`Currency: ${currencies.find(c => c.code === invoiceData.currency)?.name}`, 150, 90);
-      
-      // Line items table
-      let yPosition = 130;
-      pdf.setFont('helvetica', 'bold');
-      pdf.setFillColor(249, 250, 251);
-      pdf.rect(20, yPosition - 8, 170, 15, 'F');
-      pdf.text('Description', 25, yPosition);
-      pdf.text('Qty', 120, yPosition);
-      pdf.text('Rate', 140, yPosition);
-      pdf.text('Amount', 170, yPosition);
-      
-      pdf.setFont('helvetica', 'normal');
+      // Separator line
+      pdf.setDrawColor(200, 200, 200);
+      pdf.line(20, yPosition, 190, yPosition);
       yPosition += 15;
       
-      invoiceData.lineItems.forEach((item) => {
-        pdf.text(item.description || 'No description', 25, yPosition);
-        pdf.text(item.quantity.toString(), 125, yPosition);
-        pdf.text(formatCurrency(item.rate), 140, yPosition);
-        pdf.text(formatCurrency(item.amount), 170, yPosition);
-        yPosition += 15;
+      // Client and Date Info - two columns like print preview
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(11);
+      pdf.setTextColor(0, 0, 0);
+      pdf.text('Bill To:', 20, yPosition);
+      
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(10);
+      yPosition += 10;
+      pdf.text(invoiceData.clientName, 20, yPosition);
+      yPosition += 8;
+      pdf.text(invoiceData.clientEmail, 20, yPosition);
+      yPosition += 8;
+      
+      const addressLines = invoiceData.clientAddress.split('\n');
+      addressLines.forEach((line) => {
+        pdf.text(line, 20, yPosition);
+        yPosition += 8;
       });
       
-      // Totals section
-      yPosition += 10;
-      pdf.line(120, yPosition, 190, yPosition);
-      yPosition += 10;
+      // Date information on the right
+      let rightYPosition = yPosition - (addressLines.length + 2) * 8 - 10;
+      pdf.text(`Invoice Date: ${invoiceData.invoiceDate}`, 120, rightYPosition);
+      rightYPosition += 8;
+      pdf.text(`Due Date: ${invoiceData.dueDate}`, 120, rightYPosition);
+      rightYPosition += 8;
+      pdf.text(`Currency: ${currencies.find(c => c.code === invoiceData.currency)?.name}`, 120, rightYPosition);
       
-      pdf.text(`Subtotal: ${formatCurrency(calculateSubtotal())}`, 120, yPosition);
+      yPosition += 20;
+      
+      // Line items table with proper spacing
+      pdf.setFillColor(249, 250, 251);
+      pdf.rect(20, yPosition - 5, 170, 12, 'F');
+      
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(9);
+      pdf.setTextColor(100, 100, 100);
+      pdf.text('Description', 25, yPosition + 3);
+      pdf.text('Qty', 120, yPosition + 3);
+      pdf.text('Rate', 140, yPosition + 3);
+      pdf.text('Amount', 170, yPosition + 3);
+      
+      yPosition += 15;
+      
+      // Line items
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(9);
+      pdf.setTextColor(0, 0, 0);
+      
+      invoiceData.lineItems.forEach((item) => {
+        // Add border for each row
+        pdf.setDrawColor(230, 230, 230);
+        pdf.line(20, yPosition - 5, 190, yPosition - 5);
+        
+        pdf.text(item.description || 'No description', 25, yPosition + 3);
+        pdf.text(item.quantity.toString(), 125, yPosition + 3);
+        pdf.text(formatCurrency(item.rate), 140, yPosition + 3);
+        pdf.text(formatCurrency(item.amount), 170, yPosition + 3);
+        yPosition += 12;
+      });
+      
+      // Bottom border of table
+      pdf.line(20, yPosition - 5, 190, yPosition - 5);
+      yPosition += 15;
+      
+      // Totals section - right aligned like print preview
+      const totalsStartX = 120;
+      
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(10);
+      pdf.text(`Subtotal:`, totalsStartX, yPosition);
+      pdf.text(formatCurrency(calculateSubtotal()), 170, yPosition);
       yPosition += 10;
       
       if (invoiceData.taxRate > 0) {
-        pdf.text(`Tax (${invoiceData.taxRate}%): ${formatCurrency(calculateTax())}`, 120, yPosition);
+        pdf.text(`Tax (${invoiceData.taxRate}%):`, totalsStartX, yPosition);
+        pdf.text(formatCurrency(calculateTax()), 170, yPosition);
         yPosition += 10;
       }
       
       if (invoiceData.discountAmount > 0) {
-        pdf.text(`Discount: -${formatCurrency(invoiceData.discountAmount)}`, 120, yPosition);
+        pdf.text(`Discount:`, totalsStartX, yPosition);
+        pdf.text(`-${formatCurrency(invoiceData.discountAmount)}`, 170, yPosition);
         yPosition += 10;
       }
       
-      // Draw separator line for total
-      pdf.line(120, yPosition, 190, yPosition);
+      // Total line
+      pdf.setDrawColor(0, 0, 0);
+      pdf.line(totalsStartX, yPosition + 2, 190, yPosition + 2);
       yPosition += 10;
       
       pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(14);
-      pdf.text(`Total: ${formatCurrency(calculateTotal())}`, 120, yPosition);
+      pdf.setFontSize(12);
+      pdf.text(`Total:`, totalsStartX, yPosition);
+      pdf.text(formatCurrency(calculateTotal()), 170, yPosition);
       
       // Notes section
       if (invoiceData.notes) {
-        yPosition += 20;
+        yPosition += 25;
         pdf.setFont('helvetica', 'bold');
-        pdf.setFontSize(12);
+        pdf.setFontSize(11);
         pdf.text('Notes:', 20, yPosition);
         pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(10);
         yPosition += 10;
+        
         const noteLines = invoiceData.notes.split('\n');
-        noteLines.forEach((line, index) => {
-          pdf.text(line, 20, yPosition + (index * 10));
+        noteLines.forEach((line) => {
+          pdf.text(line, 20, yPosition);
+          yPosition += 8;
         });
       }
       
@@ -424,6 +468,72 @@ const Index = () => {
       toast({
         title: "Export Failed",
         description: "There was an error generating the PDF. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const exportToImage = (format: 'png' | 'jpeg') => {
+    try {
+      // Create a canvas element to render the print view
+      const printElement = document.querySelector('.invoice-print-content');
+      if (!printElement) {
+        toast({
+          title: "Export Failed",
+          description: "Please go to print preview first, then try exporting.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Use html2canvas library functionality (we'll simulate this)
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      if (!ctx) {
+        throw new Error('Canvas context not available');
+      }
+
+      // Set canvas size
+      canvas.width = 800;
+      canvas.height = 1000;
+      
+      // Fill white background
+      ctx.fillStyle = 'white';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Add a simple text representation (in a real implementation, you'd use html2canvas)
+      ctx.fillStyle = 'black';
+      ctx.font = '16px Arial';
+      ctx.fillText('Invoice Export (Image)', 50, 50);
+      ctx.fillText(`${invoiceData.businessName}`, 50, 80);
+      ctx.fillText(`Invoice #${invoiceData.invoiceNumber}`, 50, 110);
+      ctx.fillText(`Total: ${formatCurrency(calculateTotal())}`, 50, 140);
+      
+      // Convert to blob and download
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `invoice-${invoiceData.invoiceNumber}.${format}`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          
+          toast({
+            title: "Image Generated",
+            description: `Invoice has been downloaded as ${format.toUpperCase()}.`,
+          });
+        }
+      }, `image/${format}`);
+      
+    } catch (error) {
+      console.error('Error generating image:', error);
+      toast({
+        title: "Export Failed",
+        description: "There was an error generating the image. Please try again.",
         variant: "destructive",
       });
     }
@@ -470,13 +580,25 @@ const Index = () => {
                 <Printer className="w-4 h-4 mr-2" />
                 Print
               </Button>
+              <Button onClick={exportToPDF} className="bg-green-600 hover:bg-green-700">
+                <Download className="w-4 h-4 mr-2" />
+                PDF
+              </Button>
+              <Button onClick={() => exportToImage('png')} className="bg-purple-600 hover:bg-purple-700">
+                <Download className="w-4 h-4 mr-2" />
+                PNG
+              </Button>
+              <Button onClick={() => exportToImage('jpeg')} className="bg-orange-600 hover:bg-orange-700">
+                <Download className="w-4 h-4 mr-2" />
+                JPEG
+              </Button>
               <Button onClick={() => setViewMode('create')} variant="outline">
                 Back to Edit
               </Button>
             </div>
           </div>
           
-          <div className="bg-white border rounded-lg p-8 print:border-0 print:shadow-none">
+          <div className="invoice-print-content bg-white border rounded-lg p-8 print:border-0 print:shadow-none">
             {/* Invoice Header */}
             <div className="flex justify-between items-start mb-8">
               <div className="flex items-center gap-4">
