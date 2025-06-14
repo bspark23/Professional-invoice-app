@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,6 +16,7 @@ import DashboardWelcome from "@/components/DashboardWelcome";
 import { useInvoiceData } from "@/hooks/useInvoiceData";
 import { formatCurrency, calculateSubtotal, calculateTax, calculateTotal } from "@/utils/invoiceUtils";
 import { exportToPDF, exportToImage } from "@/utils/exportUtils";
+import StudyAssistant from "@/components/StudyAssistant";
 
 const Index = () => {
   const { toast } = useToast();
@@ -254,6 +254,11 @@ const Index = () => {
               calculateTotal={getCalculateTotal}
             />
           </div>
+        </div>
+
+        {/* Study Assistant Section */}
+        <div>
+          <StudyAssistant />
         </div>
       </div>
     </div>
