@@ -522,8 +522,8 @@ const PrintView = ({
           </div>
         </div>
         
-        {/* Landing Page Section */}
-        <div className="mb-16 print:mb-8">
+        {/* Beautiful Landing Page Section */}
+        <div className="mb-16 print:mb-8 print:page-break-after-always">
           <LandingPage 
             businessName={invoiceData.businessName}
             businessLogo={invoiceData.businessLogo}
@@ -535,6 +535,7 @@ const PrintView = ({
           />
         </div>
         
+        {/* Invoice Content */}
         <div className="invoice-print-content bg-white border rounded-lg p-8 print:border-0 print:shadow-none print:bg-white">
           {/* Invoice Header */}
           <div className="flex justify-between items-start mb-8">
@@ -980,21 +981,24 @@ const Index = () => {
 
   const exportToPDF = () => {
     try {
-      const pdf = new jsPDF();
+      const pdf = new jsPDF('p', 'mm', 'a4');
       
-      // Set consistent colors for PDF (always dark text on white background)
+      // Set consistent colors for PDF
       const primaryColor = [0, 0, 0]; // Black text
       const blueColor = [59, 130, 246]; // Blue for business name
       const greenColor = [34, 197, 94]; // Green for paid status
       const redColor = [239, 68, 68]; // Red for unpaid status
       
-      // Invoice Header - matching print preview layout
       let yPosition = 20;
       
       // Add logo and business name section
       if (invoiceData.businessLogo) {
         try {
-          pdf.addImage(invoiceData.businessLogo, 'JPEG', 20, yPosition, 30, 20);
+          // Convert base64 to proper format for jsPDF
+          let logoData = invoiceData.businessLogo;
+          if (logoData.startsWith('data:image/')) {
+            pdf.addImage(logoData, 'JPEG', 20, yPosition, 30, 20);
+          }
         } catch (error) {
           console.log('Error adding logo to PDF:', error);
         }
@@ -1031,7 +1035,7 @@ const Index = () => {
       pdf.line(20, yPosition, 190, yPosition);
       yPosition += 15;
       
-      // Client and Date Info - two columns like print preview
+      // Client and Date Info
       pdf.setFont('helvetica', 'bold');
       pdf.setFontSize(11);
       pdf.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
@@ -1061,7 +1065,7 @@ const Index = () => {
       
       yPosition += 20;
       
-      // Line items table with proper spacing and borders
+      // Line items table with borders
       pdf.setFillColor(249, 250, 251);
       pdf.rect(20, yPosition - 5, 170, 12, 'F');
       
@@ -1100,7 +1104,7 @@ const Index = () => {
       
       yPosition += 15;
       
-      // Totals section - right aligned like print preview
+      // Totals section
       const totalsStartX = 120;
       
       pdf.setFont('helvetica', 'normal');
@@ -1166,7 +1170,6 @@ const Index = () => {
 
   const exportToImage = (format: 'png' | 'jpeg') => {
     try {
-      // Create a canvas element to render the invoice
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       
@@ -1182,134 +1185,155 @@ const Index = () => {
       ctx.fillStyle = 'white';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       
-      // Set up text styling
-      ctx.fillStyle = 'black';
-      ctx.font = 'bold 24px Arial';
+      let yPosition = 50;
       
-      // Business name
-      ctx.fillStyle = '#3b82f6';
-      ctx.fillText(invoiceData.businessName, 50, 60);
+      // Add logo if present
+      if (invoiceData.businessLogo) {
+        const img = new Image();
+        img.onload = () => {
+          ctx.drawImage(img, 50, yPosition, 60, 40);
+          continueImageGeneration();
+        };
+        img.onerror = () => {
+          console.log('Error loading logo for image export');
+          continueImageGeneration();
+        };
+        img.src = invoiceData.businessLogo;
+      } else {
+        continueImageGeneration();
+      }
       
-      // Invoice title
-      ctx.fillStyle = 'black';
-      ctx.font = '18px Arial';
-      ctx.fillText('INVOICE', 650, 50);
-      
-      ctx.font = '14px Arial';
-      ctx.fillText(`#${invoiceData.invoiceNumber}`, 650, 75);
-      
-      // Status
-      ctx.fillStyle = invoiceData.status === 'paid' ? '#22c55e' : '#ef4444';
-      ctx.fillText(invoiceData.status === 'paid' ? '✅ Paid' : '❌ Unpaid', 650, 100);
-      
-      // Bill To section
-      ctx.fillStyle = 'black';
-      ctx.font = 'bold 14px Arial';
-      ctx.fillText('Bill To:', 50, 150);
-      
-      ctx.font = '12px Arial';
-      ctx.fillText(invoiceData.clientName, 50, 175);
-      ctx.fillText(invoiceData.clientEmail, 50, 195);
-      
-      const addressLines = invoiceData.clientAddress.split('\n');
-      addressLines.forEach((line, index) => {
-        ctx.fillText(line, 50, 215 + (index * 20));
-      });
-      
-      // Date information
-      const dateY = 150;
-      ctx.fillText(`Invoice Date: ${invoiceData.invoiceDate}`, 500, dateY);
-      ctx.fillText(`Due Date: ${invoiceData.dueDate}`, 500, dateY + 20);
-      ctx.fillText(`Currency: ${currencies.find(c => c.code === invoiceData.currency)?.name}`, 500, dateY + 40);
-      
-      // Line items table header with borders
-      let tableY = 300;
-      ctx.fillStyle = '#f9fafb';
-      ctx.fillRect(50, tableY - 10, 700, 30);
-      
-      // Draw table borders
-      ctx.strokeStyle = '#6b7280';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(50, tableY - 10, 700, 30); // Header border
-      
-      ctx.fillStyle = 'black';
-      ctx.font = 'bold 12px Arial';
-      ctx.fillText('Description', 60, tableY + 10);
-      ctx.fillText('Qty', 450, tableY + 10);
-      ctx.fillText('Rate', 550, tableY + 10);
-      ctx.fillText('Amount', 650, tableY + 10);
-      
-      // Line items with borders
-      ctx.font = '11px Arial';
-      tableY += 40;
-      
-      invoiceData.lineItems.forEach((item, index) => {
-        const y = tableY + (index * 25);
+      function continueImageGeneration() {
+        // Business name
+        ctx.fillStyle = '#3b82f6';
+        ctx.font = 'bold 24px Arial';
+        ctx.fillText(invoiceData.businessName, invoiceData.businessLogo ? 120 : 50, yPosition + 25);
         
-        // Draw row borders
-        ctx.strokeStyle = '#d1d5db';
-        ctx.lineWidth = 0.5;
-        ctx.strokeRect(50, y - 10, 700, 25);
+        // Invoice title
+        ctx.fillStyle = 'black';
+        ctx.font = '18px Arial';
+        ctx.fillText('INVOICE', 650, yPosition + 15);
+        
+        ctx.font = '14px Arial';
+        ctx.fillText(`#${invoiceData.invoiceNumber}`, 650, yPosition + 35);
+        
+        // Status
+        ctx.fillStyle = invoiceData.status === 'paid' ? '#22c55e' : '#ef4444';
+        ctx.fillText(invoiceData.status === 'paid' ? '✅ Paid' : '❌ Unpaid', 650, yPosition + 55);
+        
+        yPosition += 100;
+        
+        // Bill To section
+        ctx.fillStyle = 'black';
+        ctx.font = 'bold 14px Arial';
+        ctx.fillText('Bill To:', 50, yPosition);
+        
+        ctx.font = '12px Arial';
+        ctx.fillText(invoiceData.clientName, 50, yPosition + 25);
+        ctx.fillText(invoiceData.clientEmail, 50, yPosition + 45);
+        
+        const addressLines = invoiceData.clientAddress.split('\n');
+        addressLines.forEach((line, index) => {
+          ctx.fillText(line, 50, yPosition + 65 + (index * 20));
+        });
+        
+        // Date information
+        const dateY = yPosition;
+        ctx.fillText(`Invoice Date: ${invoiceData.invoiceDate}`, 500, dateY);
+        ctx.fillText(`Due Date: ${invoiceData.dueDate}`, 500, dateY + 20);
+        ctx.fillText(`Currency: ${currencies.find(c => c.code === invoiceData.currency)?.name}`, 500, dateY + 40);
+        
+        // Line items table
+        let tableY = yPosition + 120;
+        
+        // Table header with background and borders
+        ctx.fillStyle = '#f9fafb';
+        ctx.fillRect(50, tableY - 10, 700, 30);
+        
+        // Draw table borders
+        ctx.strokeStyle = '#6b7280';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(50, tableY - 10, 700, 30);
         
         ctx.fillStyle = 'black';
-        ctx.fillText(item.description || 'No description', 60, y);
-        ctx.fillText(item.quantity.toString(), 465, y);
-        ctx.fillText(formatCurrency(item.rate), 550, y);
-        ctx.fillText(formatCurrency(item.amount), 650, y);
-      });
-      
-      // Totals section
-      const totalsY = tableY + (invoiceData.lineItems.length * 25) + 40;
-      ctx.font = '12px Arial';
-      
-      let currentY = totalsY;
-      ctx.fillText(`Subtotal: ${formatCurrency(calculateSubtotal())}`, 500, currentY);
-      currentY += 20;
-      
-      if (invoiceData.taxRate > 0) {
-        ctx.fillText(`Tax (${invoiceData.taxRate}%): ${formatCurrency(calculateTax())}`, 500, currentY);
-        currentY += 20;
-      }
-      
-      if (invoiceData.discountAmount > 0) {
-        ctx.fillText(`Discount: -${formatCurrency(invoiceData.discountAmount)}`, 500, currentY);
-        currentY += 20;
-      }
-      
-      // Total
-      ctx.font = 'bold 14px Arial';
-      ctx.fillText(`Total: ${formatCurrency(calculateTotal())}`, 500, currentY + 20);
-      
-      // Notes
-      if (invoiceData.notes) {
         ctx.font = 'bold 12px Arial';
-        ctx.fillText('Notes:', 50, currentY + 60);
-        ctx.font = '11px Arial';
+        ctx.fillText('Description', 60, tableY + 10);
+        ctx.fillText('Qty', 450, tableY + 10);
+        ctx.fillText('Rate', 550, tableY + 10);
+        ctx.fillText('Amount', 650, tableY + 10);
         
-        const noteLines = invoiceData.notes.split('\n');
-        noteLines.forEach((line, index) => {
-          ctx.fillText(line, 50, currentY + 85 + (index * 20));
-        });
-      }
-      
-      // Convert to blob and download
-      canvas.toBlob((blob) => {
-        if (blob) {
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `invoice-${invoiceData.invoiceNumber}.${format}`;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
+        // Line items with borders
+        ctx.font = '11px Arial';
+        tableY += 40;
+        
+        invoiceData.lineItems.forEach((item, index) => {
+          const y = tableY + (index * 25);
           
-          toast({
-            title: "Image Generated",
-            description: `Invoice has been downloaded as ${format.toUpperCase()}.`,
+          // Draw row borders
+          ctx.strokeStyle = '#d1d5db';
+          ctx.lineWidth = 0.5;
+          ctx.strokeRect(50, y - 10, 700, 25);
+          
+          ctx.fillStyle = 'black';
+          ctx.fillText(item.description || 'No description', 60, y);
+          ctx.fillText(item.quantity.toString(), 465, y);
+          ctx.fillText(formatCurrency(item.rate), 550, y);
+          ctx.fillText(formatCurrency(item.amount), 650, y);
+        });
+        
+        // Totals section
+        const totalsY = tableY + (invoiceData.lineItems.length * 25) + 40;
+        ctx.font = '12px Arial';
+        
+        let currentY = totalsY;
+        ctx.fillText(`Subtotal: ${formatCurrency(calculateSubtotal())}`, 500, currentY);
+        currentY += 20;
+        
+        if (invoiceData.taxRate > 0) {
+          ctx.fillText(`Tax (${invoiceData.taxRate}%): ${formatCurrency(calculateTax())}`, 500, currentY);
+          currentY += 20;
+        }
+        
+        if (invoiceData.discountAmount > 0) {
+          ctx.fillText(`Discount: -${formatCurrency(invoiceData.discountAmount)}`, 500, currentY);
+          currentY += 20;
+        }
+        
+        // Total
+        ctx.font = 'bold 14px Arial';
+        ctx.fillText(`Total: ${formatCurrency(calculateTotal())}`, 500, currentY + 20);
+        
+        // Notes
+        if (invoiceData.notes) {
+          ctx.font = 'bold 12px Arial';
+          ctx.fillText('Notes:', 50, currentY + 60);
+          ctx.font = '11px Arial';
+          
+          const noteLines = invoiceData.notes.split('\n');
+          noteLines.forEach((line, index) => {
+            ctx.fillText(line, 50, currentY + 85 + (index * 20));
           });
         }
-      }, `image/${format}`);
+        
+        // Convert to blob and download
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `invoice-${invoiceData.invoiceNumber}.${format}`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            toast({
+              title: "Image Generated",
+              description: `Invoice has been downloaded as ${format.toUpperCase()}.`,
+            });
+          }
+        }, `image/${format}`);
+      }
       
     } catch (error) {
       console.error('Error generating image:', error);
