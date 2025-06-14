@@ -6,8 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Trash2, Download, Save } from "lucide-react";
+import { Plus, Trash2, Download, Save, Eye, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import jsPDF from 'jspdf';
 
 interface LineItem {
   id: string;
@@ -18,6 +19,7 @@ interface LineItem {
 }
 
 interface InvoiceData {
+  id?: string;
   clientName: string;
   clientEmail: string;
   clientAddress: string;
@@ -28,11 +30,14 @@ interface InvoiceData {
   taxRate: number;
   discountAmount: number;
   businessName: string;
+  createdAt?: string;
 }
 
 const Index = () => {
   const { toast } = useToast();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [viewMode, setViewMode] = useState<'create' | 'list'>('create');
+  const [savedInvoices, setSavedInvoices] = useState<InvoiceData[]>([]);
   const [invoiceData, setInvoiceData] = useState<InvoiceData>({
     clientName: "",
     clientEmail: "",
@@ -58,14 +63,88 @@ const Index = () => {
         console.log('Error loading saved data:', error);
       }
     }
+
+    const savedInvoicesData = localStorage.getItem('invoicer-pro-invoices');
+    if (savedInvoicesData) {
+      try {
+        const parsed = JSON.parse(savedInvoicesData);
+        setSavedInvoices(parsed);
+      } catch (error) {
+        console.log('Error loading saved invoices:', error);
+      }
+    }
   }, []);
 
   const saveInvoiceData = () => {
     localStorage.setItem('invoicer-pro-data', JSON.stringify(invoiceData));
     toast({
-      title: "Invoice Saved",
-      description: "Your invoice data has been saved locally.",
+      title: "Invoice Data Saved",
+      description: "Your current invoice data has been saved locally.",
     });
+  };
+
+  const saveInvoice = () => {
+    const invoiceToSave = {
+      ...invoiceData,
+      id: invoiceData.id || Date.now().toString(),
+      createdAt: new Date().toISOString()
+    };
+
+    const existingInvoices = [...savedInvoices];
+    const existingIndex = existingInvoices.findIndex(inv => inv.id === invoiceToSave.id);
+    
+    if (existingIndex >= 0) {
+      existingInvoices[existingIndex] = invoiceToSave;
+    } else {
+      existingInvoices.push(invoiceToSave);
+    }
+
+    setSavedInvoices(existingInvoices);
+    localStorage.setItem('invoicer-pro-invoices', JSON.stringify(existingInvoices));
+    
+    setInvoiceData(prev => ({ ...prev, id: invoiceToSave.id }));
+    
+    toast({
+      title: "Invoice Saved",
+      description: "Your invoice has been saved and can be viewed later.",
+    });
+  };
+
+  const loadInvoice = (invoice: InvoiceData) => {
+    setInvoiceData(invoice);
+    setViewMode('create');
+    toast({
+      title: "Invoice Loaded",
+      description: "Invoice loaded successfully.",
+    });
+  };
+
+  const deleteInvoice = (invoiceId: string) => {
+    const updatedInvoices = savedInvoices.filter(inv => inv.id !== invoiceId);
+    setSavedInvoices(updatedInvoices);
+    localStorage.setItem('invoicer-pro-invoices', JSON.stringify(updatedInvoices));
+    toast({
+      title: "Invoice Deleted",
+      description: "Invoice has been deleted successfully.",
+    });
+  };
+
+  const createNewInvoice = () => {
+    setInvoiceData({
+      clientName: "",
+      clientEmail: "",
+      clientAddress: "",
+      invoiceNumber: `INV-${Date.now().toString().slice(-6)}`,
+      invoiceDate: new Date().toISOString().split('T')[0],
+      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      lineItems: [
+        { id: Date.now().toString(), description: "", quantity: 1, rate: 0, amount: 0 }
+      ],
+      taxRate: 0,
+      discountAmount: 0,
+      businessName: invoiceData.businessName
+    });
+    setViewMode('create');
   };
 
   const addLineItem = () => {
@@ -97,6 +176,7 @@ const Index = () => {
       lineItems: prev.lineItems.map(item => {
         if (item.id === id) {
           const updated = { ...item, [field]: value };
+          // Auto-calculate amount when quantity or rate changes, but allow manual amount editing
           if (field === 'quantity' || field === 'rate') {
             updated.amount = updated.quantity * updated.rate;
           }
@@ -120,10 +200,102 @@ const Index = () => {
   };
 
   const exportToPDF = () => {
-    toast({
-      title: "Export Feature",
-      description: "PDF export functionality would be implemented here with a library like jsPDF.",
-    });
+    try {
+      const pdf = new jsPDF();
+      
+      // Set up fonts and colors
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(24);
+      pdf.setTextColor(59, 130, 246); // Blue color
+      
+      // Business name
+      pdf.text(invoiceData.businessName, 20, 30);
+      
+      // Invoice title and number
+      pdf.setFontSize(18);
+      pdf.setTextColor(0, 0, 0);
+      pdf.text('INVOICE', 150, 30);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(12);
+      pdf.text(`#${invoiceData.invoiceNumber}`, 150, 40);
+      
+      // Bill to section
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(12);
+      pdf.text('Bill To:', 20, 60);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(invoiceData.clientName, 20, 70);
+      pdf.text(invoiceData.clientEmail, 20, 80);
+      
+      const addressLines = invoiceData.clientAddress.split('\n');
+      addressLines.forEach((line, index) => {
+        pdf.text(line, 20, 90 + (index * 10));
+      });
+      
+      // Dates
+      pdf.text(`Invoice Date: ${invoiceData.invoiceDate}`, 150, 70);
+      pdf.text(`Due Date: ${invoiceData.dueDate}`, 150, 80);
+      
+      // Items table header
+      let yPosition = 120;
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Description', 20, yPosition);
+      pdf.text('Qty', 120, yPosition);
+      pdf.text('Rate', 140, yPosition);
+      pdf.text('Amount', 170, yPosition);
+      
+      // Draw line under header
+      pdf.line(20, yPosition + 2, 190, yPosition + 2);
+      
+      // Items
+      pdf.setFont('helvetica', 'normal');
+      yPosition += 15;
+      
+      invoiceData.lineItems.forEach((item) => {
+        pdf.text(item.description || 'No description', 20, yPosition);
+        pdf.text(item.quantity.toString(), 120, yPosition);
+        pdf.text(`$${item.rate.toFixed(2)}`, 140, yPosition);
+        pdf.text(`$${item.amount.toFixed(2)}`, 170, yPosition);
+        yPosition += 15;
+      });
+      
+      // Totals section
+      yPosition += 10;
+      pdf.line(120, yPosition, 190, yPosition);
+      yPosition += 10;
+      
+      pdf.text(`Subtotal: $${calculateSubtotal().toFixed(2)}`, 120, yPosition);
+      yPosition += 10;
+      
+      if (invoiceData.taxRate > 0) {
+        pdf.text(`Tax (${invoiceData.taxRate}%): $${calculateTax().toFixed(2)}`, 120, yPosition);
+        yPosition += 10;
+      }
+      
+      if (invoiceData.discountAmount > 0) {
+        pdf.text(`Discount: -$${invoiceData.discountAmount.toFixed(2)}`, 120, yPosition);
+        yPosition += 10;
+      }
+      
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(14);
+      pdf.text(`Total: $${calculateTotal().toFixed(2)}`, 120, yPosition);
+      
+      // Save the PDF
+      pdf.save(`invoice-${invoiceData.invoiceNumber}.pdf`);
+      
+      toast({
+        title: "PDF Generated",
+        description: "Invoice PDF has been downloaded successfully.",
+      });
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast({
+        title: "Export Failed",
+        description: "There was an error generating the PDF. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   if (!isLoggedIn) {
@@ -156,6 +328,81 @@ const Index = () => {
     );
   }
 
+  if (viewMode === 'list') {
+    return (
+      <div className="min-h-screen bg-gray-50 p-4">
+        <div className="max-w-6xl mx-auto space-y-6">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Saved Invoices</h1>
+              <p className="text-gray-600">Manage your saved invoices</p>
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={createNewInvoice} className="bg-blue-600 hover:bg-blue-700">
+                <Plus className="w-4 h-4 mr-2" />
+                New Invoice
+              </Button>
+              <Button onClick={() => setViewMode('create')} variant="outline">
+                Back to Current
+              </Button>
+            </div>
+          </div>
+
+          {/* Invoices List */}
+          <div className="grid gap-4">
+            {savedInvoices.length === 0 ? (
+              <Card>
+                <CardContent className="p-6 text-center">
+                  <FileText className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+                  <p className="text-gray-600">No saved invoices yet. Create and save your first invoice!</p>
+                </CardContent>
+              </Card>
+            ) : (
+              savedInvoices.map((invoice) => (
+                <Card key={invoice.id} className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-4">
+                          <div>
+                            <h3 className="font-semibold">{invoice.invoiceNumber}</h3>
+                            <p className="text-sm text-gray-600">{invoice.clientName}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-500">Due: {invoice.dueDate}</p>
+                            <p className="font-medium">${calculateTotal().toFixed(2)}</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => loadInvoice(invoice)}
+                          variant="outline"
+                          size="sm"
+                        >
+                          <Eye className="w-4 h-4 mr-2" />
+                          Edit
+                        </Button>
+                        <Button
+                          onClick={() => deleteInvoice(invoice.id!)}
+                          variant="outline"
+                          size="sm"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-6xl mx-auto space-y-6">
@@ -166,9 +413,17 @@ const Index = () => {
             <p className="text-gray-600">Create professional invoices</p>
           </div>
           <div className="flex gap-2">
+            <Button onClick={() => setViewMode('list')} variant="outline">
+              <Eye className="w-4 h-4 mr-2" />
+              View Saved ({savedInvoices.length})
+            </Button>
             <Button onClick={saveInvoiceData} variant="outline">
               <Save className="w-4 h-4 mr-2" />
-              Save
+              Save Draft
+            </Button>
+            <Button onClick={saveInvoice} variant="outline" className="bg-green-50 hover:bg-green-100">
+              <FileText className="w-4 h-4 mr-2" />
+              Save Invoice
             </Button>
             <Button onClick={exportToPDF} className="bg-blue-600 hover:bg-blue-700">
               <Download className="w-4 h-4 mr-2" />
@@ -311,6 +566,7 @@ const Index = () => {
                         {index === 0 && <Label>Rate</Label>}
                         <Input
                           type="number"
+                          step="0.01"
                           placeholder="0.00"
                           value={item.rate}
                           onChange={(e) => updateLineItem(item.id, 'rate', parseFloat(e.target.value) || 0)}
@@ -320,9 +576,10 @@ const Index = () => {
                         {index === 0 && <Label>Amount</Label>}
                         <Input
                           type="number"
+                          step="0.01"
                           value={item.amount.toFixed(2)}
-                          readOnly
-                          className="bg-gray-50"
+                          onChange={(e) => updateLineItem(item.id, 'amount', parseFloat(e.target.value) || 0)}
+                          className="bg-white"
                         />
                       </div>
                       <div className="col-span-1">
