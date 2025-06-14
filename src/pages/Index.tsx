@@ -11,7 +11,8 @@ import InvoiceForm from "@/components/InvoiceForm";
 import InvoicePreview from "@/components/InvoicePreview";
 import PrintView from "@/components/PrintView";
 import InvoiceList from "@/components/InvoiceList";
-import AppLandingPage from "@/components/AppLandingPage";
+import DashboardStats from "@/components/DashboardStats";
+import DashboardWelcome from "@/components/DashboardWelcome";
 import { useInvoiceData } from "@/hooks/useInvoiceData";
 import { formatCurrency, calculateSubtotal, calculateTax, calculateTotal } from "@/utils/invoiceUtils";
 import { exportToPDF, exportToImage } from "@/utils/exportUtils";
@@ -74,25 +75,29 @@ const Index = () => {
 
   if (!isLoggedIn) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <CardTitle className="text-3xl font-bold text-blue-600 dark:text-blue-400">InvoiceCraft Pro</CardTitle>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:bg-gradient-to-br dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md shadow-2xl border-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm">
+          <CardHeader className="text-center pb-2">
+            <div className="mx-auto w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mb-4 shadow-lg">
+              <FileText className="w-8 h-8 text-white" />
+            </div>
+            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">InvoiceCraft Pro</CardTitle>
             <p className="text-gray-600 dark:text-gray-300 mt-2">Professional invoicing for freelancers</p>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6 pt-4">
             <div className="space-y-2">
-              <Label htmlFor="business-name">Business Name</Label>
+              <Label htmlFor="business-name" className="text-sm font-medium">Business Name</Label>
               <Input
                 id="business-name"
                 placeholder="Enter your business name"
                 value={invoiceData.businessName}
                 onChange={(e) => setInvoiceData(prev => ({ ...prev, businessName: e.target.value }))}
+                className="border-2 focus:border-blue-500 transition-colors"
               />
             </div>
             <Button 
               onClick={() => setIsLoggedIn(true)}
-              className="w-full bg-blue-600 hover:bg-blue-700"
+              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
             >
               Get Started
             </Button>
@@ -136,13 +141,12 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/30 dark:bg-gradient-to-br dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-4">
       <div className="max-w-6xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            {/* App Logo with circular white background */}
-            <div className="flex-shrink-0 w-12 h-12 rounded-full bg-white shadow border border-gray-200 flex items-center justify-center overflow-hidden">
+        {/* Enhanced Header */}
+        <div className="flex items-center justify-between bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl p-6 shadow-xl border-0">
+          <div className="flex items-center space-x-4">
+            <div className="flex-shrink-0 w-14 h-14 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg flex items-center justify-center overflow-hidden">
               <img
                 src="/lovable-uploads/7ee69eb6-9c39-4842-a5be-8ca62c793130.png"
                 alt="App Logo"
@@ -151,33 +155,33 @@ const Index = () => {
               />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">InvoiceCraft Pro</h1>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">InvoiceCraft Pro</h1>
               <p className="text-gray-600 dark:text-gray-300">Create professional invoices</p>
             </div>
           </div>
           <div className="flex gap-2">
-            <Button onClick={toggleDarkMode} variant="outline" size="sm">
+            <Button onClick={toggleDarkMode} variant="outline" size="sm" className="hover:bg-gray-100 dark:hover:bg-gray-700">
               {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </Button>
-            <Button onClick={() => setViewMode('list')} variant="outline">
+            <Button onClick={() => setViewMode('list')} variant="outline" className="hover:bg-blue-50 dark:hover:bg-blue-900/30">
               <Eye className="w-4 h-4 mr-2" />
               View Saved ({savedInvoices.length})
             </Button>
-            <Button onClick={saveInvoiceData} variant="outline">
+            <Button onClick={saveInvoiceData} variant="outline" className="hover:bg-yellow-50 dark:hover:bg-yellow-900/30">
               <Save className="w-4 h-4 mr-2" />
               Save Draft
             </Button>
-            <Button onClick={saveInvoice} variant="outline" className="bg-green-50 hover:bg-green-100 dark:bg-green-900 dark:hover:bg-green-800">
+            <Button onClick={saveInvoice} variant="outline" className="bg-green-50 hover:bg-green-100 dark:bg-green-900/30 dark:hover:bg-green-800/50">
               <FileText className="w-4 h-4 mr-2" />
               Save Invoice
             </Button>
-            <Button onClick={printInvoice} variant="outline">
+            <Button onClick={printInvoice} variant="outline" className="hover:bg-purple-50 dark:hover:bg-purple-900/30">
               <Printer className="w-4 h-4 mr-2" />
               Print Preview
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button className="bg-blue-600 hover:bg-blue-700">
+                <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg">
                   <Download className="w-4 h-4 mr-2" />
                   Export
                   <ChevronDown className="w-4 h-4 ml-2" />
@@ -201,24 +205,47 @@ const Index = () => {
           </div>
         </div>
 
+        {/* Welcome Section */}
+        <DashboardWelcome 
+          businessName={invoiceData.businessName} 
+          onCreateNew={() => {
+            // Reset form for new invoice
+            setInvoiceData(prev => ({
+              ...prev,
+              invoiceNumber: `INV-${String(savedInvoices.length + 1).padStart(3, '0')}`,
+              lineItems: [{ description: '', quantity: 1, rate: 0 }]
+            }));
+          }}
+        />
+
+        {/* Stats Section */}
+        <DashboardStats 
+          savedInvoices={savedInvoices} 
+          formatCurrency={getFormatCurrency}
+        />
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left Column - Invoice Form */}
-          <InvoiceForm
-            invoiceData={invoiceData}
-            setInvoiceData={setInvoiceData}
-            addLineItem={addLineItem}
-            removeLineItem={removeLineItem}
-            updateLineItem={updateLineItem}
-          />
+          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-xl border-0 overflow-hidden">
+            <InvoiceForm
+              invoiceData={invoiceData}
+              setInvoiceData={setInvoiceData}
+              addLineItem={addLineItem}
+              removeLineItem={removeLineItem}
+              updateLineItem={updateLineItem}
+            />
+          </div>
 
           {/* Right Column - Invoice Preview */}
-          <InvoicePreview
-            invoiceData={invoiceData}
-            formatCurrency={getFormatCurrency}
-            calculateSubtotal={getCalculateSubtotal}
-            calculateTax={getCalculateTax}
-            calculateTotal={getCalculateTotal}
-          />
+          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-xl border-0 overflow-hidden">
+            <InvoicePreview
+              invoiceData={invoiceData}
+              formatCurrency={getFormatCurrency}
+              calculateSubtotal={getCalculateSubtotal}
+              calculateTax={getCalculateTax}
+              calculateTotal={getCalculateTotal}
+            />
+          </div>
         </div>
       </div>
     </div>

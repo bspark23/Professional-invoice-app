@@ -20,16 +20,24 @@ const AppContent = () => {
   const location = useLocation();
 
   useEffect(() => {
-    // Check localStorage first visit flag
+    // Always check localStorage on mount and route changes
     const hasVisited = localStorage.getItem('invoicecraft-has-visited') === 'true';
-    setShowLandingPage(!hasVisited);
+    console.log('Checking localStorage - hasVisited:', hasVisited, 'path:', location.pathname);
+    
+    if (!hasVisited) {
+      // Force landing page to show if user hasn't visited
+      setShowLandingPage(true);
+    } else {
+      setShowLandingPage(false);
+    }
     setIsInitialized(true);
   }, [location.pathname]);
 
   const handleGetStarted = () => {
+    console.log('Get Started clicked - setting localStorage and hiding landing page');
     localStorage.setItem('invoicecraft-has-visited', 'true');
     setShowLandingPage(false);
-    // Always navigate to language selector after landing page
+    // Navigate to language selector after landing page
     navigate('/');
   };
 
@@ -38,15 +46,13 @@ const AppContent = () => {
     return <div className="min-h-screen bg-gray-50 dark:bg-gray-900"></div>;
   }
 
-  // If landing page should show, force all routes to render it and optionally redirect to "/"
+  // FORCE landing page to show if user hasn't visited, regardless of current route
   if (showLandingPage) {
-    // If we're not already on "/", redirect so the path is "/" for after "Get Started"
-    if (location.pathname !== "/") {
-      return <Navigate to="/" replace />;
-    }
+    console.log('Rendering landing page');
     return <AppLandingPage onGetStarted={handleGetStarted} />;
   }
 
+  console.log('Rendering app routes');
   return (
     <Routes>
       <Route path="/" element={<LanguageSelector />} />
@@ -73,4 +79,3 @@ const App = () => {
 };
 
 export default App;
-
