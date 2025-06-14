@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useNavigate, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useNavigate, useLocation, Navigate } from "react-router-dom";
 import LanguageSelector from "./pages/LanguageSelector";
 import Welcome from "./pages/Welcome";
 import Index from "./pages/Index";
@@ -22,9 +22,6 @@ const AppContent = () => {
   useEffect(() => {
     // Check localStorage first visit flag
     const hasVisited = localStorage.getItem('invoicecraft-has-visited') === 'true';
-    console.log('Has visited:', hasVisited);
-    console.log('Current path:', location.pathname);
-    
     setShowLandingPage(!hasVisited);
     setIsInitialized(true);
   }, [location.pathname]);
@@ -32,7 +29,7 @@ const AppContent = () => {
   const handleGetStarted = () => {
     localStorage.setItem('invoicecraft-has-visited', 'true');
     setShowLandingPage(false);
-    // Navigate to language selector after landing page
+    // Always navigate to language selector after landing page
     navigate('/');
   };
 
@@ -41,8 +38,12 @@ const AppContent = () => {
     return <div className="min-h-screen bg-gray-50 dark:bg-gray-900"></div>;
   }
 
-  // If landing page should show, render *only* that first
+  // If landing page should show, force all routes to render it and optionally redirect to "/"
   if (showLandingPage) {
+    // If we're not already on "/", redirect so the path is "/" for after "Get Started"
+    if (location.pathname !== "/") {
+      return <Navigate to="/" replace />;
+    }
     return <AppLandingPage onGetStarted={handleGetStarted} />;
   }
 
@@ -72,3 +73,4 @@ const App = () => {
 };
 
 export default App;
+
