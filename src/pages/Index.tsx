@@ -18,7 +18,6 @@ import { exportToPDF, exportToImage } from "@/utils/exportUtils";
 
 const Index = () => {
   const { toast } = useToast();
-  const [showLandingPage, setShowLandingPage] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [viewMode, setViewMode] = useState<'create' | 'list' | 'print'>('create');
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -48,22 +47,11 @@ const Index = () => {
     const savedDarkMode = localStorage.getItem('invoicecraft-dark-mode') === 'true';
     setIsDarkMode(savedDarkMode);
     document.documentElement.classList.toggle('dark', savedDarkMode);
-
-    // Check if user has visited before
-    const hasVisited = localStorage.getItem('invoicecraft-has-visited') === 'true';
-    if (hasVisited) {
-      setShowLandingPage(false);
-    }
   }, []);
 
   useEffect(() => {
     localStorage.setItem('invoicecraft-dark-mode', isDarkMode.toString());
   }, [isDarkMode]);
-
-  const handleGetStarted = () => {
-    localStorage.setItem('invoicecraft-has-visited', 'true');
-    setShowLandingPage(false);
-  };
 
   // Helper functions that use the invoiceData
   const getCalculateSubtotal = () => calculateSubtotal(invoiceData);
@@ -83,11 +71,6 @@ const Index = () => {
   const printInvoice = () => {
     setViewMode('print');
   };
-
-  // Show landing page first
-  if (showLandingPage) {
-    return <AppLandingPage onGetStarted={handleGetStarted} />;
-  }
 
   if (!isLoggedIn) {
     return (
