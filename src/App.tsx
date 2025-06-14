@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -9,7 +10,6 @@ import Welcome from "./pages/Welcome";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import AppLandingPage from "@/components/AppLandingPage";
-import RequireLandingPage from "@/components/RequireLandingPage";
 
 const queryClient = new QueryClient();
 
@@ -43,22 +43,8 @@ const App = () => {
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<LanguageSelector />} />
-            <Route 
-              path="/welcome" 
-              element={
-                <RequireLandingPage>
-                  <Welcome />
-                </RequireLandingPage>
-              } 
-            />
-            <Route 
-              path="/dashboard" 
-              element={
-                <RequireLandingPage>
-                  <Index />
-                </RequireLandingPage>
-              } 
-            />
+            <Route path="/welcome" element={<Welcome />} />
+            <Route path="/dashboard" element={<Index />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
