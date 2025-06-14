@@ -8,9 +8,11 @@ import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Trash2, Download, Save, Eye, FileText, Printer, Moon, Sun, Check, X, Upload } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Plus, Trash2, Download, Save, Eye, FileText, Printer, Moon, Sun, Check, X, ChevronDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import jsPDF from 'jspdf';
+import LandingPage from "@/components/LandingPage";
 
 interface LineItem {
   id: string;
@@ -48,6 +50,697 @@ const currencies = [
   { code: 'AUD', symbol: 'A$', name: 'Australian Dollar' },
 ];
 
+const InvoiceForm = ({
+  invoiceData,
+  setInvoiceData,
+  addLineItem,
+  removeLineItem,
+  updateLineItem,
+}: {
+  invoiceData: InvoiceData;
+  setInvoiceData: React.Dispatch<React.SetStateAction<InvoiceData>>;
+  addLineItem: () => void;
+  removeLineItem: (id: string) => void;
+  updateLineItem: (id: string, field: keyof LineItem, value: string | number) => void;
+}) => {
+  return (
+    <div className="space-y-6">
+      {/* Business Info */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Business Information</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="business-name">Business Name</Label>
+              <Input
+                id="business-name"
+                value={invoiceData.businessName}
+                onChange={(e) => setInvoiceData(prev => ({ ...prev, businessName: e.target.value }))}
+              />
+            </div>
+            <div>
+              <Label htmlFor="business-logo">Company Logo</Label>
+              <div className="flex items-center gap-4">
+                <Input
+                  id="business-logo"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onload = (ev) => {
+                        const result = ev.target?.result as string;
+                        setInvoiceData(prev => ({ ...prev, businessLogo: result }));
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                  className="flex-1"
+                />
+                {invoiceData.businessLogo && (
+                  <img 
+                    src={invoiceData.businessLogo} 
+                    alt="Logo Preview" 
+                    className="w-12 h-12 object-contain border rounded"
+                  />
+                )}
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="currency">Currency</Label>
+              <Select value={invoiceData.currency} onValueChange={(value) => setInvoiceData(prev => ({ ...prev, currency: value }))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select currency" />
+                </SelectTrigger>
+                <SelectContent>
+                  {currencies.map((currency) => (
+                    <SelectItem key={currency.code} value={currency.code}>
+                      {currency.symbol} {currency.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Client Details */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Client Information</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="client-name">Client Name</Label>
+              <Input
+                id="client-name"
+                placeholder="Client Name"
+                value={invoiceData.clientName}
+                onChange={(e) => setInvoiceData(prev => ({ ...prev, clientName: e.target.value }))}
+              />
+            </div>
+            <div>
+              <Label htmlFor="client-email">Client Email</Label>
+              <Input
+                id="client-email"
+                type="email"
+                placeholder="client@example.com"
+                value={invoiceData.clientEmail}
+                onChange={(e) => setInvoiceData(prev => ({ ...prev, clientEmail: e.target.value }))}
+              />
+            </div>
+            <div>
+              <Label htmlFor="client-address">Client Address</Label>
+              <Textarea
+                id="client-address"
+                placeholder="Client Address"
+                value={invoiceData.clientAddress}
+                onChange={(e) => setInvoiceData(prev => ({ ...prev, clientAddress: e.target.value }))}
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Invoice Details */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Invoice Details</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div>
+              <Label htmlFor="invoice-number">Invoice Number</Label>
+              <Input
+                id="invoice-number"
+                value={invoiceData.invoiceNumber}
+                onChange={(e) => setInvoiceData(prev => ({ ...prev, invoiceNumber: e.target.value }))}
+              />
+            </div>
+            <div>
+              <Label htmlFor="invoice-date">Invoice Date</Label>
+              <Input
+                id="invoice-date"
+                type="date"
+                value={invoiceData.invoiceDate}
+                onChange={(e) => setInvoiceData(prev => ({ ...prev, invoiceDate: e.target.value }))}
+              />
+            </div>
+            <div>
+              <Label htmlFor="due-date">Due Date</Label>
+              <Input
+                id="due-date"
+                type="date"
+                value={invoiceData.dueDate}
+                onChange={(e) => setInvoiceData(prev => ({ ...prev, dueDate: e.target.value }))}
+              />
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <Label htmlFor="status">Status:</Label>
+            <div className="flex items-center gap-2">
+              <Switch
+                id="status"
+                checked={invoiceData.status === 'paid'}
+                onCheckedChange={(checked) => setInvoiceData(prev => ({ ...prev, status: checked ? 'paid' : 'unpaid' }))}
+              />
+              <Badge variant={invoiceData.status === 'paid' ? 'default' : 'destructive'}>
+                {invoiceData.status === 'paid' ? '✅ Paid' : '❌ Unpaid'}
+              </Badge>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Line Items */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg">Services / Items</CardTitle>
+            <Button onClick={addLineItem} variant="outline" size="sm">
+              <Plus className="w-4 h-4 mr-2" />
+              Add Item
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {invoiceData.lineItems.map((item, index) => (
+              <div key={item.id} className="grid grid-cols-12 gap-2 items-end">
+                <div className="col-span-5">
+                  {index === 0 && <Label>Description</Label>}
+                  <Input
+                    placeholder="Service description"
+                    value={item.description}
+                    onChange={(e) => updateLineItem(item.id, 'description', e.target.value)}
+                  />
+                </div>
+                <div className="col-span-2">
+                  {index === 0 && <Label>Qty</Label>}
+                  <Input
+                    type="number"
+                    placeholder="1"
+                    value={item.quantity}
+                    onChange={(e) => updateLineItem(item.id, 'quantity', parseInt(e.target.value) || 0)}
+                  />
+                </div>
+                <div className="col-span-2">
+                  {index === 0 && <Label>Rate</Label>}
+                  <Input
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    value={item.rate}
+                    onChange={(e) => updateLineItem(item.id, 'rate', parseFloat(e.target.value) || 0)}
+                  />
+                </div>
+                <div className="col-span-2">
+                  {index === 0 && <Label>Amount</Label>}
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={item.amount.toFixed(2)}
+                    onChange={(e) => updateLineItem(item.id, 'amount', parseFloat(e.target.value) || 0)}
+                    className="bg-white dark:bg-gray-800"
+                  />
+                </div>
+                <div className="col-span-1">
+                  {index === 0 && <div className="h-6"></div>}
+                  <Button
+                    onClick={() => removeLineItem(item.id)}
+                    variant="outline"
+                    size="sm"
+                    disabled={invoiceData.lineItems.length === 1}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Totals */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Invoice Totals</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="tax-rate">Tax Rate (%)</Label>
+                <Input
+                  id="tax-rate"
+                  type="number"
+                  placeholder="0"
+                  value={invoiceData.taxRate}
+                  onChange={(e) => setInvoiceData(prev => ({ ...prev, taxRate: parseFloat(e.target.value) || 0 }))}
+                />
+              </div>
+              <div>
+                <Label htmlFor="discount">Discount Amount</Label>
+                <Input
+                  id="discount"
+                  type="number"
+                  placeholder="0.00"
+                  value={invoiceData.discountAmount}
+                  onChange={(e) => setInvoiceData(prev => ({ ...prev, discountAmount: parseFloat(e.target.value) || 0 }))}
+                />
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Notes */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Notes & Terms</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div>
+            <Label htmlFor="notes">Additional Notes</Label>
+            <Textarea
+              id="notes"
+              placeholder="Payment instructions, terms, or additional notes..."
+              value={invoiceData.notes}
+              onChange={(e) => setInvoiceData(prev => ({ ...prev, notes: e.target.value }))}
+              rows={4}
+            />
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+const InvoicePreview = ({
+  invoiceData,
+  formatCurrency,
+  calculateSubtotal,
+  calculateTax,
+  calculateTotal,
+}: {
+  invoiceData: InvoiceData;
+  formatCurrency: (amount: number, currencyCode?: string) => string;
+  calculateSubtotal: () => number;
+  calculateTax: () => number;
+  calculateTotal: () => number;
+}) => {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">Invoice Preview</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="bg-white dark:bg-gray-800 border rounded-lg p-6 space-y-6">
+          {/* Invoice Header */}
+          <div className="flex justify-between items-start">
+            <div className="flex items-center gap-4">
+              {invoiceData.businessLogo && (
+                <img 
+                  src={invoiceData.businessLogo} 
+                  alt="Company Logo" 
+                  className="w-12 h-12 object-contain"
+                />
+              )}
+              <div>
+                <h2 className="text-2xl font-bold text-blue-600 dark:text-blue-400">{invoiceData.businessName}</h2>
+              </div>
+            </div>
+            <div className="text-right">
+              <h3 className="text-xl font-semibold">INVOICE</h3>
+              <p className="text-gray-600 dark:text-gray-300">#{invoiceData.invoiceNumber}</p>
+              <Badge variant={invoiceData.status === 'paid' ? 'default' : 'destructive'} className="mt-2">
+                {invoiceData.status === 'paid' ? '✅ Paid' : '❌ Unpaid'}
+              </Badge>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Client and Date Info */}
+          <div className="grid grid-cols-2 gap-6">
+            <div>
+              <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">Bill To:</h4>
+              <div className="text-gray-600 dark:text-gray-300">
+                <p className="font-medium">{invoiceData.clientName}</p>
+                <p>{invoiceData.clientEmail}</p>
+                <p className="whitespace-pre-line">{invoiceData.clientAddress}</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="space-y-1">
+                <p><span className="font-medium">Invoice Date:</span> {invoiceData.invoiceDate}</p>
+                <p><span className="font-medium">Due Date:</span> {invoiceData.dueDate}</p>
+                <p><span className="font-medium">Currency:</span> {currencies.find(c => c.code === invoiceData.currency)?.name}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Invoice Items */}
+          <div>
+            <div className="border rounded-lg overflow-hidden">
+              <div className="bg-gray-50 dark:bg-gray-700 grid grid-cols-12 gap-2 p-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+                <div className="col-span-6">Description</div>
+                <div className="col-span-2 text-center">Qty</div>
+                <div className="col-span-2 text-center">Rate</div>
+                <div className="col-span-2 text-right">Amount</div>
+              </div>
+              {invoiceData.lineItems.map((item) => (
+                <div key={item.id} className="grid grid-cols-12 gap-2 p-3 border-t text-sm">
+                  <div className="col-span-6">{item.description}</div>
+                  <div className="col-span-2 text-center">{item.quantity}</div>
+                  <div className="col-span-2 text-center">{formatCurrency(item.rate)}</div>
+                  <div className="col-span-2 text-right">{formatCurrency(item.amount)}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Totals */}
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <span>Subtotal:</span>
+              <span>{formatCurrency(calculateSubtotal())}</span>
+            </div>
+            {invoiceData.taxRate > 0 && (
+              <div className="flex justify-between">
+                <span>Tax ({invoiceData.taxRate}%):</span>
+                <span>{formatCurrency(calculateTax())}</span>
+              </div>
+            )}
+            {invoiceData.discountAmount > 0 && (
+              <div className="flex justify-between">
+                <span>Discount:</span>
+                <span>-{formatCurrency(invoiceData.discountAmount)}</span>
+              </div>
+            )}
+            <Separator />
+            <div className="flex justify-between text-lg font-bold">
+              <span>Total:</span>
+              <span>{formatCurrency(calculateTotal())}</span>
+            </div>
+          </div>
+
+          {/* Notes Preview */}
+          {invoiceData.notes && (
+            <div>
+              <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">Notes:</h4>
+              <p className="text-gray-600 dark:text-gray-300 text-sm whitespace-pre-line">{invoiceData.notes}</p>
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+const PrintView = ({
+  invoiceData,
+  formatCurrency,
+  calculateSubtotal,
+  calculateTax,
+  calculateTotal,
+  exportToPDF,
+  exportToImage,
+  setViewMode,
+}: {
+  invoiceData: InvoiceData;
+  formatCurrency: (amount: number, currencyCode?: string) => string;
+  calculateSubtotal: () => number;
+  calculateTax: () => number;
+  calculateTotal: () => number;
+  exportToPDF: () => void;
+  exportToImage: (format: 'png' | 'jpeg') => void;
+  setViewMode: React.Dispatch<React.SetStateAction<'create' | 'list' | 'print'>>;
+}) => {
+  return (
+    <div className="min-h-screen bg-white print:bg-white">
+      <div className="max-w-4xl mx-auto p-8 print:p-0">
+        <div className="flex justify-between items-center mb-8 print:hidden">
+          <h1 className="text-2xl font-bold text-gray-900">Print Preview</h1>
+          <div className="flex gap-2">
+            <Button onClick={() => window.print()} className="bg-blue-600 hover:bg-blue-700">
+              <Printer className="w-4 h-4 mr-2" />
+              Print
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button className="bg-green-600 hover:bg-green-700">
+                  <Download className="w-4 h-4 mr-2" />
+                  Export
+                  <ChevronDown className="w-4 h-4 ml-2" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={exportToPDF}>
+                  <FileText className="w-4 h-4 mr-2" />
+                  Export as PDF
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => exportToImage('png')}>
+                  <Download className="w-4 h-4 mr-2" />
+                  Export as PNG
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => exportToImage('jpeg')}>
+                  <Download className="w-4 h-4 mr-2" />
+                  Export as JPEG
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button onClick={() => setViewMode('create')} variant="outline">
+              Back to Edit
+            </Button>
+          </div>
+        </div>
+        
+        {/* Landing Page Section */}
+        <div className="mb-16 print:mb-8">
+          <LandingPage 
+            businessName={invoiceData.businessName}
+            businessLogo={invoiceData.businessLogo}
+            invoiceNumber={invoiceData.invoiceNumber}
+            clientName={invoiceData.clientName}
+            total={formatCurrency(calculateTotal())}
+            status={invoiceData.status}
+            currency={currencies.find(c => c.code === invoiceData.currency)?.name || 'USD'}
+          />
+        </div>
+        
+        <div className="invoice-print-content bg-white border rounded-lg p-8 print:border-0 print:shadow-none print:bg-white">
+          {/* Invoice Header */}
+          <div className="flex justify-between items-start mb-8">
+            <div className="flex items-center gap-4">
+              {invoiceData.businessLogo && (
+                <img 
+                  src={invoiceData.businessLogo} 
+                  alt="Company Logo" 
+                  className="w-16 h-16 object-contain"
+                />
+              )}
+              <div>
+                <h2 className="text-3xl font-bold text-blue-600 print:text-blue-600">{invoiceData.businessName}</h2>
+              </div>
+            </div>
+            <div className="text-right">
+              <h3 className="text-2xl font-semibold text-gray-900 print:text-black">INVOICE</h3>
+              <p className="text-gray-600 print:text-black">#{invoiceData.invoiceNumber}</p>
+              <Badge variant={invoiceData.status === 'paid' ? 'default' : 'destructive'} className="print:bg-white print:text-black print:border print:border-gray-400">
+                {invoiceData.status === 'paid' ? '✅ Paid' : '❌ Unpaid'}
+              </Badge>
+            </div>
+          </div>
+
+          <Separator className="mb-8 print:border-gray-300" />
+
+          {/* Client and Date Info */}
+          <div className="grid grid-cols-2 gap-8 mb-8">
+            <div>
+              <h4 className="font-semibold text-gray-800 mb-3 print:text-black">Bill To:</h4>
+              <div className="text-gray-600 print:text-black">
+                <p className="font-medium">{invoiceData.clientName}</p>
+                <p>{invoiceData.clientEmail}</p>
+                <p className="whitespace-pre-line">{invoiceData.clientAddress}</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="space-y-2 text-gray-600 print:text-black">
+                <p><span className="font-medium">Invoice Date:</span> {invoiceData.invoiceDate}</p>
+                <p><span className="font-medium">Due Date:</span> {invoiceData.dueDate}</p>
+                <p><span className="font-medium">Currency:</span> {currencies.find(c => c.code === invoiceData.currency)?.name}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Invoice Items */}
+          <div className="mb-8">
+            <div className="border rounded-lg overflow-hidden print:border-gray-300">
+              <div className="bg-gray-50 grid grid-cols-12 gap-2 p-4 text-sm font-medium text-gray-700 print:bg-gray-100 print:text-black">
+                <div className="col-span-6">Description</div>
+                <div className="col-span-2 text-center">Qty</div>
+                <div className="col-span-2 text-center">Rate</div>
+                <div className="col-span-2 text-right">Amount</div>
+              </div>
+              {invoiceData.lineItems.map((item) => (
+                <div key={item.id} className="grid grid-cols-12 gap-2 p-4 border-t text-sm print:text-black print:border-gray-300">
+                  <div className="col-span-6">{item.description}</div>
+                  <div className="col-span-2 text-center">{item.quantity}</div>
+                  <div className="col-span-2 text-center">{formatCurrency(item.rate)}</div>
+                  <div className="col-span-2 text-right">{formatCurrency(item.amount)}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Totals */}
+          <div className="space-y-3 mb-8 text-gray-900 print:text-black">
+            <div className="flex justify-between">
+              <span>Subtotal:</span>
+              <span>{formatCurrency(calculateSubtotal())}</span>
+            </div>
+            {invoiceData.taxRate > 0 && (
+              <div className="flex justify-between">
+                <span>Tax ({invoiceData.taxRate}%):</span>
+                <span>{formatCurrency(calculateTax())}</span>
+              </div>
+            )}
+            {invoiceData.discountAmount > 0 && (
+              <div className="flex justify-between">
+                <span>Discount:</span>
+                <span>-{formatCurrency(invoiceData.discountAmount)}</span>
+              </div>
+            )}
+            <Separator className="print:border-gray-300" />
+            <div className="flex justify-between text-xl font-bold">
+              <span>Total:</span>
+              <span>{formatCurrency(calculateTotal())}</span>
+            </div>
+          </div>
+
+          {/* Notes */}
+          {invoiceData.notes && (
+            <div>
+              <h4 className="font-semibold text-gray-800 mb-3 print:text-black">Notes:</h4>
+              <p className="text-gray-600 whitespace-pre-line print:text-black">{invoiceData.notes}</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const InvoiceList = ({
+  savedInvoices,
+  formatCurrency,
+  toggleInvoiceStatus,
+  loadInvoice,
+  deleteInvoice,
+  setViewMode,
+  isDarkMode,
+  toggleDarkMode,
+}: {
+  savedInvoices: InvoiceData[];
+  formatCurrency: (amount: number, currencyCode?: string) => string;
+  toggleInvoiceStatus: (invoiceId: string) => void;
+  loadInvoice: (invoice: InvoiceData) => void;
+  deleteInvoice: (invoiceId: string) => void;
+  setViewMode: React.Dispatch<React.SetStateAction<'create' | 'list' | 'print'>>;
+  isDarkMode: boolean;
+  toggleDarkMode: () => void;
+}) => {
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4">
+      <div className="max-w-6xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Saved Invoices</h1>
+            <p className="text-gray-600 dark:text-gray-300">Manage your saved invoices</p>
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={toggleDarkMode} variant="outline" size="sm">
+              {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </Button>
+            <Button onClick={() => setViewMode('create')} variant="outline">
+              Back to Current
+            </Button>
+          </div>
+        </div>
+
+        {/* Invoices List */}
+        <div className="grid gap-4">
+          {savedInvoices.length === 0 ? (
+            <Card>
+              <CardContent className="p-6 text-center">
+                <FileText className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+                <p className="text-gray-600 dark:text-gray-300">No saved invoices yet. Create and save your first invoice!</p>
+              </CardContent>
+            </Card>
+          ) : (
+            savedInvoices.map((invoice) => (
+              <Card key={invoice.id} className="hover:shadow-md transition-shadow">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-4">
+                        <div>
+                          <h3 className="font-semibold">{invoice.invoiceNumber}</h3>
+                          <p className="text-sm text-gray-600 dark:text-gray-300">{invoice.clientName}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Due: {invoice.dueDate}</p>
+                          <p className="font-medium">{formatCurrency(invoice.lineItems.reduce((sum, item) => sum + item.amount, 0) + (invoice.lineItems.reduce((sum, item) => sum + item.amount, 0) * invoice.taxRate / 100) - invoice.discountAmount, invoice.currency)}</p>
+                        </div>
+                        <div>
+                          <Badge variant={invoice.status === 'paid' ? 'default' : 'destructive'}>
+                            {invoice.status === 'paid' ? '✅ Paid' : '❌ Unpaid'}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => toggleInvoiceStatus(invoice.id!)}
+                        variant="outline"
+                        size="sm"
+                      >
+                        {invoice.status === 'paid' ? <X className="w-4 h-4" /> : <Check className="w-4 h-4" />}
+                      </Button>
+                      <Button
+                        onClick={() => loadInvoice(invoice)}
+                        variant="outline"
+                        size="sm"
+                      >
+                        <Eye className="w-4 h-4 mr-2" />
+                        Edit
+                      </Button>
+                      <Button
+                        onClick={() => deleteInvoice(invoice.id!)}
+                        variant="outline"
+                        size="sm"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const Index = () => {
   const { toast } = useToast();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -72,19 +765,6 @@ const Index = () => {
     notes: '',
     status: 'unpaid'
   });
-
-  // Handle logo upload
-  const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target?.result as string;
-        setInvoiceData(prev => ({ ...prev, businessLogo: result }));
-      };
-      reader.readAsDataURL(file);
-    }
-  };
 
   // Generate auto invoice number
   const generateInvoiceNumber = () => {
@@ -301,6 +981,12 @@ const Index = () => {
     try {
       const pdf = new jsPDF();
       
+      // Set consistent colors for PDF (always dark text on white background)
+      const primaryColor = [0, 0, 0]; // Black text
+      const blueColor = [59, 130, 246]; // Blue for business name
+      const greenColor = [34, 197, 94]; // Green for paid status
+      const redColor = [239, 68, 68]; // Red for unpaid status
+      
       // Invoice Header - matching print preview layout
       let yPosition = 20;
       
@@ -316,12 +1002,12 @@ const Index = () => {
       // Business name
       pdf.setFont('helvetica', 'bold');
       pdf.setFontSize(20);
-      pdf.setTextColor(59, 130, 246);
+      pdf.setTextColor(...blueColor);
       pdf.text(invoiceData.businessName, invoiceData.businessLogo ? 60 : 20, yPosition + 15);
       
       // Invoice title and details on the right
       pdf.setFontSize(16);
-      pdf.setTextColor(0, 0, 0);
+      pdf.setTextColor(...primaryColor);
       pdf.text('INVOICE', 150, yPosition + 10);
       pdf.setFont('helvetica', 'normal');
       pdf.setFontSize(10);
@@ -330,10 +1016,10 @@ const Index = () => {
       // Status badge
       pdf.setFontSize(9);
       if (invoiceData.status === 'paid') {
-        pdf.setTextColor(34, 197, 94);
+        pdf.setTextColor(...greenColor);
         pdf.text('✅ Paid', 150, yPosition + 30);
       } else {
-        pdf.setTextColor(239, 68, 68);
+        pdf.setTextColor(...redColor);
         pdf.text('❌ Unpaid', 150, yPosition + 30);
       }
       
@@ -347,7 +1033,7 @@ const Index = () => {
       // Client and Date Info - two columns like print preview
       pdf.setFont('helvetica', 'bold');
       pdf.setFontSize(11);
-      pdf.setTextColor(0, 0, 0);
+      pdf.setTextColor(...primaryColor);
       pdf.text('Bill To:', 20, yPosition);
       
       pdf.setFont('helvetica', 'normal');
@@ -391,7 +1077,7 @@ const Index = () => {
       // Line items
       pdf.setFont('helvetica', 'normal');
       pdf.setFontSize(9);
-      pdf.setTextColor(0, 0, 0);
+      pdf.setTextColor(...primaryColor);
       
       invoiceData.lineItems.forEach((item) => {
         // Add border for each row
@@ -475,9 +1161,9 @@ const Index = () => {
 
   const exportToImage = (format: 'png' | 'jpeg') => {
     try {
-      // Create a canvas element to render the print view
-      const printElement = document.querySelector('.invoice-print-content');
-      if (!printElement) {
+      // Create a temporary div to capture the print content with proper styling
+      const printContent = document.querySelector('.invoice-print-content');
+      if (!printContent) {
         toast({
           title: "Export Failed",
           description: "Please go to print preview first, then try exporting.",
@@ -486,7 +1172,7 @@ const Index = () => {
         return;
       }
 
-      // Use html2canvas library functionality (we'll simulate this)
+      // Create a canvas element to render the invoice
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       
@@ -494,21 +1180,111 @@ const Index = () => {
         throw new Error('Canvas context not available');
       }
 
-      // Set canvas size
+      // Set canvas size for high quality
       canvas.width = 800;
-      canvas.height = 1000;
+      canvas.height = 1200;
       
       // Fill white background
       ctx.fillStyle = 'white';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       
-      // Add a simple text representation (in a real implementation, you'd use html2canvas)
+      // Set up text styling
       ctx.fillStyle = 'black';
-      ctx.font = '16px Arial';
-      ctx.fillText('Invoice Export (Image)', 50, 50);
-      ctx.fillText(`${invoiceData.businessName}`, 50, 80);
-      ctx.fillText(`Invoice #${invoiceData.invoiceNumber}`, 50, 110);
-      ctx.fillText(`Total: ${formatCurrency(calculateTotal())}`, 50, 140);
+      ctx.font = 'bold 24px Arial';
+      
+      // Business name
+      ctx.fillStyle = '#3b82f6';
+      ctx.fillText(invoiceData.businessName, 50, 60);
+      
+      // Invoice title
+      ctx.fillStyle = 'black';
+      ctx.font = '18px Arial';
+      ctx.fillText('INVOICE', 650, 50);
+      
+      ctx.font = '14px Arial';
+      ctx.fillText(`#${invoiceData.invoiceNumber}`, 650, 75);
+      
+      // Status
+      ctx.fillStyle = invoiceData.status === 'paid' ? '#22c55e' : '#ef4444';
+      ctx.fillText(invoiceData.status === 'paid' ? '✅ Paid' : '❌ Unpaid', 650, 100);
+      
+      // Bill To section
+      ctx.fillStyle = 'black';
+      ctx.font = 'bold 14px Arial';
+      ctx.fillText('Bill To:', 50, 150);
+      
+      ctx.font = '12px Arial';
+      ctx.fillText(invoiceData.clientName, 50, 175);
+      ctx.fillText(invoiceData.clientEmail, 50, 195);
+      
+      const addressLines = invoiceData.clientAddress.split('\n');
+      addressLines.forEach((line, index) => {
+        ctx.fillText(line, 50, 215 + (index * 20));
+      });
+      
+      // Date information
+      const dateY = 150;
+      ctx.fillText(`Invoice Date: ${invoiceData.invoiceDate}`, 500, dateY);
+      ctx.fillText(`Due Date: ${invoiceData.dueDate}`, 500, dateY + 20);
+      ctx.fillText(`Currency: ${currencies.find(c => c.code === invoiceData.currency)?.name}`, 500, dateY + 40);
+      
+      // Line items table header
+      let tableY = 300;
+      ctx.fillStyle = '#f9fafb';
+      ctx.fillRect(50, tableY - 10, 700, 30);
+      
+      ctx.fillStyle = 'black';
+      ctx.font = 'bold 12px Arial';
+      ctx.fillText('Description', 60, tableY + 10);
+      ctx.fillText('Qty', 450, tableY + 10);
+      ctx.fillText('Rate', 550, tableY + 10);
+      ctx.fillText('Amount', 650, tableY + 10);
+      
+      // Line items
+      ctx.font = '11px Arial';
+      tableY += 40;
+      
+      invoiceData.lineItems.forEach((item, index) => {
+        const y = tableY + (index * 25);
+        ctx.fillText(item.description || 'No description', 60, y);
+        ctx.fillText(item.quantity.toString(), 465, y);
+        ctx.fillText(formatCurrency(item.rate), 550, y);
+        ctx.fillText(formatCurrency(item.amount), 650, y);
+      });
+      
+      // Totals section
+      const totalsY = tableY + (invoiceData.lineItems.length * 25) + 40;
+      ctx.font = '12px Arial';
+      
+      let currentY = totalsY;
+      ctx.fillText(`Subtotal: ${formatCurrency(calculateSubtotal())}`, 500, currentY);
+      currentY += 20;
+      
+      if (invoiceData.taxRate > 0) {
+        ctx.fillText(`Tax (${invoiceData.taxRate}%): ${formatCurrency(calculateTax())}`, 500, currentY);
+        currentY += 20;
+      }
+      
+      if (invoiceData.discountAmount > 0) {
+        ctx.fillText(`Discount: -${formatCurrency(invoiceData.discountAmount)}`, 500, currentY);
+        currentY += 20;
+      }
+      
+      // Total
+      ctx.font = 'bold 14px Arial';
+      ctx.fillText(`Total: ${formatCurrency(calculateTotal())}`, 500, currentY + 20);
+      
+      // Notes
+      if (invoiceData.notes) {
+        ctx.font = 'bold 12px Arial';
+        ctx.fillText('Notes:', 50, currentY + 60);
+        ctx.font = '11px Arial';
+        
+        const noteLines = invoiceData.notes.split('\n');
+        noteLines.forEach((line, index) => {
+          ctx.fillText(line, 50, currentY + 85 + (index * 20));
+        });
+      }
       
       // Convert to blob and download
       canvas.toBlob((blob) => {
@@ -571,223 +1347,31 @@ const Index = () => {
 
   if (viewMode === 'print') {
     return (
-      <div className="min-h-screen bg-white print:bg-white">
-        <div className="max-w-4xl mx-auto p-8 print:p-0">
-          <div className="flex justify-between items-center mb-8 print:hidden">
-            <h1 className="text-2xl font-bold">Print Preview</h1>
-            <div className="flex gap-2">
-              <Button onClick={() => window.print()} className="bg-blue-600 hover:bg-blue-700">
-                <Printer className="w-4 h-4 mr-2" />
-                Print
-              </Button>
-              <Button onClick={exportToPDF} className="bg-green-600 hover:bg-green-700">
-                <Download className="w-4 h-4 mr-2" />
-                PDF
-              </Button>
-              <Button onClick={() => exportToImage('png')} className="bg-purple-600 hover:bg-purple-700">
-                <Download className="w-4 h-4 mr-2" />
-                PNG
-              </Button>
-              <Button onClick={() => exportToImage('jpeg')} className="bg-orange-600 hover:bg-orange-700">
-                <Download className="w-4 h-4 mr-2" />
-                JPEG
-              </Button>
-              <Button onClick={() => setViewMode('create')} variant="outline">
-                Back to Edit
-              </Button>
-            </div>
-          </div>
-          
-          <div className="invoice-print-content bg-white border rounded-lg p-8 print:border-0 print:shadow-none">
-            {/* Invoice Header */}
-            <div className="flex justify-between items-start mb-8">
-              <div className="flex items-center gap-4">
-                {invoiceData.businessLogo && (
-                  <img 
-                    src={invoiceData.businessLogo} 
-                    alt="Company Logo" 
-                    className="w-16 h-16 object-contain"
-                  />
-                )}
-                <div>
-                  <h2 className="text-3xl font-bold text-blue-600">{invoiceData.businessName}</h2>
-                </div>
-              </div>
-              <div className="text-right">
-                <h3 className="text-2xl font-semibold">INVOICE</h3>
-                <p className="text-gray-600">#{invoiceData.invoiceNumber}</p>
-                <Badge variant={invoiceData.status === 'paid' ? 'default' : 'destructive'}>
-                  {invoiceData.status === 'paid' ? '✅ Paid' : '❌ Unpaid'}
-                </Badge>
-              </div>
-            </div>
-
-            <Separator className="mb-8" />
-
-            {/* Client and Date Info */}
-            <div className="grid grid-cols-2 gap-8 mb-8">
-              <div>
-                <h4 className="font-semibold text-gray-800 mb-3">Bill To:</h4>
-                <div className="text-gray-600">
-                  <p className="font-medium">{invoiceData.clientName}</p>
-                  <p>{invoiceData.clientEmail}</p>
-                  <p className="whitespace-pre-line">{invoiceData.clientAddress}</p>
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="space-y-2">
-                  <p><span className="font-medium">Invoice Date:</span> {invoiceData.invoiceDate}</p>
-                  <p><span className="font-medium">Due Date:</span> {invoiceData.dueDate}</p>
-                  <p><span className="font-medium">Currency:</span> {currencies.find(c => c.code === invoiceData.currency)?.name}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Invoice Items */}
-            <div className="mb-8">
-              <div className="border rounded-lg overflow-hidden">
-                <div className="bg-gray-50 grid grid-cols-12 gap-2 p-4 text-sm font-medium text-gray-700">
-                  <div className="col-span-6">Description</div>
-                  <div className="col-span-2 text-center">Qty</div>
-                  <div className="col-span-2 text-center">Rate</div>
-                  <div className="col-span-2 text-right">Amount</div>
-                </div>
-                {invoiceData.lineItems.map((item) => (
-                  <div key={item.id} className="grid grid-cols-12 gap-2 p-4 border-t text-sm">
-                    <div className="col-span-6">{item.description}</div>
-                    <div className="col-span-2 text-center">{item.quantity}</div>
-                    <div className="col-span-2 text-center">{formatCurrency(item.rate)}</div>
-                    <div className="col-span-2 text-right">{formatCurrency(item.amount)}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Totals */}
-            <div className="space-y-3 mb-8">
-              <div className="flex justify-between">
-                <span>Subtotal:</span>
-                <span>{formatCurrency(calculateSubtotal())}</span>
-              </div>
-              {invoiceData.taxRate > 0 && (
-                <div className="flex justify-between">
-                  <span>Tax ({invoiceData.taxRate}%):</span>
-                  <span>{formatCurrency(calculateTax())}</span>
-                </div>
-              )}
-              {invoiceData.discountAmount > 0 && (
-                <div className="flex justify-between">
-                  <span>Discount:</span>
-                  <span>-{formatCurrency(invoiceData.discountAmount)}</span>
-                </div>
-              )}
-              <Separator />
-              <div className="flex justify-between text-xl font-bold">
-                <span>Total:</span>
-                <span>{formatCurrency(calculateTotal())}</span>
-              </div>
-            </div>
-
-            {/* Notes */}
-            {invoiceData.notes && (
-              <div>
-                <h4 className="font-semibold text-gray-800 mb-3">Notes:</h4>
-                <p className="text-gray-600 whitespace-pre-line">{invoiceData.notes}</p>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+      <PrintView
+        invoiceData={invoiceData}
+        formatCurrency={formatCurrency}
+        calculateSubtotal={calculateSubtotal}
+        calculateTax={calculateTax}
+        calculateTotal={calculateTotal}
+        exportToPDF={exportToPDF}
+        exportToImage={exportToImage}
+        setViewMode={setViewMode}
+      />
     );
   }
 
   if (viewMode === 'list') {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4">
-        <div className="max-w-6xl mx-auto space-y-6">
-          {/* Header */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Saved Invoices</h1>
-              <p className="text-gray-600 dark:text-gray-300">Manage your saved invoices</p>
-            </div>
-            <div className="flex gap-2">
-              <Button onClick={toggleDarkMode} variant="outline" size="sm">
-                {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-              </Button>
-              <Button onClick={createNewInvoice} className="bg-blue-600 hover:bg-blue-700">
-                <Plus className="w-4 h-4 mr-2" />
-                New Invoice
-              </Button>
-              <Button onClick={() => setViewMode('create')} variant="outline">
-                Back to Current
-              </Button>
-            </div>
-          </div>
-
-          {/* Invoices List */}
-          <div className="grid gap-4">
-            {savedInvoices.length === 0 ? (
-              <Card>
-                <CardContent className="p-6 text-center">
-                  <FileText className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                  <p className="text-gray-600 dark:text-gray-300">No saved invoices yet. Create and save your first invoice!</p>
-                </CardContent>
-              </Card>
-            ) : (
-              savedInvoices.map((invoice) => (
-                <Card key={invoice.id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-4">
-                          <div>
-                            <h3 className="font-semibold">{invoice.invoiceNumber}</h3>
-                            <p className="text-sm text-gray-600 dark:text-gray-300">{invoice.clientName}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm text-gray-500">Due: {invoice.dueDate}</p>
-                            <p className="font-medium">{formatCurrency(invoice.lineItems.reduce((sum, item) => sum + item.amount, 0) + (invoice.lineItems.reduce((sum, item) => sum + item.amount, 0) * invoice.taxRate / 100) - invoice.discountAmount, invoice.currency)}</p>
-                          </div>
-                          <div>
-                            <Badge variant={invoice.status === 'paid' ? 'default' : 'destructive'}>
-                              {invoice.status === 'paid' ? '✅ Paid' : '❌ Unpaid'}
-                            </Badge>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          onClick={() => toggleInvoiceStatus(invoice.id!)}
-                          variant="outline"
-                          size="sm"
-                        >
-                          {invoice.status === 'paid' ? <X className="w-4 h-4" /> : <Check className="w-4 h-4" />}
-                        </Button>
-                        <Button
-                          onClick={() => loadInvoice(invoice)}
-                          variant="outline"
-                          size="sm"
-                        >
-                          <Eye className="w-4 h-4 mr-2" />
-                          Edit
-                        </Button>
-                        <Button
-                          onClick={() => deleteInvoice(invoice.id!)}
-                          variant="outline"
-                          size="sm"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
-            )}
-          </div>
-        </div>
-      </div>
+      <InvoiceList
+        savedInvoices={savedInvoices}
+        formatCurrency={formatCurrency}
+        toggleInvoiceStatus={toggleInvoiceStatus}
+        loadInvoice={loadInvoice}
+        deleteInvoice={deleteInvoice}
+        setViewMode={setViewMode}
+        isDarkMode={isDarkMode}
+        toggleDarkMode={toggleDarkMode}
+      />
     );
   }
 
@@ -820,388 +1404,50 @@ const Index = () => {
               <Printer className="w-4 h-4 mr-2" />
               Print Preview
             </Button>
-            <Button onClick={exportToPDF} className="bg-blue-600 hover:bg-blue-700">
-              <Download className="w-4 h-4 mr-2" />
-              Export PDF
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button className="bg-blue-600 hover:bg-blue-700">
+                  <Download className="w-4 h-4 mr-2" />
+                  Export
+                  <ChevronDown className="w-4 h-4 ml-2" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={exportToPDF}>
+                  <FileText className="w-4 h-4 mr-2" />
+                  Export as PDF
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => exportToImage('png')}>
+                  <Download className="w-4 h-4 mr-2" />
+                  Export as PNG
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => exportToImage('jpeg')}>
+                  <Download className="w-4 h-4 mr-2" />
+                  Export as JPEG
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left Column - Invoice Form */}
-          <div className="space-y-6">
-            {/* Business Info */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Business Information</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="business-name">Business Name</Label>
-                    <Input
-                      id="business-name"
-                      value={invoiceData.businessName}
-                      onChange={(e) => setInvoiceData(prev => ({ ...prev, businessName: e.target.value }))}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="business-logo">Company Logo</Label>
-                    <div className="flex items-center gap-4">
-                      <Input
-                        id="business-logo"
-                        type="file"
-                        accept="image/*"
-                        onChange={handleLogoUpload}
-                        className="flex-1"
-                      />
-                      {invoiceData.businessLogo && (
-                        <img 
-                          src={invoiceData.businessLogo} 
-                          alt="Logo Preview" 
-                          className="w-12 h-12 object-contain border rounded"
-                        />
-                      )}
-                    </div>
-                  </div>
-                  <div>
-                    <Label htmlFor="currency">Currency</Label>
-                    <Select value={invoiceData.currency} onValueChange={(value) => setInvoiceData(prev => ({ ...prev, currency: value }))}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select currency" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {currencies.map((currency) => (
-                          <SelectItem key={currency.code} value={currency.code}>
-                            {currency.symbol} {currency.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Client Details */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Client Information</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="client-name">Client Name</Label>
-                    <Input
-                      id="client-name"
-                      placeholder="Client Name"
-                      value={invoiceData.clientName}
-                      onChange={(e) => setInvoiceData(prev => ({ ...prev, clientName: e.target.value }))}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="client-email">Client Email</Label>
-                    <Input
-                      id="client-email"
-                      type="email"
-                      placeholder="client@example.com"
-                      value={invoiceData.clientEmail}
-                      onChange={(e) => setInvoiceData(prev => ({ ...prev, clientEmail: e.target.value }))}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="client-address">Client Address</Label>
-                    <Textarea
-                      id="client-address"
-                      placeholder="Client Address"
-                      value={invoiceData.clientAddress}
-                      onChange={(e) => setInvoiceData(prev => ({ ...prev, clientAddress: e.target.value }))}
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Invoice Details */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Invoice Details</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                  <div>
-                    <Label htmlFor="invoice-number">Invoice Number</Label>
-                    <Input
-                      id="invoice-number"
-                      value={invoiceData.invoiceNumber}
-                      onChange={(e) => setInvoiceData(prev => ({ ...prev, invoiceNumber: e.target.value }))}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="invoice-date">Invoice Date</Label>
-                    <Input
-                      id="invoice-date"
-                      type="date"
-                      value={invoiceData.invoiceDate}
-                      onChange={(e) => setInvoiceData(prev => ({ ...prev, invoiceDate: e.target.value }))}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="due-date">Due Date</Label>
-                    <Input
-                      id="due-date"
-                      type="date"
-                      value={invoiceData.dueDate}
-                      onChange={(e) => setInvoiceData(prev => ({ ...prev, dueDate: e.target.value }))}
-                    />
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Label htmlFor="status">Status:</Label>
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      id="status"
-                      checked={invoiceData.status === 'paid'}
-                      onCheckedChange={(checked) => setInvoiceData(prev => ({ ...prev, status: checked ? 'paid' : 'unpaid' }))}
-                    />
-                    <Badge variant={invoiceData.status === 'paid' ? 'default' : 'destructive'}>
-                      {invoiceData.status === 'paid' ? '✅ Paid' : '❌ Unpaid'}
-                    </Badge>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Line Items */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">Services / Items</CardTitle>
-                  <Button onClick={addLineItem} variant="outline" size="sm">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Item
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {invoiceData.lineItems.map((item, index) => (
-                    <div key={item.id} className="grid grid-cols-12 gap-2 items-end">
-                      <div className="col-span-5">
-                        {index === 0 && <Label>Description</Label>}
-                        <Input
-                          placeholder="Service description"
-                          value={item.description}
-                          onChange={(e) => updateLineItem(item.id, 'description', e.target.value)}
-                        />
-                      </div>
-                      <div className="col-span-2">
-                        {index === 0 && <Label>Qty</Label>}
-                        <Input
-                          type="number"
-                          placeholder="1"
-                          value={item.quantity}
-                          onChange={(e) => updateLineItem(item.id, 'quantity', parseInt(e.target.value) || 0)}
-                        />
-                      </div>
-                      <div className="col-span-2">
-                        {index === 0 && <Label>Rate</Label>}
-                        <Input
-                          type="number"
-                          step="0.01"
-                          placeholder="0.00"
-                          value={item.rate}
-                          onChange={(e) => updateLineItem(item.id, 'rate', parseFloat(e.target.value) || 0)}
-                        />
-                      </div>
-                      <div className="col-span-2">
-                        {index === 0 && <Label>Amount</Label>}
-                        <Input
-                          type="number"
-                          step="0.01"
-                          value={item.amount.toFixed(2)}
-                          onChange={(e) => updateLineItem(item.id, 'amount', parseFloat(e.target.value) || 0)}
-                          className="bg-white dark:bg-gray-800"
-                        />
-                      </div>
-                      <div className="col-span-1">
-                        {index === 0 && <div className="h-6"></div>}
-                        <Button
-                          onClick={() => removeLineItem(item.id)}
-                          variant="outline"
-                          size="sm"
-                          disabled={invoiceData.lineItems.length === 1}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Totals */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Invoice Totals</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="tax-rate">Tax Rate (%)</Label>
-                      <Input
-                        id="tax-rate"
-                        type="number"
-                        placeholder="0"
-                        value={invoiceData.taxRate}
-                        onChange={(e) => setInvoiceData(prev => ({ ...prev, taxRate: parseFloat(e.target.value) || 0 }))}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="discount">Discount Amount</Label>
-                      <Input
-                        id="discount"
-                        type="number"
-                        placeholder="0.00"
-                        value={invoiceData.discountAmount}
-                        onChange={(e) => setInvoiceData(prev => ({ ...prev, discountAmount: parseFloat(e.target.value) || 0 }))}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Notes */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Notes & Terms</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div>
-                  <Label htmlFor="notes">Additional Notes</Label>
-                  <Textarea
-                    id="notes"
-                    placeholder="Payment instructions, terms, or additional notes..."
-                    value={invoiceData.notes}
-                    onChange={(e) => setInvoiceData(prev => ({ ...prev, notes: e.target.value }))}
-                    rows={4}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          <InvoiceForm
+            invoiceData={invoiceData}
+            setInvoiceData={setInvoiceData}
+            addLineItem={addLineItem}
+            removeLineItem={removeLineItem}
+            updateLineItem={updateLineItem}
+          />
 
           {/* Right Column - Invoice Preview */}
-          <div className="lg:sticky lg:top-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Invoice Preview</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="bg-white dark:bg-gray-800 border rounded-lg p-6 space-y-6">
-                  {/* Invoice Header */}
-                  <div className="flex justify-between items-start">
-                    <div className="flex items-center gap-4">
-                      {invoiceData.businessLogo && (
-                        <img 
-                          src={invoiceData.businessLogo} 
-                          alt="Company Logo" 
-                          className="w-12 h-12 object-contain"
-                        />
-                      )}
-                      <div>
-                        <h2 className="text-2xl font-bold text-blue-600 dark:text-blue-400">{invoiceData.businessName}</h2>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <h3 className="text-xl font-semibold">INVOICE</h3>
-                      <p className="text-gray-600 dark:text-gray-300">#{invoiceData.invoiceNumber}</p>
-                      <Badge variant={invoiceData.status === 'paid' ? 'default' : 'destructive'} className="mt-2">
-                        {invoiceData.status === 'paid' ? '✅ Paid' : '❌ Unpaid'}
-                      </Badge>
-                    </div>
-                  </div>
-
-                  <Separator />
-
-                  {/* Client and Date Info */}
-                  <div className="grid grid-cols-2 gap-6">
-                    <div>
-                      <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">Bill To:</h4>
-                      <div className="text-gray-600 dark:text-gray-300">
-                        <p className="font-medium">{invoiceData.clientName}</p>
-                        <p>{invoiceData.clientEmail}</p>
-                        <p className="whitespace-pre-line">{invoiceData.clientAddress}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="space-y-1">
-                        <p><span className="font-medium">Invoice Date:</span> {invoiceData.invoiceDate}</p>
-                        <p><span className="font-medium">Due Date:</span> {invoiceData.dueDate}</p>
-                        <p><span className="font-medium">Currency:</span> {currencies.find(c => c.code === invoiceData.currency)?.name}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Invoice Items */}
-                  <div>
-                    <div className="border rounded-lg overflow-hidden">
-                      <div className="bg-gray-50 dark:bg-gray-700 grid grid-cols-12 gap-2 p-3 text-sm font-medium text-gray-700 dark:text-gray-300">
-                        <div className="col-span-6">Description</div>
-                        <div className="col-span-2 text-center">Qty</div>
-                        <div className="col-span-2 text-center">Rate</div>
-                        <div className="col-span-2 text-right">Amount</div>
-                      </div>
-                      {invoiceData.lineItems.map((item) => (
-                        <div key={item.id} className="grid grid-cols-12 gap-2 p-3 border-t text-sm">
-                          <div className="col-span-6">{item.description}</div>
-                          <div className="col-span-2 text-center">{item.quantity}</div>
-                          <div className="col-span-2 text-center">{formatCurrency(item.rate)}</div>
-                          <div className="col-span-2 text-right">{formatCurrency(item.amount)}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Totals */}
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span>Subtotal:</span>
-                      <span>{formatCurrency(calculateSubtotal())}</span>
-                    </div>
-                    {invoiceData.taxRate > 0 && (
-                      <div className="flex justify-between">
-                        <span>Tax ({invoiceData.taxRate}%):</span>
-                        <span>{formatCurrency(calculateTax())}</span>
-                      </div>
-                    )}
-                    {invoiceData.discountAmount > 0 && (
-                      <div className="flex justify-between">
-                        <span>Discount:</span>
-                        <span>-{formatCurrency(invoiceData.discountAmount)}</span>
-                      </div>
-                    )}
-                    <Separator />
-                    <div className="flex justify-between text-lg font-bold">
-                      <span>Total:</span>
-                      <span>{formatCurrency(calculateTotal())}</span>
-                    </div>
-                  </div>
-
-                  {/* Notes Preview */}
-                  {invoiceData.notes && (
-                    <div>
-                      <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">Notes:</h4>
-                      <p className="text-gray-600 dark:text-gray-300 text-sm whitespace-pre-line">{invoiceData.notes}</p>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          <InvoicePreview
+            invoiceData={invoiceData}
+            formatCurrency={formatCurrency}
+            calculateSubtotal={calculateSubtotal}
+            calculateTax={calculateTax}
+            calculateTotal={calculateTotal}
+          />
         </div>
       </div>
     </div>
