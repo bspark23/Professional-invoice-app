@@ -26,12 +26,13 @@ export const exportToPDF = (
     
     // Add border if template == "bordered"
     if (template === "bordered") {
-      pdf.setDrawColor(...colors.header);
+      pdf.setDrawColor(colors.header[0], colors.header[1], colors.header[2]);
       pdf.setLineWidth(3);
       pdf.rect(8, 8, 194, 281); // thick border around full page
     } else if (template === "modern") {
       // Modern: subtle shade, maybe colored rectangles at top/bottom
-      pdf.setFillColor(...colors.header, 0.10);
+      // FIX: setFillColor expects r,g,b,a NOT spread!
+      pdf.setFillColor(colors.header[0], colors.header[1], colors.header[2], 0.10);
       pdf.rect(0, 0, 210, 30, 'F');
       pdf.rect(0, 280, 210, 18, 'F');
     }

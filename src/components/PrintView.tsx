@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -17,6 +16,27 @@ interface PrintViewProps {
   setViewMode: React.Dispatch<React.SetStateAction<'create' | 'list' | 'print'>>;
 }
 
+const COLOR_CLASSES = {
+  blue: {
+    header: "text-blue-700",
+    badge: "bg-blue-100 text-blue-800",
+    accentBg: "bg-blue-50",
+    border: "border-blue-300",
+  },
+  green: {
+    header: "text-green-700",
+    badge: "bg-green-100 text-green-800",
+    accentBg: "bg-green-50",
+    border: "border-green-300",
+  },
+  gray: {
+    header: "text-gray-800",
+    badge: "bg-gray-200 text-gray-700",
+    accentBg: "bg-gray-50",
+    border: "border-gray-400",
+  }
+};
+
 const PrintView = ({
   invoiceData,
   formatCurrency,
@@ -27,12 +47,15 @@ const PrintView = ({
   exportToImage,
   setViewMode,
 }: PrintViewProps) => {
+  const colorTheme = invoiceData.colorTheme || "blue";
+  const color = COLOR_CLASSES[colorTheme];
+
   return (
-    <div className="min-h-screen bg-white print:bg-white">
+    <div className={`min-h-screen bg-white print:bg-white ${color.accentBg}`}>
       <div className="max-w-4xl mx-auto p-8 print:p-0">
         {/* PRINT CONTROLS */}
         <div className="flex justify-between items-center mb-8 print:hidden">
-          <h1 className="text-2xl font-bold text-gray-900">Print Preview</h1>
+          <h1 className={`text-2xl font-bold ${color.header}`}>Print Preview</h1>
           <div className="flex gap-2">
             <Button onClick={() => window.print()} className="bg-blue-600 hover:bg-blue-700">
               <Printer className="w-4 h-4 mr-2" />
@@ -68,7 +91,7 @@ const PrintView = ({
         </div>
 
         {/* DISTINCT INVOICE HEADER */}
-        <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-10 print:mb-8">
+        <div className={`flex flex-col md:flex-row md:justify-between md:items-center mb-10 print:mb-8`}>
           <div className="flex items-center gap-4 mb-6 md:mb-0">
             {invoiceData.businessLogo && (
               <img 
@@ -78,7 +101,7 @@ const PrintView = ({
               />
             )}
             <div>
-              <h2 className="text-3xl font-bold text-blue-700">{invoiceData.businessName}</h2>
+              <h2 className={`text-3xl font-bold ${color.header}`}>{invoiceData.businessName}</h2>
               {invoiceData.businessName && (
                 <div className="text-sm text-gray-600 mt-1">{invoiceData.businessEmail}</div>
               )}
@@ -86,24 +109,24 @@ const PrintView = ({
             </div>
           </div>
           <div className="text-right">
-            <div className="mb-2">
-              <span className="inline-block px-3 py-1 bg-gray-200 text-xs font-semibold rounded uppercase tracking-wide text-gray-700">
+            <div className={`mb-2`}>
+              <span className={`inline-block px-3 py-1 ${color.badge} text-xs font-semibold rounded uppercase tracking-wide`}>
                 Invoice
               </span>
             </div>
             <div className="text-xl font-semibold text-gray-800 mb-1">
               #{invoiceData.invoiceNumber}
             </div>
-            <Badge variant={invoiceData.status === 'paid' ? 'default' : 'destructive'} className="print:bg-white print:text-black print:border print:border-gray-400">
+            <Badge variant={invoiceData.status === 'paid' ? 'default' : 'destructive'} className={`print:bg-white print:text-black print:border print:border-gray-400 ${color.badge}`}>
               {invoiceData.status === 'paid' ? '✅ Paid' : invoiceData.status === "unpaid" ? '❌ Unpaid' : invoiceData.status}
             </Badge>
           </div>
         </div>
 
-        <Separator className="mb-8 print:border-gray-300" />
+        <Separator className={`mb-8 print:border-gray-300 ${color.border}`} />
 
         {/* CLIENT AND DATE/AMOUNT INFO */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10 text-gray-700">
+        <div className={`grid grid-cols-1 md:grid-cols-2 gap-8 mb-10 text-gray-700`}>
           <div>
             <h4 className="font-semibold mb-2">Bill To:</h4>
             <div>
@@ -130,8 +153,8 @@ const PrintView = ({
 
         {/* INVOICE LINE ITEMS */}
         <div className="mb-8">
-          <div className="border border-gray-400 rounded-lg overflow-hidden print:border-gray-400">
-            <div className="bg-gray-50 grid grid-cols-12 gap-2 p-4 text-sm font-medium text-gray-700 border-b border-gray-300">
+          <div className={`border rounded-lg overflow-hidden print:border-gray-400 ${color.border}`}>
+            <div className={`bg-gray-50 grid grid-cols-12 gap-2 p-4 text-sm font-medium text-gray-700 border-b ${color.border}`}>
               <div className="col-span-6">Description</div>
               <div className="col-span-2 text-center">Qty</div>
               <div className="col-span-2 text-center">Rate</div>

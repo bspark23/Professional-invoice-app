@@ -148,9 +148,9 @@ const Index = () => {
     { value: "modern", label: "Modern" }
   ];
   const colorThemeOptions = [
-    { value: "blue", label: "Blue" },
-    { value: "green", label: "Green" },
-    { value: "gray", label: "Gray" },
+    { value: "blue", label: "Blue", bg: "bg-blue-500" },
+    { value: "green", label: "Green", bg: "bg-green-500" },
+    { value: "gray", label: "Gray", bg: "bg-gray-500" },
   ];
 
   return (
@@ -259,15 +259,26 @@ const Index = () => {
           </div>
           <div>
             <label className="block text-sm font-semibold mb-1">Color Theme</label>
-            <select
-              className="rounded border px-4 py-2 bg-gray-50 dark:bg-gray-700 focus:outline-none"
-              value={invoiceData.colorTheme || "blue"}
-              onChange={e => setInvoiceData(prev => ({ ...prev, colorTheme: e.target.value as 'blue' | 'green' | 'gray' }))}
-            >
+            {/* Custom color select with color dots for visual feedback */}
+            <div className="flex gap-2 mt-1">
               {colorThemeOptions.map(opt => (
-                <option value={opt.value} key={opt.value}>{opt.label}</option>
+                <button
+                  key={opt.value}
+                  type="button"
+                  className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition 
+                    ${opt.bg} 
+                    ${invoiceData.colorTheme === opt.value ? "ring-2 ring-offset-2 ring-black dark:ring-white scale-110" : "opacity-70"}
+                  `}
+                  aria-label={opt.label}
+                  onClick={() => setInvoiceData(prev => ({ ...prev, colorTheme: opt.value as 'blue' | 'green' | 'gray' }))}
+                  style={{ outline: "none" }}
+                >
+                  {invoiceData.colorTheme === opt.value && (
+                    <span className="text-white font-bold text-lg">✓</span>
+                  )}
+                </button>
               ))}
-            </select>
+            </div>
           </div>
         </div>
 
