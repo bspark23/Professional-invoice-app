@@ -150,6 +150,8 @@ export const useInvoiceData = () => {
       discountAmount: 0,
       businessName: invoiceData.businessName,
       businessLogo: invoiceData.businessLogo,
+      businessEmail: invoiceData.businessEmail,    // <-- Fix: preserve or set default
+      businessAddress: invoiceData.businessAddress, // <-- Fix: preserve or set default
       currency: invoiceData.currency,
       notes: '',
       status: 'unpaid'
