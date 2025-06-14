@@ -408,15 +408,15 @@ const InvoicePreview = ({
 
           {/* Invoice Items */}
           <div>
-            <div className="border rounded-lg overflow-hidden">
-              <div className="bg-gray-50 dark:bg-gray-700 grid grid-cols-12 gap-2 p-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+            <div className="border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
+              <div className="bg-gray-50 dark:bg-gray-700 grid grid-cols-12 gap-2 p-3 text-sm font-medium text-gray-700 dark:text-gray-300 border-b border-gray-300 dark:border-gray-600">
                 <div className="col-span-6">Description</div>
                 <div className="col-span-2 text-center">Qty</div>
                 <div className="col-span-2 text-center">Rate</div>
                 <div className="col-span-2 text-right">Amount</div>
               </div>
-              {invoiceData.lineItems.map((item) => (
-                <div key={item.id} className="grid grid-cols-12 gap-2 p-3 border-t text-sm">
+              {invoiceData.lineItems.map((item, index) => (
+                <div key={item.id} className={`grid grid-cols-12 gap-2 p-3 text-sm ${index < invoiceData.lineItems.length - 1 ? 'border-b border-gray-300 dark:border-gray-600' : ''}`}>
                   <div className="col-span-6">{item.description}</div>
                   <div className="col-span-2 text-center">{item.quantity}</div>
                   <div className="col-span-2 text-center">{formatCurrency(item.rate)}</div>
@@ -582,15 +582,15 @@ const PrintView = ({
 
           {/* Invoice Items */}
           <div className="mb-8">
-            <div className="border rounded-lg overflow-hidden print:border-gray-300">
-              <div className="bg-gray-50 grid grid-cols-12 gap-2 p-4 text-sm font-medium text-gray-700 print:bg-gray-100 print:text-black">
+            <div className="border border-gray-400 rounded-lg overflow-hidden print:border-gray-400">
+              <div className="bg-gray-50 grid grid-cols-12 gap-2 p-4 text-sm font-medium text-gray-700 print:bg-gray-100 print:text-black border-b border-gray-400 print:border-gray-400">
                 <div className="col-span-6">Description</div>
                 <div className="col-span-2 text-center">Qty</div>
                 <div className="col-span-2 text-center">Rate</div>
                 <div className="col-span-2 text-right">Amount</div>
               </div>
-              {invoiceData.lineItems.map((item) => (
-                <div key={item.id} className="grid grid-cols-12 gap-2 p-4 border-t text-sm print:text-black print:border-gray-300">
+              {invoiceData.lineItems.map((item, index) => (
+                <div key={item.id} className={`grid grid-cols-12 gap-2 p-4 text-sm print:text-black ${index < invoiceData.lineItems.length - 1 ? 'border-b border-gray-400 print:border-gray-400' : ''}`}>
                   <div className="col-span-6">{item.description}</div>
                   <div className="col-span-2 text-center">{item.quantity}</div>
                   <div className="col-span-2 text-center">{formatCurrency(item.rate)}</div>
@@ -1061,9 +1061,14 @@ const Index = () => {
       
       yPosition += 20;
       
-      // Line items table with proper spacing
+      // Line items table with proper spacing and borders
       pdf.setFillColor(249, 250, 251);
       pdf.rect(20, yPosition - 5, 170, 12, 'F');
+      
+      // Table borders
+      pdf.setDrawColor(100, 100, 100);
+      pdf.setLineWidth(0.5);
+      pdf.rect(20, yPosition - 5, 170, 12); // Header border
       
       pdf.setFont('helvetica', 'bold');
       pdf.setFontSize(9);
@@ -1075,15 +1080,16 @@ const Index = () => {
       
       yPosition += 15;
       
-      // Line items
+      // Line items with borders
       pdf.setFont('helvetica', 'normal');
       pdf.setFontSize(9);
       pdf.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
       
-      invoiceData.lineItems.forEach((item) => {
-        // Add border for each row
-        pdf.setDrawColor(230, 230, 230);
-        pdf.line(20, yPosition - 5, 190, yPosition - 5);
+      invoiceData.lineItems.forEach((item, index) => {
+        // Draw row borders
+        pdf.setDrawColor(150, 150, 150);
+        pdf.setLineWidth(0.3);
+        pdf.rect(20, yPosition - 5, 170, 12); // Row border
         
         pdf.text(item.description || 'No description', 25, yPosition + 3);
         pdf.text(item.quantity.toString(), 125, yPosition + 3);
@@ -1092,8 +1098,6 @@ const Index = () => {
         yPosition += 12;
       });
       
-      // Bottom border of table
-      pdf.line(20, yPosition - 5, 190, yPosition - 5);
       yPosition += 15;
       
       // Totals section - right aligned like print preview
@@ -1162,17 +1166,6 @@ const Index = () => {
 
   const exportToImage = (format: 'png' | 'jpeg') => {
     try {
-      // Create a temporary div to capture the print content with proper styling
-      const printContent = document.querySelector('.invoice-print-content');
-      if (!printContent) {
-        toast({
-          title: "Export Failed",
-          description: "Please go to print preview first, then try exporting.",
-          variant: "destructive",
-        });
-        return;
-      }
-
       // Create a canvas element to render the invoice
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
@@ -1229,10 +1222,15 @@ const Index = () => {
       ctx.fillText(`Due Date: ${invoiceData.dueDate}`, 500, dateY + 20);
       ctx.fillText(`Currency: ${currencies.find(c => c.code === invoiceData.currency)?.name}`, 500, dateY + 40);
       
-      // Line items table header
+      // Line items table header with borders
       let tableY = 300;
       ctx.fillStyle = '#f9fafb';
       ctx.fillRect(50, tableY - 10, 700, 30);
+      
+      // Draw table borders
+      ctx.strokeStyle = '#6b7280';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(50, tableY - 10, 700, 30); // Header border
       
       ctx.fillStyle = 'black';
       ctx.font = 'bold 12px Arial';
@@ -1241,12 +1239,19 @@ const Index = () => {
       ctx.fillText('Rate', 550, tableY + 10);
       ctx.fillText('Amount', 650, tableY + 10);
       
-      // Line items
+      // Line items with borders
       ctx.font = '11px Arial';
       tableY += 40;
       
       invoiceData.lineItems.forEach((item, index) => {
         const y = tableY + (index * 25);
+        
+        // Draw row borders
+        ctx.strokeStyle = '#d1d5db';
+        ctx.lineWidth = 0.5;
+        ctx.strokeRect(50, y - 10, 700, 25);
+        
+        ctx.fillStyle = 'black';
         ctx.fillText(item.description || 'No description', 60, y);
         ctx.fillText(item.quantity.toString(), 465, y);
         ctx.fillText(formatCurrency(item.rate), 550, y);
