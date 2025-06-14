@@ -157,9 +157,20 @@ const Index = () => {
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">InvoiceCraft Pro</h1>
-            <p className="text-gray-600 dark:text-gray-300">Create professional invoices</p>
+          <div className="flex items-center space-x-3">
+            {/* App Logo with circular white background */}
+            <div className="flex-shrink-0 w-12 h-12 rounded-full bg-white shadow border border-gray-200 flex items-center justify-center overflow-hidden">
+              <img
+                src="/lovable-uploads/7ee69eb6-9c39-4842-a5be-8ca62c793130.png"
+                alt="App Logo"
+                className="w-10 h-10 object-contain"
+                style={{ background: "transparent" }}
+              />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">InvoiceCraft Pro</h1>
+              <p className="text-gray-600 dark:text-gray-300">Create professional invoices</p>
+            </div>
           </div>
           <div className="flex gap-2">
             <Button onClick={toggleDarkMode} variant="outline" size="sm">
