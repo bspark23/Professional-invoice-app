@@ -14,39 +14,31 @@ import LandingPage from "@/components/LandingPage";
 const queryClient = new QueryClient();
 
 const AppContent = () => {
-  const [showLandingPage, setShowLandingPage] = useState(true);
+  const [showLandingPage, setShowLandingPage] = useState<boolean | null>(null); // null means uninitialized
   const [isInitialized, setIsInitialized] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
-    console.log('App initializing - checking localStorage...');
+    // Always run on mount and location change (in case user manually changes route)
     const hasVisited = localStorage.getItem('invoicecraft-has-visited');
-    console.log('localStorage value:', hasVisited);
-    console.log('Current location:', location.pathname);
-    
-    // Always show landing page if user hasn't visited, regardless of URL
+    console.info('[AppContent] Checking localStorage for landing page:', hasVisited);
     if (hasVisited !== 'true') {
-      console.log('User has not visited - showing landing page');
       setShowLandingPage(true);
     } else {
-      console.log('User has visited before - allowing app access');
       setShowLandingPage(false);
     }
-    
     setIsInitialized(true);
   }, [location]);
 
   const handleGetStarted = () => {
-    console.log('Get Started clicked - setting localStorage and navigating');
     localStorage.setItem('invoicecraft-has-visited', 'true');
     setShowLandingPage(false);
     navigate('/');
   };
 
-  // Show loading while checking localStorage
-  if (!isInitialized) {
-    console.log('App initializing...');
+  // Loading indicator while checking
+  if (!isInitialized || showLandingPage === null) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-lg text-gray-600">Loading...</div>
@@ -54,9 +46,9 @@ const AppContent = () => {
     );
   }
 
-  // ALWAYS show landing page if user hasn't visited - override any route
+  // Force show the custom landing page for new users regardless of url
   if (showLandingPage) {
-    console.log('Showing custom landing page');
+    console.info('[AppContent] Rendering Landing Page!');
     return (
       <LandingPage
         businessName="InvoiceCraft Pro"
@@ -70,8 +62,7 @@ const AppContent = () => {
     );
   }
 
-  // Only show app routes if user has completed landing
-  console.log('Showing app routes');
+  // Show app proper
   return (
     <Routes>
       <Route path="/" element={<LanguageSelector />} />
