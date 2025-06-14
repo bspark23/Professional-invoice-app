@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -166,16 +165,20 @@ const LandingPage = ({
               <CardContent className="p-8">
                 <div className="flex justify-between items-start mb-8">
                   <div className="flex items-center gap-4">
-                    {businessLogo && (
+                    {businessLogo ? (
                       <img 
                         src={businessLogo} 
                         alt="Company Logo" 
                         className="w-16 h-16 object-contain rounded-lg shadow-md"
                       />
+                    ) : (
+                      <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+                        <FileText className="w-8 h-8 text-white" />
+                      </div>
                     )}
                     <div>
                       <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                        {businessName}
+                        {businessName || "InvoiceCraft Pro"}
                       </h2>
                     </div>
                   </div>

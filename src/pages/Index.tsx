@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -46,23 +45,23 @@ const Index = () => {
 
   useEffect(() => {
     // Initialize dark mode from localStorage
-    const savedDarkMode = localStorage.getItem('invoicer-dark-mode') === 'true';
+    const savedDarkMode = localStorage.getItem('invoicecraft-dark-mode') === 'true';
     setIsDarkMode(savedDarkMode);
     document.documentElement.classList.toggle('dark', savedDarkMode);
 
     // Check if user has visited before
-    const hasVisited = localStorage.getItem('invoicer-has-visited') === 'true';
+    const hasVisited = localStorage.getItem('invoicecraft-has-visited') === 'true';
     if (hasVisited) {
       setShowLandingPage(false);
     }
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('invoicer-dark-mode', isDarkMode.toString());
+    localStorage.setItem('invoicecraft-dark-mode', isDarkMode.toString());
   }, [isDarkMode]);
 
   const handleGetStarted = () => {
-    localStorage.setItem('invoicer-has-visited', 'true');
+    localStorage.setItem('invoicecraft-has-visited', 'true');
     setShowLandingPage(false);
   };
 
@@ -95,7 +94,7 @@ const Index = () => {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <CardTitle className="text-3xl font-bold text-blue-600 dark:text-blue-400">Invoicer Pro</CardTitle>
+            <CardTitle className="text-3xl font-bold text-blue-600 dark:text-blue-400">InvoiceCraft Pro</CardTitle>
             <p className="text-gray-600 dark:text-gray-300 mt-2">Professional invoicing for freelancers</p>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -159,7 +158,7 @@ const Index = () => {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Invoicer Pro</h1>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">InvoiceCraft Pro</h1>
             <p className="text-gray-600 dark:text-gray-300">Create professional invoices</p>
           </div>
           <div className="flex gap-2">
