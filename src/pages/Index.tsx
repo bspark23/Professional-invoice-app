@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -1002,12 +1003,12 @@ const Index = () => {
       // Business name
       pdf.setFont('helvetica', 'bold');
       pdf.setFontSize(20);
-      pdf.setTextColor(...blueColor);
+      pdf.setTextColor(blueColor[0], blueColor[1], blueColor[2]);
       pdf.text(invoiceData.businessName, invoiceData.businessLogo ? 60 : 20, yPosition + 15);
       
       // Invoice title and details on the right
       pdf.setFontSize(16);
-      pdf.setTextColor(...primaryColor);
+      pdf.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
       pdf.text('INVOICE', 150, yPosition + 10);
       pdf.setFont('helvetica', 'normal');
       pdf.setFontSize(10);
@@ -1016,10 +1017,10 @@ const Index = () => {
       // Status badge
       pdf.setFontSize(9);
       if (invoiceData.status === 'paid') {
-        pdf.setTextColor(...greenColor);
+        pdf.setTextColor(greenColor[0], greenColor[1], greenColor[2]);
         pdf.text('✅ Paid', 150, yPosition + 30);
       } else {
-        pdf.setTextColor(...redColor);
+        pdf.setTextColor(redColor[0], redColor[1], redColor[2]);
         pdf.text('❌ Unpaid', 150, yPosition + 30);
       }
       
@@ -1033,7 +1034,7 @@ const Index = () => {
       // Client and Date Info - two columns like print preview
       pdf.setFont('helvetica', 'bold');
       pdf.setFontSize(11);
-      pdf.setTextColor(...primaryColor);
+      pdf.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
       pdf.text('Bill To:', 20, yPosition);
       
       pdf.setFont('helvetica', 'normal');
@@ -1077,7 +1078,7 @@ const Index = () => {
       // Line items
       pdf.setFont('helvetica', 'normal');
       pdf.setFontSize(9);
-      pdf.setTextColor(...primaryColor);
+      pdf.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
       
       invoiceData.lineItems.forEach((item) => {
         // Add border for each row
