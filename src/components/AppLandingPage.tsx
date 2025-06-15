@@ -1,9 +1,9 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { VoluntaryContribution } from "./VoluntaryContribution";
 import { 
   FileText, 
   Zap, 
@@ -360,6 +360,9 @@ const AppLandingPage = ({ onGetStarted }: AppLandingPageProps) => {
           </div>
         </div>
       </div>
+
+      {/* Voluntary Contribution Section */}
+      <VoluntaryContribution />
 
       {/* CTA Section */}
       <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-gray-800 dark:to-gray-900 py-20">
