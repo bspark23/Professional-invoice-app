@@ -1,7 +1,6 @@
-
 import { useState } from "react";
 import { ActivityEvent } from "@/hooks/useInvoiceActivity";
-import { Clock, Activity } from "lucide-react";
+import { Clock, Activity, CreditCard, Users, Mail, Calculator } from "lucide-react";
 
 interface Props {
   events: ActivityEvent[];
@@ -11,18 +10,30 @@ const typeLabel: Record<ActivityEvent["type"], string> = {
   created: "Invoice created",
   edited: "Invoice edited",
   downloaded: "Invoice downloaded",
+  payment: "Payment received",
+  client: "Client updated",
+  email: "Email sent",
+  estimate: "Estimate generated",
 };
 
 const typeColor: Record<ActivityEvent["type"], string> = {
   created: "text-blue-600",
   edited: "text-orange-600",
   downloaded: "text-green-600",
+  payment: "text-green-600",
+  client: "text-purple-600",
+  email: "text-orange-600",
+  estimate: "text-teal-600",
 };
 
 const iconByType: Record<ActivityEvent["type"], React.ReactNode> = {
   created: <Activity className="w-5 h-5 text-blue-600" />,
   edited: <Activity className="w-5 h-5 text-orange-600" />,
   downloaded: <Activity className="w-5 h-5 text-green-600" />,
+  payment: <CreditCard className="w-5 h-5 text-green-600" />,
+  client: <Users className="w-5 h-5 text-purple-600" />,
+  email: <Mail className="w-5 h-5 text-orange-600" />,
+  estimate: <Calculator className="w-5 h-5 text-teal-600" />,
 };
 
 function formatTimestamp(ts: string) {
