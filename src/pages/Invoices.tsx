@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import NewDashboardSidebar from "@/components/NewDashboardSidebar";
@@ -10,34 +9,16 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Plus, Search, Edit, Trash2, Download, Mail, FileText, 
-  DollarSign, Calendar, User, Building, Eye, Copy, Send
+  DollarSign, Calendar, User, Building, Eye, Copy, Send, Palette
 } from "lucide-react";
 import { useInvoiceData } from "@/hooks/useInvoiceData";
 import { useClients } from "@/hooks/useClients";
 import { useAuthLocal } from "@/hooks/useAuthLocal";
 import { currencies } from "@/types/invoice";
 import { formatCurrency, calculateTotal } from "@/utils/invoiceUtils";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
+import InvoiceTemplateSelector from "@/components/InvoiceTemplateSelector";
+import LogoSignatureUpload from "@/components/LogoSignatureUpload";
+import InvoicePreviewModal from "@/components/InvoicePreviewModal";
 
 const Invoices: React.FC = () => {
   const { user } = useAuthLocal();
@@ -45,6 +26,8 @@ const Invoices: React.FC = () => {
   const [viewMode, setViewMode] = useState<'list' | 'create' | 'edit'>('list');
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedInvoice, setSelectedInvoice] = useState<string | null>(null);
+  const [showTemplateSelector, setShowTemplateSelector] = useState(false);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
   
   const {
     invoiceData,
@@ -106,11 +89,25 @@ const Invoices: React.FC = () => {
     });
   };
 
-  const handleDownloadPDF = (invoice: any) => {
+  const handleTemplateSelect = (template: string, colorTheme: string) => {
+    setInvoiceData(prev => ({
+      ...prev,
+      template: template as any,
+      colorTheme: colorTheme as any
+    }));
+  };
+
+  const handlePreviewInvoice = () => {
+    setShowPreviewModal(true);
+  };
+
+  const handleDownloadPDF = () => {
+    // This would implement PDF download
     toast({
       title: "Download Feature",
       description: "PDF download functionality would be implemented here.",
     });
+    setShowPreviewModal(false);
   };
 
   const getStatusColor = (status: string) => {
@@ -142,6 +139,14 @@ const Invoices: React.FC = () => {
                   <p className="text-gray-600">Fill in the invoice details below.</p>
                 </div>
                 <div className="flex gap-2">
+                  <Button variant="outline" onClick={() => setShowTemplateSelector(true)}>
+                    <Palette className="w-4 h-4 mr-2" />
+                    Choose Template
+                  </Button>
+                  <Button variant="outline" onClick={handlePreviewInvoice}>
+                    <Eye className="w-4 h-4 mr-2" />
+                    Preview
+                  </Button>
                   <Button variant="outline" onClick={() => setViewMode('list')}>
                     Cancel
                   </Button>
@@ -152,6 +157,35 @@ const Invoices: React.FC = () => {
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Template Selection Card */}
+                <Card className="lg:col-span-2">
+                  <CardHeader>
+                    <CardTitle>Template & Style</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                      <div>
+                        <p className="font-medium">Current Template: {invoiceData.template || 'Minimalist'}</p>
+                        <p className="text-sm text-gray-600">Color Theme: {invoiceData.colorTheme || 'Blue'}</p>
+                      </div>
+                      <Button variant="outline" onClick={() => setShowTemplateSelector(true)}>
+                        <Palette className="w-4 h-4 mr-2" />
+                        Change Template
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Logo & Signature Upload */}
+                <LogoSignatureUpload
+                  businessLogo={invoiceData.businessLogo}
+                  signatureImage={invoiceData.signatureImage}
+                  onLogoChange={(dataUrl) => setInvoiceData(prev => ({ ...prev, businessLogo: dataUrl }))}
+                  onSignatureChange={(dataUrl) => setInvoiceData(prev => ({ ...prev, signatureImage: dataUrl }))}
+                  onLogoClear={() => setInvoiceData(prev => ({ ...prev, businessLogo: "" }))}
+                  onSignatureClear={() => setInvoiceData(prev => ({ ...prev, signatureImage: "" }))}
+                />
+
                 {/* Invoice Details */}
                 <Card>
                   <CardHeader>
@@ -443,6 +477,27 @@ const Invoices: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* Template Selector Modal */}
+        <InvoiceTemplateSelector
+          isOpen={showTemplateSelector}
+          onClose={() => setShowTemplateSelector(false)}
+          currentTemplate={invoiceData.template || 'minimalist'}
+          currentColorTheme={invoiceData.colorTheme || 'blue'}
+          onTemplateSelect={handleTemplateSelect}
+        />
+
+        {/* Preview Modal */}
+        <InvoicePreviewModal
+          isOpen={showPreviewModal}
+          onClose={() => setShowPreviewModal(false)}
+          invoiceData={invoiceData}
+          formatCurrency={formatCurrency}
+          calculateSubtotal={() => invoiceData.lineItems.reduce((sum, item) => sum + item.amount, 0)}
+          calculateTax={() => (invoiceData.lineItems.reduce((sum, item) => sum + item.amount, 0) * invoiceData.taxRate) / 100}
+          calculateTotal={() => calculateTotal(invoiceData)}
+          onDownload={handleDownloadPDF}
+        />
       </SidebarProvider>
     );
   }

@@ -1,9 +1,13 @@
+
 import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Download, Printer, Mail, X } from "lucide-react";
+import { Download, Printer, Mail, Image as ImageIcon } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import InvoicePreview from "./InvoicePreview";
 import { InvoiceData } from "@/types/invoice";
+import { downloadAsPDF, downloadAsImage, generateFileName } from "@/utils/downloadUtils";
+import { useToast } from "@/hooks/use-toast";
 
 interface InvoicePreviewModalProps {
   isOpen: boolean;
@@ -13,7 +17,7 @@ interface InvoicePreviewModalProps {
   calculateSubtotal: () => number;
   calculateTax: () => number;
   calculateTotal: () => number;
-  onDownload: () => void;
+  onDownload?: () => void;
   onEmail?: () => void;
 }
 
@@ -25,11 +29,46 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
   calculateSubtotal,
   calculateTax,
   calculateTotal,
-  onDownload,
   onEmail
 }) => {
+  const { toast } = useToast();
+
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleDownloadPDF = async () => {
+    try {
+      const filename = generateFileName(invoiceData.invoiceNumber, invoiceData.clientName, 'pdf');
+      await downloadAsPDF('invoice-preview-content', filename);
+      toast({
+        title: "Success",
+        description: "Invoice downloaded as PDF successfully!",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to download PDF. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDownloadImage = async (format: 'png' | 'jpg') => {
+    try {
+      const filename = generateFileName(invoiceData.invoiceNumber, invoiceData.clientName, format);
+      await downloadAsImage('invoice-preview-content', filename, format);
+      toast({
+        title: "Success",
+        description: `Invoice downloaded as ${format.toUpperCase()} successfully!`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: `Failed to download ${format.toUpperCase()}. Please try again.`,
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -49,23 +88,43 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
                   Email
                 </Button>
               )}
-              <Button size="sm" onClick={onDownload}>
-                <Download className="w-4 h-4 mr-2" />
-                Download
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="sm">
+                    <Download className="w-4 h-4 mr-2" />
+                    Download
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem onClick={handleDownloadPDF}>
+                    <Download className="w-4 h-4 mr-2" />
+                    Download as PDF
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleDownloadImage('png')}>
+                    <ImageIcon className="w-4 h-4 mr-2" />
+                    Download as PNG
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleDownloadImage('jpg')}>
+                    <ImageIcon className="w-4 h-4 mr-2" />
+                    Download as JPG
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </DialogHeader>
         
         <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
           <div className="bg-white shadow-lg rounded-lg overflow-hidden">
-            <InvoicePreview
-              invoiceData={invoiceData}
-              formatCurrency={formatCurrency}
-              calculateSubtotal={calculateSubtotal}
-              calculateTax={calculateTax}
-              calculateTotal={calculateTotal}
-            />
+            <div id="invoice-preview-content">
+              <InvoicePreview
+                invoiceData={invoiceData}
+                formatCurrency={formatCurrency}
+                calculateSubtotal={calculateSubtotal}
+                calculateTax={calculateTax}
+                calculateTotal={calculateTotal}
+              />
+            </div>
           </div>
         </div>
       </DialogContent>
