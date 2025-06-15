@@ -34,8 +34,59 @@ export default function CalendarView() {
     setMonthData(map);
   }, [savedInvoices]);
 
-  // Generate a list of due dates for modifiers
+  // Generate a list of due dates for modifiers (dates as Date objects)
   const datesWithInvoices = Object.keys(monthData).map(ds => new Date(ds));
+
+  // Define custom classNames for Calendar
+  const calendarClassNames = {
+    months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
+    month: "space-y-4",
+    caption: "flex justify-center pt-1 relative items-center",
+    caption_label: "text-sm font-medium",
+    nav: "space-x-1 flex items-center",
+    nav_button:
+      "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 border border-input rounded-md",
+    nav_button_previous: "absolute left-1",
+    nav_button_next: "absolute right-1",
+    table: "w-full border-collapse space-y-1",
+    head_row: "flex",
+    head_cell:
+      "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",
+    row: "flex w-full mt-2",
+    cell: "h-9 w-9 text-center text-sm p-0 relative",
+    day: clsx(
+      "h-9 w-9 p-0 font-normal focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 aria-selected:opacity-100 transition-all relative"
+    ),
+    day_range_end: "day-range-end",
+    day_selected:
+      "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
+    day_today: "bg-accent text-accent-foreground",
+    day_outside:
+      "day-outside text-muted-foreground opacity-50 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30",
+    day_disabled: "text-muted-foreground opacity-50",
+    day_range_middle:
+      "aria-selected:bg-accent aria-selected:text-accent-foreground",
+    day_hidden: "invisible",
+    day_withInvoices: "day-with-invoices relative"
+  };
+
+  // Adds colored dot to days with invoices after the calendar renders
+  useEffect(() => {
+    setTimeout(() => {
+      document.querySelectorAll(".day-with-invoices").forEach(day => {
+        if (day && !day.querySelector('.invoice-dot')) {
+          const dot = document.createElement("span");
+          dot.className = "invoice-dot";
+          const dstr = day.getAttribute("aria-label")?.split("T")[0] || "";
+          const events = monthData[dstr] || [];
+          let c = "#22d3ee";
+          if (events.some(e => !e.paid)) c = "#f59e42";
+          dot.style.background = c;
+          day.appendChild(dot);
+        }
+      });
+    }, 1);
+  }, [monthData]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:bg-gradient-to-br dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex flex-col items-center py-8">
@@ -59,78 +110,55 @@ export default function CalendarView() {
       </style>
       <Card className="w-full max-w-3xl shadow-2xl border-0 bg-white/95 dark:bg-gray-800/95 backdrop-blur mb-8">
         <CardHeader>
-          <CardTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Invoice Calendar</CardTitle>
-          <p className="text-gray-600 dark:text-gray-300">See when your invoices are due at a glance.</p>
+          <CardTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            Invoice Calendar
+          </CardTitle>
+          <p className="text-gray-600 dark:text-gray-300">
+            See when your invoices are due at a glance.
+          </p>
         </CardHeader>
         <CardContent className="flex flex-col items-center py-4">
           <Calendar
             mode="single"
             selected={undefined}
             modifiers={{
-              withInvoices: datesWithInvoices
+              withInvoices: (date: Date) =>
+                datesWithInvoices.some(
+                  d =>
+                    d.getFullYear() === date.getFullYear() &&
+                    d.getMonth() === date.getMonth() &&
+                    d.getDate() === date.getDate()
+                ),
             }}
             showOutsideDays
             className="pointer-events-auto"
-            // Highlight days with invoices by using modifiers and classNames
-            classNames={{
-              ...Calendar.defaultProps?.classNames,
-              day: clsx(
-                Calendar.defaultProps?.classNames?.day,
-                "day-with-invoices relative"
-              ),
-              day_withInvoices: "day-with-invoices", // just for scoping
-            }}
-            components={{
-              // To add a dot: Add a pseudo-element, or in day modifier, use content in classNames.
-            }}
+            classNames={calendarClassNames}
             onDayClick={() => { }}
-            // As react-day-picker doesn't support direct children in day cell,
-            // instead, we add an absolutely positioned dot here after the render.
           />
-          {/* Decorate the dots inline */}
-          <div style={{ display: "none" }} aria-hidden="true">
-            {/*
-              .invoice-dot logic is in <style> above
-            */}
-          </div>
-          <script dangerouslySetInnerHTML={{
-            __html: `
-              setTimeout(() => {
-                document.querySelectorAll('.day-with-invoices').forEach(day => {
-                  if (day && !day.querySelector('.invoice-dot')) {
-                    const dot = document.createElement('span');
-                    dot.className = 'invoice-dot';
-                    // Let unpaid = orange, else blue
-                    const dstr = day?.getAttribute('aria-label')?.split('T')[0] || "";
-                    const events = ${JSON.stringify(monthData)};
-                    const dateKey = day?.getAttribute('aria-label')?.split('T')[0];
-                    let c = '#22d3ee';
-                    if(events[dateKey] && events[dateKey].some(e => !e.paid)) c = '#f59e42';
-                    dot.style.background = c;
-                    day.appendChild(dot);
-                  }
-                });
-              }, 1);
-            `
-          }} />
           {/* List of invoices/due dates below calendar */}
           <div className="mt-6 w-full">
-            <h3 className="font-semibold text-blue-700 dark:text-blue-300 mb-2">Due Invoices</h3>
+            <h3 className="font-semibold text-blue-700 dark:text-blue-300 mb-2">
+              Due Invoices
+            </h3>
             <ul>
               {Object.entries(monthData)
                 .sort(([a], [b]) => a.localeCompare(b))
                 .map(([date, events]) =>
                   events.map(e => (
                     <li key={e.id} className="flex items-center gap-3 mb-1">
-                      <span className={`px-2 rounded text-xs ${e.paid ? 'bg-green-200 text-green-800' : 'bg-yellow-200 text-yellow-800'}`}>
-                        {e.paid ? 'Paid' : 'Due'}
+                      <span
+                        className={`px-2 rounded text-xs ${e.paid
+                          ? "bg-green-200 text-green-800"
+                          : "bg-yellow-200 text-yellow-800"
+                          }`}
+                      >
+                        {e.paid ? "Paid" : "Due"}
                       </span>
                       <span className="font-bold">{e.name}</span>
                       <span className="text-gray-500">{date}</span>
                     </li>
                   ))
-                )
-              }
+                )}
             </ul>
           </div>
         </CardContent>
@@ -138,3 +166,4 @@ export default function CalendarView() {
     </div>
   );
 }
+
