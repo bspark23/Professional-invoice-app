@@ -1,9 +1,34 @@
+
 import { useState, useEffect } from "react";
 import { InvoiceData, LineItem } from "@/types/invoice";
 import { useToast } from "@/hooks/use-toast";
 
 // Now always use profileId as namespace for persistence
 export const useInvoiceData = (profileId?: string | null) => {
+  // Place helper at the top so it's always in scope!
+  const generateInvoiceNumber = () => {
+    const STORAGE_PREFIX = profileId ? `profile-${profileId}-` : "";
+    const savedInvoicesData = localStorage.getItem(`${STORAGE_PREFIX}invoicer-pro-invoices`);
+    let savedInvoices: InvoiceData[] = [];
+    if (savedInvoicesData) {
+      try {
+        savedInvoices = JSON.parse(savedInvoicesData);
+      } catch (error) {
+        savedInvoices = [];
+      }
+    }
+    const year = new Date().getFullYear();
+    const month = String(new Date().getMonth() + 1).padStart(2, '0');
+    const lastInvoiceNumber = savedInvoices.length > 0
+      ? Math.max(...savedInvoices.map(inv => {
+          const match = inv.invoiceNumber.match(/(\d+)$/);
+          return match ? parseInt(match[1]) : 0;
+        }))
+      : 0;
+    const nextNumber = String(lastInvoiceNumber + 1).padStart(3, '0');
+    return `INV-${year}-${month}-${nextNumber}`;
+  };
+
   const { toast } = useToast();
   const STORAGE_PREFIX = profileId ? `profile-${profileId}-` : "";
   const [savedInvoices, setSavedInvoices] = useState<InvoiceData[]>([]);
@@ -190,17 +215,6 @@ export const useInvoiceData = (profileId?: string | null) => {
         })
       }));
     },
-    generateInvoiceNumber: () => {
-      const year = new Date().getFullYear();
-      const month = String(new Date().getMonth() + 1).padStart(2, '0');
-      const lastInvoiceNumber = savedInvoices.length > 0
-        ? Math.max(...savedInvoices.map(inv => {
-            const match = inv.invoiceNumber.match(/(\d+)$/);
-            return match ? parseInt(match[1]) : 0;
-          }))
-        : 0;
-      const nextNumber = String(lastInvoiceNumber + 1).padStart(3, '0');
-      return `INV-${year}-${month}-${nextNumber}`;
-    }
+    generateInvoiceNumber,
   };
 };
