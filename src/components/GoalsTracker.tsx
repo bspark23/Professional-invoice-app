@@ -44,25 +44,28 @@ const GoalsTracker: React.FC<GoalsTrackerProps> = ({ savedInvoices }) => {
   useEffect(() => {
     const savedGoals = localStorage.getItem(GOALS_KEY);
     if (savedGoals) {
-      setGoals(JSON.parse(savedGoals));
+      try {
+        setGoals(JSON.parse(savedGoals));
+      } catch (error) {
+        console.error('Error parsing saved goals:', error);
+        setGoals([]);
+      }
     }
   }, [GOALS_KEY]);
 
   useEffect(() => {
-    const updatedGoals = goals.map(goal => ({
-      ...goal,
-      current: calculateCurrentProgress(goal)
-    }));
-    
-    if (JSON.stringify(updatedGoals) !== JSON.stringify(goals)) {
-      setGoals(updatedGoals);
+    if (goals.length > 0) {
+      const updatedGoals = goals.map(goal => ({
+        ...goal,
+        current: calculateCurrentProgress(goal)
+      }));
+      
       localStorage.setItem(GOALS_KEY, JSON.stringify(updatedGoals));
     }
-  }, [savedInvoices, goals.length]);
+  }, [savedInvoices, GOALS_KEY]);
 
   const calculateCurrentProgress = (goal: Goal) => {
     const now = new Date();
-    const goalDate = new Date(goal.createdAt);
     
     let startDate = new Date();
     switch (goal.timeframe) {
@@ -82,7 +85,7 @@ const GoalsTracker: React.FC<GoalsTrackerProps> = ({ savedInvoices }) => {
     }
 
     const relevantInvoices = savedInvoices.filter(invoice => {
-      const invoiceDate = new Date(invoice.date);
+      const invoiceDate = new Date(invoice.invoiceDate || invoice.date);
       return invoiceDate >= startDate && invoiceDate <= now;
     });
 
@@ -101,11 +104,13 @@ const GoalsTracker: React.FC<GoalsTrackerProps> = ({ savedInvoices }) => {
   };
 
   const addGoal = () => {
-    if (!newGoal.title || !newGoal.target) return;
+    if (!newGoal.title.trim() || !newGoal.target || newGoal.target <= 0) {
+      return;
+    }
 
     const goal: Goal = {
       id: Date.now().toString(),
-      title: newGoal.title,
+      title: newGoal.title.trim(),
       type: newGoal.type,
       target: newGoal.target,
       current: 0,
@@ -119,6 +124,7 @@ const GoalsTracker: React.FC<GoalsTrackerProps> = ({ savedInvoices }) => {
     setGoals(updatedGoals);
     localStorage.setItem(GOALS_KEY, JSON.stringify(updatedGoals));
 
+    // Reset form
     setNewGoal({
       title: '',
       type: 'revenue',
@@ -191,7 +197,7 @@ const GoalsTracker: React.FC<GoalsTrackerProps> = ({ savedInvoices }) => {
                   id="title"
                   value={newGoal.title}
                   onChange={(e) => setNewGoal({...newGoal, title: e.target.value})}
-                  placeholder="e.g., Earn ₦500,000 this month"
+                  placeholder="e.g., Earn $5,000 this month"
                 />
               </div>
               
@@ -215,9 +221,10 @@ const GoalsTracker: React.FC<GoalsTrackerProps> = ({ savedInvoices }) => {
                 <Input
                   id="target"
                   type="number"
-                  value={newGoal.target}
+                  min="1"
+                  value={newGoal.target || ''}
                   onChange={(e) => setNewGoal({...newGoal, target: Number(e.target.value)})}
-                  placeholder={newGoal.type === 'revenue' ? '500000' : '10'}
+                  placeholder={newGoal.type === 'revenue' ? '5000' : '10'}
                 />
               </div>
 
@@ -263,7 +270,7 @@ const GoalsTracker: React.FC<GoalsTrackerProps> = ({ savedInvoices }) => {
                 <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
                   Cancel
                 </Button>
-                <Button onClick={addGoal}>
+                <Button onClick={addGoal} disabled={!newGoal.title.trim() || !newGoal.target || newGoal.target <= 0}>
                   Add Goal
                 </Button>
               </div>
@@ -314,10 +321,10 @@ const GoalsTracker: React.FC<GoalsTrackerProps> = ({ savedInvoices }) => {
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span>
-                        {goal.type === 'revenue' ? formatCurrency(goal.current) : `${goal.current} invoices`}
+                        {goal.type === 'revenue' ? formatCurrency(goal.current, goal.currency) : `${goal.current} invoices`}
                       </span>
                       <span className="font-medium">
-                        {goal.type === 'revenue' ? formatCurrency(goal.target) : `${goal.target} invoices`}
+                        {goal.type === 'revenue' ? formatCurrency(goal.target, goal.currency) : `${goal.target} invoices`}
                       </span>
                     </div>
                     <Progress 

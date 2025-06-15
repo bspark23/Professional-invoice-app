@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
@@ -7,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Download, Eye, Mail, Palette, Save, Image, Edit, FileText } from "lucide-react";
+import { Download, Eye, Mail, Save, Image, Edit, FileText } from "lucide-react";
 import { v4 as uuidv4 } from 'uuid';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -19,6 +20,7 @@ import HelpCenter from "@/components/HelpCenter";
 import LogoSignatureUpload from "@/components/LogoSignatureUpload";
 import SendInvoiceDialog from "@/components/SendInvoiceDialog";
 import InvoicePreviewModal from "@/components/InvoicePreviewModal";
+import InvoiceTemplateMinimalist from "@/components/invoice-templates/InvoiceTemplateMinimalist";
 import { useInvoiceData } from "@/hooks/useInvoiceData";
 import { useAuthLocal } from "@/hooks/useAuthLocal";
 import { formatCurrency, calculateTotal } from "@/utils/invoiceUtils";
@@ -45,13 +47,9 @@ const Invoices = () => {
   } = useInvoiceData(null, user?.email || user?.profileName);
   const [formData, setFormData] = useState<InvoiceData>(invoiceData);
   const [isLogoDialogOpen, setIsLogoDialogOpen] = useState(false);
-  const [isTemplateDialogOpen, setIsTemplateDialogOpen] = useState(false);
   const [isSendDialogOpen, setIsSendDialogOpen] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<InvoiceData | null>(null);
-  const [selectedTemplate, setSelectedTemplate] = useState<string>('minimalist');
-  const [selectedColorTheme, setSelectedColorTheme] = useState<string>('blue');
-  const [selectedCustomTemplate, setSelectedCustomTemplate] = useState<CustomTemplate | null>(null);
   const [isHelpCenterOpen, setIsHelpCenterOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -146,18 +144,6 @@ const Invoices = () => {
     }
   };
 
-  const handleSaveCustomTemplate = (template: Omit<CustomTemplate, "id" | "createdAt" | "userId">): CustomTemplate => {
-    const savedTemplate: CustomTemplate = {
-      ...template,
-      id: uuidv4(),
-      createdAt: new Date().toISOString(),
-      userId: user?.email || "anonymous"
-    };
-    
-    console.log("Custom template saved:", savedTemplate);
-    return savedTemplate;
-  };
-
   // Calculate totals for preview
   const calculateSubtotal = () => {
     return formData.lineItems.reduce((sum, item) => sum + item.amount, 0);
@@ -178,7 +164,7 @@ const Invoices = () => {
     <SidebarProvider>
       <div className="flex min-h-screen w-full bg-gray-50">
         <NewDashboardSidebar />
-        <div className="flex-1">
+        <div className="flex-1 w-full">
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center p-4 border-b bg-white gap-4">
             <div className="flex items-center gap-4">
@@ -196,10 +182,10 @@ const Invoices = () => {
 
           {/* Main content */}
           <div className="p-4 sm:p-6">
-            {/* Invoice form and other content */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Invoice form and preview layout */}
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
               {/* Invoice Form */}
-              <div className="lg:col-span-2">
+              <div className="space-y-6">
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -415,55 +401,6 @@ const Invoices = () => {
                       </div>
                     </div>
 
-                    {/* Payment Information */}
-                    <div className="space-y-4">
-                      <h3 className="font-semibold text-lg">Payment Information</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor="paymentTerms">Payment Terms</Label>
-                          <Input
-                            id="paymentTerms"
-                            name="paymentTerms"
-                            value={formData.paymentTerms || ''}
-                            onChange={handleInputChange}
-                            placeholder="Net 30 days"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="accountNumber">Account Number</Label>
-                          <Input
-                            id="accountNumber"
-                            name="accountNumber"
-                            value={formData.accountNumber || ''}
-                            onChange={handleInputChange}
-                            placeholder="Account Number"
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <Label htmlFor="bankDetails">Bank Details</Label>
-                        <Textarea
-                          id="bankDetails"
-                          name="bankDetails"
-                          value={formData.bankDetails || ''}
-                          onChange={handleInputChange}
-                          placeholder="Bank name, routing number, etc."
-                          rows={2}
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="paymentInstructions">Payment Instructions</Label>
-                        <Textarea
-                          id="paymentInstructions"
-                          name="paymentInstructions"
-                          value={formData.paymentInstructions || ''}
-                          onChange={handleInputChange}
-                          placeholder="Special payment instructions..."
-                          rows={2}
-                        />
-                      </div>
-                    </div>
-
                     {/* Notes */}
                     <div>
                       <Label htmlFor="notes">Notes</Label>
@@ -510,10 +447,8 @@ const Invoices = () => {
                     </div>
                   </CardContent>
                 </Card>
-              </div>
 
-              {/* Saved Invoices */}
-              <div>
+                {/* Saved Invoices */}
                 <Card>
                   <CardHeader>
                     <CardTitle>Saved Invoices</CardTitle>
@@ -547,6 +482,26 @@ const Invoices = () => {
                           </div>
                         ))
                       )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Live Invoice Preview - Only show on desktop */}
+              <div className="hidden xl:block">
+                <Card className="sticky top-6">
+                  <CardHeader>
+                    <CardTitle>Live Preview</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div id="invoice-preview" className="transform scale-75 origin-top-left w-[133%] h-auto overflow-hidden">
+                      <InvoiceTemplateMinimalist
+                        invoiceData={formData}
+                        formatCurrency={formatCurrency}
+                        calculateSubtotal={calculateSubtotal}
+                        calculateTax={calculateTax}
+                        calculateTotal={calculateTotalAmount}
+                      />
                     </div>
                   </CardContent>
                 </Card>

@@ -38,19 +38,12 @@
     --radius: 0.5rem;
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
@@ -96,14 +89,39 @@
 @layer base {
   * {
     @apply border-border;
+    box-sizing: border-box;
+  }
+
+  html {
+    @apply scroll-smooth;
   }
 
   body {
     @apply bg-background text-foreground;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Responsive typography */
+  h1 {
+    @apply text-xl sm:text-2xl lg:text-3xl xl:text-4xl;
+  }
+
+  h2 {
+    @apply text-lg sm:text-xl lg:text-2xl xl:text-3xl;
+  }
+
+  h3 {
+    @apply text-base sm:text-lg lg:text-xl xl:text-2xl;
+  }
+
+  /* Ensure containers are responsive */
+  .container {
+    @apply w-full max-w-full px-4 sm:px-6 lg:px-8;
   }
 }
 
-/* Animation utilities */
+/* Responsive utilities */
 @layer utilities {
   .animate-fade-in {
     animation: fade-in 0.6s ease-out;
@@ -118,6 +136,38 @@
       opacity: 1;
       transform: translateY(0);
     }
+  }
+
+  /* Responsive grid utilities */
+  .grid-responsive {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6;
+  }
+
+  .grid-responsive-2 {
+    @apply grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6;
+  }
+
+  /* Responsive spacing */
+  .spacing-responsive {
+    @apply p-4 sm:p-6 lg:p-8;
+  }
+
+  .margin-responsive {
+    @apply m-4 sm:m-6 lg:m-8;
+  }
+
+  /* Mobile-first responsive flex */
+  .flex-responsive {
+    @apply flex flex-col sm:flex-row items-start sm:items-center gap-4;
+  }
+
+  /* Responsive text sizes */
+  .text-responsive {
+    @apply text-sm sm:text-base lg:text-lg;
+  }
+
+  .text-responsive-small {
+    @apply text-xs sm:text-sm lg:text-base;
   }
 }
 
@@ -149,5 +199,27 @@
   
   body {
     background-color: white !important;
+  }
+}
+
+/* Desktop specific styles */
+@media (min-width: 1024px) {
+  .desktop\:min-h-screen {
+    min-height: 100vh;
+  }
+  
+  .desktop\:max-w-none {
+    max-width: none;
+  }
+  
+  .desktop\:w-full {
+    width: 100%;
+  }
+}
+
+/* Ensure sidebar responsiveness */
+@media (max-width: 768px) {
+  .sidebar-mobile {
+    @apply fixed inset-0 z-50 transform transition-transform duration-300 ease-in-out;
   }
 }
