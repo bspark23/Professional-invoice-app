@@ -4,17 +4,16 @@ import { useNavigate, Link } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthLocal } from "@/hooks/useAuthLocal";
 import { Label } from "@/components/ui/label";
 import { useProfiles } from "@/hooks/useProfiles";
 
 const SignUp = () => {
   const [profileName, setProfileName] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const { signUp } = useAuth();
+  const { signUp } = useAuthLocal();
   const { profiles, createProfile, setActiveProfile } = useProfiles();
   const navigate = useNavigate();
 
@@ -23,13 +22,13 @@ const SignUp = () => {
     setError(null);
     setLoading(true);
 
-    if (!profileName.trim() || !email.trim() || !password.trim()) {
+    if (!profileName.trim() || !email.trim()) {
       setError("All fields are required");
       setLoading(false);
       return;
     }
 
-    const res = await signUp(email, profileName);
+    const res = signUp(email, profileName);
     
     if (!res.success) {
       setError(res.error!);
@@ -82,18 +81,6 @@ const SignUp = () => {
                 value={email} 
                 onChange={e => setEmail(e.target.value)}
                 disabled={loading}
-              />
-            </div>
-            <div>
-              <Label htmlFor="password">Password</Label>
-              <Input 
-                id="password" 
-                type="password" 
-                required 
-                value={password} 
-                onChange={e => setPassword(e.target.value)}
-                disabled={loading}
-                minLength={6}
               />
             </div>
             {error && <div className="text-red-600 text-sm">{error}</div>}

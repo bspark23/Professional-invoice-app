@@ -4,16 +4,15 @@ import { useNavigate, Link } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthLocal } from "@/hooks/useAuthLocal";
 import { Label } from "@/components/ui/label";
 import { useProfiles } from "@/hooks/useProfiles";
 
 const SignIn = () => {
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const { signIn } = useAuth();
+  const { signIn } = useAuthLocal();
   const { profiles, setActiveProfile } = useProfiles();
   const navigate = useNavigate();
 
@@ -22,13 +21,13 @@ const SignIn = () => {
     setError(null);
     setLoading(true);
 
-    if (!email.trim() || !password.trim()) {
-      setError("Email and password are required");
+    if (!email.trim()) {
+      setError("Email is required");
       setLoading(false);
       return;
     }
 
-    const res = await signIn(email, password);
+    const res = signIn(email);
     
     if (!res.success) {
       setError(res.error!);
@@ -71,17 +70,6 @@ const SignIn = () => {
                 required 
                 value={email} 
                 onChange={e => setEmail(e.target.value)}
-                disabled={loading}
-              />
-            </div>
-            <div>
-              <Label htmlFor="password">Password</Label>
-              <Input 
-                id="password" 
-                type="password" 
-                required 
-                value={password} 
-                onChange={e => setPassword(e.target.value)}
                 disabled={loading}
               />
             </div>
