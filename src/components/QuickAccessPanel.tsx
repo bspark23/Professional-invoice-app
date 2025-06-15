@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Users, Receipt, Download, FileText, CreditCard } from "lucide-react";
+import { Plus, Users, Receipt, Download, FileText, CreditCard, ShoppingCart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const QuickAccessPanel: React.FC = () => {
@@ -21,6 +21,14 @@ const QuickAccessPanel: React.FC = () => {
       action: () => navigate('/invoices')
     },
     {
+      id: 'lpo',
+      title: 'Create LPO',
+      description: 'Generate a purchase order',
+      icon: ShoppingCart,
+      color: 'bg-purple-500 hover:bg-purple-600',
+      action: () => navigate('/lpo')
+    },
+    {
       id: 'client',
       title: 'Add Client',
       description: 'Add a new client',
@@ -35,14 +43,6 @@ const QuickAccessPanel: React.FC = () => {
       icon: Receipt,
       color: 'bg-orange-500 hover:bg-orange-600',
       action: () => navigate('/expenses')
-    },
-    {
-      id: 'report',
-      title: 'Download Report',
-      description: 'Generate reports',
-      icon: Download,
-      color: 'bg-purple-500 hover:bg-purple-600',
-      action: () => alert('Report generation feature coming soon!')
     }
   ];
 

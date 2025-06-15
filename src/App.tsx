@@ -1,58 +1,157 @@
 
-import React from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import "./App.css";
-import Welcome from "./pages/Welcome";
-import SignUp from "./pages/SignUp";
-import SignIn from "./pages/SignIn";
-import Dashboard from "./pages/Dashboard";
-import Invoices from "./pages/Invoices";
-import Payments from "./pages/Payments";
-import ExpenseTracker from "./pages/ExpenseTracker";
-import Clients from "./pages/Clients";
-import Settings from "./pages/Settings";
-import Notes from "./pages/Notes";
-import CalendarView from "./pages/CalendarView";
-import PrintPreview from "./pages/PrintPreview";
-import NotFound from "./pages/NotFound";
-import VoluntaryContributionPage from "./pages/VoluntaryContributionPage";
-import { LanguageProvider } from "./context/LanguageContext";
 import { Toaster } from "@/components/ui/toaster";
-import Estimates from "./pages/Estimates";
-import TimeTracking from "./pages/TimeTracking";
-import Projects from "./pages/Projects";
-import LandingPage from "./components/LandingPage";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { LanguageProvider } from "@/context/LanguageContext";
+import { RequireLandingPage } from "@/components/RequireLandingPage";
+import Dashboard from "@/pages/Dashboard";
+import Invoices from "@/pages/Invoices";
+import LPO from "@/pages/LPO";
+import Clients from "@/pages/Clients";
+import Payments from "@/pages/Payments";
+import Estimates from "@/pages/Estimates";
+import Projects from "@/pages/Projects";
+import TimeTracking from "@/pages/TimeTracking";
+import ExpenseTracker from "@/pages/ExpenseTracker";
+import CalendarView from "@/pages/CalendarView";
+import Settings from "@/pages/Settings";
+import Notes from "@/pages/Notes";
+import PrintPreview from "@/pages/PrintPreview";
+import Welcome from "@/pages/Welcome";
+import SignIn from "@/pages/SignIn";
+import SignUp from "@/pages/SignUp";
+import LanguageSelector from "@/pages/LanguageSelector";
+import NotFound from "@/pages/NotFound";
+import VoluntaryContributionPage from "@/pages/VoluntaryContributionPage";
 
-function App() {
-  return (
-    <BrowserRouter>
-      <div className="min-h-screen bg-gray-50">
+const queryClient = new QueryClient();
+
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <LanguageProvider>
+      <TooltipProvider>
         <Toaster />
-        <LanguageProvider>
+        <Sonner />
+        <BrowserRouter>
           <Routes>
-            <Route path="/" element={<LandingPage businessName="InvoiceCraft Pro" invoiceNumber="INV-001" clientName="Acme Corporation" total="$2,500.00" status="paid" currency="USD" onGetStarted={() => window.location.href = '/dashboard'} />} />
+            <Route path="/" element={<Navigate to="/welcome" replace />} />
             <Route path="/welcome" element={<Welcome />} />
-            <Route path="/signup" element={<SignUp />} />
             <Route path="/signin" element={<SignIn />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/invoices" element={<Invoices />} />
-            <Route path="/estimates" element={<Estimates />} />
-            <Route path="/payments" element={<Payments />} />
-            <Route path="/time-tracking" element={<TimeTracking />} />
-            <Route path="/projects" element={<Projects />} />
-            <Route path="/expenses" element={<ExpenseTracker />} />
-            <Route path="/clients" element={<Clients />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/notes" element={<Notes />} />
-            <Route path="/calendar" element={<CalendarView />} />
-            <Route path="/print-preview" element={<PrintPreview />} />
-            <Route path="/contribution" element={<VoluntaryContributionPage />} />
+            <Route path="/signup" element={<SignUp />} />
+            <Route path="/language" element={<LanguageSelector />} />
+            <Route path="/voluntary-contribution" element={<VoluntaryContributionPage />} />
+            <Route
+              path="/dashboard"
+              element={
+                <RequireLandingPage>
+                  <Dashboard />
+                </RequireLandingPage>
+              }
+            />
+            <Route
+              path="/invoices"
+              element={
+                <RequireLandingPage>
+                  <Invoices />
+                </RequireLandingPage>
+              }
+            />
+            <Route
+              path="/lpo"
+              element={
+                <RequireLandingPage>
+                  <LPO />
+                </RequireLandingPage>
+              }
+            />
+            <Route
+              path="/clients"
+              element={
+                <RequireLandingPage>
+                  <Clients />
+                </RequireLandingPage>
+              }
+            />
+            <Route
+              path="/payments"
+              element={
+                <RequireLandingPage>
+                  <Payments />
+                </RequireLandingPage>
+              }
+            />
+            <Route
+              path="/estimates"
+              element={
+                <RequireLandingPage>
+                  <Estimates />
+                </RequireLandingPage>
+              }
+            />
+            <Route
+              path="/projects"
+              element={
+                <RequireLandingPage>
+                  <Projects />
+                </RequireLandingPage>
+              }
+            />
+            <Route
+              path="/time-tracking"
+              element={
+                <RequireLandingPage>
+                  <TimeTracking />
+                </RequireLandingPage>
+              }
+            />
+            <Route
+              path="/expense-tracker"
+              element={
+                <RequireLandingPage>
+                  <ExpenseTracker />
+                </RequireLandingPage>
+              }
+            />
+            <Route
+              path="/calendar"
+              element={
+                <RequireLandingPage>
+                  <CalendarView />
+                </RequireLandingPage>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <RequireLandingPage>
+                  <Settings />
+                </RequireLandingPage>
+              }
+            />
+            <Route
+              path="/notes"
+              element={
+                <RequireLandingPage>
+                  <Notes />
+                </RequireLandingPage>
+              }
+            />
+            <Route
+              path="/print-preview/:invoiceId"
+              element={
+                <RequireLandingPage>
+                  <PrintPreview />
+                </RequireLandingPage>
+              }
+            />
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </LanguageProvider>
-      </div>
-    </BrowserRouter>
-  );
-}
+        </BrowserRouter>
+      </TooltipProvider>
+    </LanguageProvider>
+  </QueryClientProvider>
+);
 
 export default App;

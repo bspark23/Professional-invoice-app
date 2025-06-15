@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
@@ -26,9 +25,12 @@ import { useAuthLocal } from "@/hooks/useAuthLocal";
 import { formatCurrency, calculateTotal } from "@/utils/invoiceUtils";
 import ResponsiveNavButtons from "@/components/ResponsiveNavButtons";
 import { CustomTemplate, InvoiceData, LineItem } from "@/types/invoice";
+import { LPOData } from "@/types/lpo";
 
 const Invoices = () => {
   const { user } = useAuthLocal();
+  const location = useLocation();
+  const navigate = useNavigate();
   const {
     invoiceData,
     setInvoiceData,
@@ -51,8 +53,59 @@ const Invoices = () => {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<InvoiceData | null>(null);
   const [isHelpCenterOpen, setIsHelpCenterOpen] = useState(false);
-  const navigate = useNavigate();
-  const location = useLocation();
+
+  // Check for LPO conversion on mount
+  useEffect(() => {
+    const urlParams = new URLSearchParams(location.search);
+    if (urlParams.get('convert') === 'lpo') {
+      const lpoToConvert = localStorage.getItem('lpo_to_convert');
+      if (lpoToConvert) {
+        const lpoData: LPOData = JSON.parse(lpoToConvert);
+        convertLPOToInvoice(lpoData);
+        localStorage.removeItem('lpo_to_convert');
+        // Remove the query parameter from URL
+        navigate('/invoices', { replace: true });
+      }
+    }
+  }, [location.search, navigate]);
+
+  const convertLPOToInvoice = (lpo: LPOData) => {
+    const convertedInvoiceData: InvoiceData = {
+      id: uuidv4(),
+      invoiceNumber: generateInvoiceNumber(),
+      businessName: lpo.buyerCompanyName,
+      businessEmail: lpo.buyerContactEmail,
+      businessAddress: lpo.buyerAddress,
+      clientName: lpo.supplierName,
+      clientEmail: lpo.supplierContactEmail,
+      clientAddress: lpo.supplierAddress,
+      invoiceDate: new Date().toISOString().split('T')[0],
+      dueDate: lpo.deliveryDate,
+      lineItems: lpo.lineItems.map(item => ({
+        id: item.id,
+        description: item.description,
+        quantity: item.quantity,
+        rate: item.unitPrice,
+        amount: item.total,
+      })),
+      currency: 'USD',
+      taxRate: lpo.taxRate,
+      discountAmount: 0,
+      status: 'unpaid',
+      notes: `Converted from LPO: ${lpo.lpoNumber}\n\nOriginal Notes: ${lpo.additionalNotes}`,
+      businessLogo: lpo.companyLogo,
+      signatureImage: lpo.signatureImage,
+      signatureName: lpo.signatureName,
+      signaturePosition: lpo.signaturePosition,
+      paymentTerms: 'Payment due within 30 days',
+      bankDetails: 'Bank: Example Bank\nAccount: 1234567890\nRouting: 123456789',
+      paymentInstructions: 'Please make payment to the account details provided above.',
+      lpoReference: lpo.lpoNumber, // Add LPO reference
+    };
+
+    setFormData(convertedInvoiceData);
+    setInvoiceData(convertedInvoiceData);
+  };
 
   useEffect(() => {
     setFormData(invoiceData);
@@ -191,6 +244,11 @@ const Invoices = () => {
                     <CardTitle className="flex items-center gap-2">
                       <FileText className="w-5 h-5" />
                       Create Invoice
+                      {formData.lpoReference && (
+                        <Badge variant="outline" className="ml-2">
+                          From LPO: {formData.lpoReference}
+                        </Badge>
+                      )}
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6">
@@ -465,6 +523,11 @@ const Invoices = () => {
                                 <p className="font-medium">{invoice.invoiceNumber}</p>
                                 <p className="text-sm text-gray-600">{invoice.clientName}</p>
                                 <p className="text-sm font-medium">{formatCurrency(calculateTotal(invoice))}</p>
+                                {invoice.lpoReference && (
+                                  <Badge variant="outline" className="text-xs mt-1">
+                                    LPO: {invoice.lpoReference}
+                                  </Badge>
+                                )}
                               </div>
                               <div className="flex items-center gap-2">
                                 <Badge variant={invoice.status === 'paid' ? 'default' : 'secondary'}>

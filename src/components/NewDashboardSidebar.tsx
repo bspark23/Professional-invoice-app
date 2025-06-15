@@ -1,104 +1,104 @@
 
 import React from "react";
-import { 
-  Sidebar, 
-  SidebarContent, 
-  SidebarGroup, 
-  SidebarGroupContent, 
-  SidebarGroupLabel, 
-  SidebarHeader, 
-  SidebarMenu, 
-  SidebarMenuButton, 
-  SidebarMenuItem 
+import { useNavigate, useLocation } from "react-router-dom";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarHeader,
+  SidebarFooter,
 } from "@/components/ui/sidebar";
-import { 
-  Home, 
-  FileText, 
-  Users, 
-  DollarSign, 
-  BarChart3, 
-  Settings, 
-  FolderOpen, 
+import {
+  LayoutDashboard,
+  FileText,
+  Users,
+  CreditCard,
+  Calculator,
+  FolderOpen,
   Clock,
+  Receipt,
   Calendar,
+  Settings,
   StickyNote,
-  Calculator
+  ShoppingCart,
 } from "lucide-react";
-import { useLocation, useNavigate } from "react-router-dom";
-import GlobalSearchBar from "@/components/GlobalSearchBar";
 
-const menuItems = [
-  {
-    title: "Dashboard",
-    url: "/dashboard",
-    icon: Home,
-  },
-  {
-    title: "Invoices",
-    url: "/invoices",
-    icon: FileText,
-  },
-  {
-    title: "Estimates",
-    url: "/estimates", 
-    icon: Calculator,
-  },
-  {
-    title: "Clients",
-    url: "/clients",
-    icon: Users,
-  },
-  {
-    title: "Projects",
-    url: "/projects",
-    icon: FolderOpen,
-  },
-  {
-    title: "Time Tracking",
-    url: "/time-tracking",
-    icon: Clock,
-  },
-  {
-    title: "Payments",
-    url: "/payments",
-    icon: DollarSign,
-  },
-  {
-    title: "Expenses",
-    url: "/expenses",
-    icon: BarChart3,
-  },
-  {
-    title: "Calendar",
-    url: "/calendar",
-    icon: Calendar,
-  },
-  {
-    title: "Notes",
-    url: "/notes",
-    icon: StickyNote,
-  },
-  {
-    title: "Settings",
-    url: "/settings",
-    icon: Settings,
-  },
-];
-
-const NewDashboardSidebar: React.FC = () => {
-  const location = useLocation();
+const NewDashboardSidebar = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const menuItems = [
+    {
+      title: "Dashboard",
+      url: "/dashboard",
+      icon: LayoutDashboard,
+    },
+    {
+      title: "Invoices",
+      url: "/invoices",
+      icon: FileText,
+    },
+    {
+      title: "LPO",
+      url: "/lpo",
+      icon: ShoppingCart,
+    },
+    {
+      title: "Clients",
+      url: "/clients",
+      icon: Users,
+    },
+    {
+      title: "Payments",
+      url: "/payments",
+      icon: CreditCard,
+    },
+    {
+      title: "Estimates",
+      url: "/estimates",
+      icon: Calculator,
+    },
+    {
+      title: "Projects",
+      url: "/projects",
+      icon: FolderOpen,
+    },
+    {
+      title: "Time Tracking",
+      url: "/time-tracking",
+      icon: Clock,
+    },
+    {
+      title: "Expense Tracker",
+      url: "/expense-tracker",
+      icon: Receipt,
+    },
+    {
+      title: "Calendar",
+      url: "/calendar",
+      icon: Calendar,
+    },
+    {
+      title: "Notes",
+      url: "/notes",
+      icon: StickyNote,
+    },
+    {
+      title: "Settings",
+      url: "/settings",
+      icon: Settings,
+    },
+  ];
 
   return (
     <Sidebar>
-      <SidebarHeader className="border-b border-sidebar-border">
-        <div className="flex flex-col gap-2 px-2 py-2">
-          <div className="flex items-center gap-2">
-            <FileText className="h-6 w-6 text-blue-600" />
-            <span className="font-bold text-lg">InvoiceCraft Pro</span>
-          </div>
-          <GlobalSearchBar />
-        </div>
+      <SidebarHeader className="p-4">
+        <h2 className="text-lg font-semibold">Invoicely</h2>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
@@ -107,17 +107,13 @@ const NewDashboardSidebar: React.FC = () => {
             <SidebarMenu>
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton 
-                    asChild
+                  <SidebarMenuButton
+                    onClick={() => navigate(item.url)}
                     isActive={location.pathname === item.url}
+                    className="w-full"
                   >
-                    <button
-                      onClick={() => navigate(item.url)}
-                      className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-accent hover:text-accent-foreground"
-                    >
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                    </button>
+                    <item.icon className="w-4 h-4" />
+                    <span>{item.title}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -125,6 +121,9 @@ const NewDashboardSidebar: React.FC = () => {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      <SidebarFooter className="p-4">
+        <p className="text-xs text-gray-500">© 2024 Invoicely</p>
+      </SidebarFooter>
     </Sidebar>
   );
 };
