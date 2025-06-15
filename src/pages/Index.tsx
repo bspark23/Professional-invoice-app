@@ -20,7 +20,7 @@ import { formatCurrency, calculateSubtotal, calculateTax, calculateTotal } from 
 import { exportToPDF, exportToImage } from "@/utils/exportUtils";
 import { colorThemes } from "@/types/invoice";
 import SignatureInput from "@/components/SignatureInput";
-import { Link } from "react-router-dom"; // Add this import
+import { Link, useNavigate } from "react-router-dom"; // Use useNavigate if needed
 import InvoiceActivityTimeline from "@/components/InvoiceActivityTimeline";
 import { useInvoiceActivity } from "@/hooks/useInvoiceActivity";
 import { useProfiles } from "@/hooks/useProfiles";
@@ -248,6 +248,12 @@ const Index = () => {
           </div>
           <div className="flex gap-2 items-center">
             <ProfileSwitcher />
+            {/* Settings button (Navigate to Settings page) */}
+            <Link to="/settings">
+              <Button size="icon" variant="outline" className="hover:bg-gray-100 dark:hover:bg-gray-700" title="Settings">
+                <SettingsIcon className="w-5 h-5" />
+              </Button>
+            </Link>
             <Button onClick={toggleDarkMode} variant="outline" size="sm" className="hover:bg-gray-100 dark:hover:bg-gray-700">
               {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </Button>

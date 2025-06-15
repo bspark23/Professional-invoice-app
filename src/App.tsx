@@ -16,6 +16,7 @@ import LanguageDropdown from "@/components/LanguageDropdown";
 import SignUp from "./pages/SignUp";
 import SignIn from "./pages/SignIn";
 import { AuthProvider, useAuthLocal } from "@/hooks/useAuthLocal";
+import Settings from "./pages/Settings";
 
 const queryClient = new QueryClient();
 
@@ -56,6 +57,7 @@ const AppContent = () => {
         <Route path="/welcome" element={<Welcome />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/signin" element={<SignIn />} />
+        <Route path="/settings" element={<Settings />} />
         {/* Protected dashboard/expenses/calendar */}
         <Route path="/dashboard" element={user ? <Index /> : <SignIn />} />
         <Route path="/expenses" element={user ? <ExpenseTracker /> : <SignIn />} />
