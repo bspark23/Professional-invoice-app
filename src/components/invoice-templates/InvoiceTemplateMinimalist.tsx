@@ -10,7 +10,7 @@ interface InvoiceTemplateMinimalistProps {
   calculateTotal: () => number;
 }
 
-const InvoiceTemplateMinimalist: React.FC<InvoiceTemplateMinimalistProps> = ({
+const InvoiceTemplateMinimalistProps: React.FC<InvoiceTemplateMinimalistProps> = ({
   invoiceData,
   formatCurrency,
   calculateSubtotal,
@@ -243,4 +243,4 @@ const InvoiceTemplateMinimalist: React.FC<InvoiceTemplateMinimalistProps> = ({
   );
 };
 
-export default InvoiceTemplateMinimalist;
+export default InvoiceTemplateMinimalistProps;
