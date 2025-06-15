@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { Client, ClientFormData } from "@/types/client";
 import { useToast } from "@/hooks/use-toast";
 
-// Add profileId param, use as localStorage key prefix
+// Supports multiple profiles: data saved by profileId for isolation/persistence
 export const useClients = (profileId?: string | null) => {
   const { toast } = useToast();
   const STORAGE_PREFIX = profileId ? `profile-${profileId}-` : "";
@@ -24,6 +23,7 @@ export const useClients = (profileId?: string | null) => {
   }, [profileId]);
 
   const saveClients = (clientList: Client[]) => {
+    if (!profileId) return;
     setClients(clientList);
     localStorage.setItem(`${STORAGE_PREFIX}invoicer-pro-clients`, JSON.stringify(clientList));
   };
@@ -37,7 +37,7 @@ export const useClients = (profileId?: string | null) => {
 
     const updatedClients = [...clients, newClient];
     saveClients(updatedClients);
-    
+
     toast({
       title: "Client Added",
       description: "Client has been saved successfully.",
@@ -51,7 +51,7 @@ export const useClients = (profileId?: string | null) => {
       client.id === id ? { ...client, ...clientData } : client
     );
     saveClients(updatedClients);
-    
+
     toast({
       title: "Client Updated",
       description: "Client information has been updated.",
@@ -61,7 +61,7 @@ export const useClients = (profileId?: string | null) => {
   const deleteClient = (id: string) => {
     const updatedClients = clients.filter(client => client.id !== id);
     saveClients(updatedClients);
-    
+
     toast({
       title: "Client Deleted",
       description: "Client has been removed successfully.",

@@ -12,7 +12,7 @@ export type BusinessProfile = {
 const PROFILES_KEY = "invoiceease-business-profiles";
 const ACTIVE_PROFILE_KEY = "invoiceease-active-profile-id";
 
-// Generic util
+// Generate a safe unique id for storage. Never changes, even if business name changes.
 function generateProfileId() {
   return "profile-" + Date.now().toString(36) + Math.random().toString(36).substring(2, 8);
 }
@@ -40,7 +40,14 @@ export function useProfiles() {
     }
   }, [activeProfileId]);
 
+  // Make sure business name is unique for user clarity, but save by profileId
   const createProfile = (profile: Omit<BusinessProfile, "id">) => {
+    // Check uniqueness of businessName
+    const nameExists = profiles.some((p) => p.name === profile.name);
+    if (nameExists) {
+      alert("Business name already exists. Please choose a different name.");
+      return null;
+    }
     const newProfile: BusinessProfile = {
       ...profile,
       id: generateProfileId(),
@@ -53,23 +60,22 @@ export function useProfiles() {
   const deleteProfile = (id: string) => {
     setProfiles((prev) => prev.filter((p) => p.id !== id));
     if (activeProfileId === id) {
-      // Switch to another profile or null
-      setActiveProfileId((prev) => {
-        const others = profiles.filter((p) => p.id !== id);
-        return others.length > 0 ? others[0].id : null;
-      });
+      const others = profiles.filter((p) => p.id !== id);
+      setActiveProfileId(others.length > 0 ? others[0].id : null);
     }
+    // Optionally, clean up localStorage data for old profileId on delete
+    // Not doing here for data recovery use-case
   };
 
   const updateProfile = (id: string, data: Partial<BusinessProfile>) => {
-    setProfiles(prev => prev.map(p => p.id === id ? { ...p, ...data } : p));
+    setProfiles((prev) => prev.map((p) => p.id === id ? { ...p, ...data } : p));
   };
 
   const setActiveProfile = (id: string) => {
     setActiveProfileId(id);
   };
 
-  const getActiveProfile = () => profiles.find(p => p.id === activeProfileId) || null;
+  const getActiveProfile = () => profiles.find((p) => p.id === activeProfileId) || null;
 
   return {
     profiles,

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { InvoiceData, LineItem } from "@/types/invoice";
 import { useToast } from "@/hooks/use-toast";
 
-// New: Accept profileId and use it as a localStorage key prefix
+// Now always use profileId as namespace for persistence
 export const useInvoiceData = (profileId?: string | null) => {
   const { toast } = useToast();
   const STORAGE_PREFIX = profileId ? `profile-${profileId}-` : "";
@@ -30,20 +30,7 @@ export const useInvoiceData = (profileId?: string | null) => {
     colorTheme: 'blue'
   });
 
-  const generateInvoiceNumber = () => {
-    const year = new Date().getFullYear();
-    const month = String(new Date().getMonth() + 1).padStart(2, '0');
-    const lastInvoiceNumber = savedInvoices.length > 0 
-      ? Math.max(...savedInvoices.map(inv => {
-          const match = inv.invoiceNumber.match(/(\d+)$/);
-          return match ? parseInt(match[1]) : 0;
-        }))
-      : 0;
-    const nextNumber = String(lastInvoiceNumber + 1).padStart(3, '0');
-    return `INV-${year}-${month}-${nextNumber}`;
-  };
-
-  // Update: Add profileId to localStorage keys
+  // If profileId is not set, do not run any side-effects
   useEffect(() => {
     if (!profileId) return;
     const savedData = localStorage.getItem(`${STORAGE_PREFIX}invoicer-pro-data`);
@@ -66,157 +53,154 @@ export const useInvoiceData = (profileId?: string | null) => {
       }
     }
 
-    // Set initial invoice number if empty
     if (!invoiceData.invoiceNumber) {
       setInvoiceData(prev => ({ ...prev, invoiceNumber: generateInvoiceNumber() }));
     }
-  }, [profileId]);
+    // eslint-disable-next-line
+  }, [profileId]); // trigger re-key if profileId changes
 
-  const saveInvoiceData = () => {
-    localStorage.setItem(`${STORAGE_PREFIX}invoicer-pro-data`, JSON.stringify(invoiceData));
-    toast({
-      title: "Invoice Data Saved",
-      description: "Your current invoice data has been saved locally.",
-    });
-  };
-
-  const saveInvoice = () => {
-    const invoiceToSave = {
-      ...invoiceData,
-      id: invoiceData.id || Date.now().toString(),
-      createdAt: new Date().toISOString()
-    };
-
-    const existingInvoices = [...savedInvoices];
-    const existingIndex = existingInvoices.findIndex(inv => inv.id === invoiceToSave.id);
-    
-    if (existingIndex >= 0) {
-      existingInvoices[existingIndex] = invoiceToSave;
-    } else {
-      existingInvoices.push(invoiceToSave);
-    }
-
-    setSavedInvoices(existingInvoices);
-    localStorage.setItem(`${STORAGE_PREFIX}invoicer-pro-invoices`, JSON.stringify(existingInvoices));
-    
-    setInvoiceData(prev => ({ ...prev, id: invoiceToSave.id }));
-    
-    toast({
-      title: "Invoice Saved",
-      description: "Your invoice has been saved and can be viewed later.",
-    });
-  };
-
-  const loadInvoice = (invoice: InvoiceData) => {
-    setInvoiceData(invoice);
-    toast({
-      title: "Invoice Loaded",
-      description: "Invoice loaded successfully.",
-    });
-  };
-
-  const deleteInvoice = (invoiceId: string) => {
-    const updatedInvoices = savedInvoices.filter(inv => inv.id !== invoiceId);
-    setSavedInvoices(updatedInvoices);
-    localStorage.setItem(`${STORAGE_PREFIX}invoicer-pro-invoices`, JSON.stringify(updatedInvoices));
-    toast({
-      title: "Invoice Deleted",
-      description: "Invoice has been deleted successfully.",
-    });
-  };
-
-  const toggleInvoiceStatus = (invoiceId: string) => {
-    const updatedInvoices = savedInvoices.map(inv => 
-      inv.id === invoiceId 
-        ? { ...inv, status: inv.status === 'paid' ? 'unpaid' : 'paid' as 'paid' | 'unpaid' }
-        : inv
-    );
-    setSavedInvoices(updatedInvoices);
-    localStorage.setItem(`${STORAGE_PREFIX}invoicer-pro-invoices`, JSON.stringify(updatedInvoices));
-    toast({
-      title: "Status Updated",
-      description: "Invoice status has been updated.",
-    });
-  };
-
-  const createNewInvoice = () => {
-    setInvoiceData({
-      clientName: "",
-      clientEmail: "",
-      clientAddress: "",
-      invoiceNumber: generateInvoiceNumber(),
-      invoiceDate: new Date().toISOString().split('T')[0],
-      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      lineItems: [
-        { id: Date.now().toString(), description: "", quantity: 1, rate: 0, amount: 0 }
-      ],
-      taxRate: 0,
-      discountAmount: 0,
-      businessName: invoiceData.businessName,
-      businessLogo: invoiceData.businessLogo,
-      businessEmail: invoiceData.businessEmail,
-      businessAddress: invoiceData.businessAddress,
-      currency: invoiceData.currency,
-      notes: '',
-      status: 'unpaid',
-      template: invoiceData.template || 'minimalist',
-      colorTheme: invoiceData.colorTheme || 'blue'
-    });
-  };
-
-  const addLineItem = () => {
-    const newItem: LineItem = {
-      id: Date.now().toString(),
-      description: "",
-      quantity: 1,
-      rate: 0,
-      amount: 0
-    };
-    setInvoiceData(prev => ({
-      ...prev,
-      lineItems: [...prev.lineItems, newItem]
-    }));
-  };
-
-  const removeLineItem = (id: string) => {
-    if (invoiceData.lineItems.length > 1) {
-      setInvoiceData(prev => ({
-        ...prev,
-        lineItems: prev.lineItems.filter(item => item.id !== id)
-      }));
-    }
-  };
-
-  const updateLineItem = (id: string, field: keyof LineItem, value: string | number) => {
-    setInvoiceData(prev => ({
-      ...prev,
-      lineItems: prev.lineItems.map(item => {
-        if (item.id === id) {
-          const updated = { ...item, [field]: value };
-          if (field === 'quantity' || field === 'rate') {
-            updated.amount = updated.quantity * updated.rate;
-          }
-          return updated;
-        }
-        return item;
-      })
-    }));
-  };
+  // All storage reads/writes use STORAGE_PREFIX scoped by profileId
 
   return {
     invoiceData,
     setInvoiceData,
     savedInvoices,
     setSavedInvoices,
-    saveInvoiceData,
-    saveInvoice,
-    loadInvoice,
-    deleteInvoice,
-    toggleInvoiceStatus,
-    createNewInvoice,
-    addLineItem,
-    removeLineItem,
-    updateLineItem,
-    generateInvoiceNumber
+    saveInvoiceData: () => {
+      if (!profileId) return;
+      localStorage.setItem(`${STORAGE_PREFIX}invoicer-pro-data`, JSON.stringify(invoiceData));
+      toast({
+        title: "Invoice Data Saved",
+        description: "Your current invoice data has been saved locally.",
+      });
+    },
+    saveInvoice: () => {
+      if (!profileId) return;
+      const invoiceToSave = {
+        ...invoiceData,
+        id: invoiceData.id || Date.now().toString(),
+        createdAt: new Date().toISOString()
+      };
+      const existingInvoices = [...savedInvoices];
+      const existingIndex = existingInvoices.findIndex(inv => inv.id === invoiceToSave.id);
+
+      if (existingIndex >= 0) {
+        existingInvoices[existingIndex] = invoiceToSave;
+      } else {
+        existingInvoices.push(invoiceToSave);
+      }
+
+      setSavedInvoices(existingInvoices);
+      localStorage.setItem(`${STORAGE_PREFIX}invoicer-pro-invoices`, JSON.stringify(existingInvoices));
+      setInvoiceData(prev => ({ ...prev, id: invoiceToSave.id }));
+
+      toast({
+        title: "Invoice Saved",
+        description: "Your invoice has been saved and can be viewed later.",
+      });
+    },
+    loadInvoice: (invoice: InvoiceData) => {
+      setInvoiceData(invoice);
+      toast({
+        title: "Invoice Loaded",
+        description: "Invoice loaded successfully.",
+      });
+    },
+    deleteInvoice: (invoiceId: string) => {
+      if (!profileId) return;
+      const updatedInvoices = savedInvoices.filter(inv => inv.id !== invoiceId);
+      setSavedInvoices(updatedInvoices);
+      localStorage.setItem(`${STORAGE_PREFIX}invoicer-pro-invoices`, JSON.stringify(updatedInvoices));
+      toast({
+        title: "Invoice Deleted",
+        description: "Invoice has been deleted successfully.",
+      });
+    },
+    toggleInvoiceStatus: (invoiceId: string) => {
+      if (!profileId) return;
+      const updatedInvoices = savedInvoices.map(inv =>
+        inv.id === invoiceId
+          ? { ...inv, status: inv.status === 'paid' ? 'unpaid' : 'paid' as 'paid' | 'unpaid' }
+          : inv
+      );
+      setSavedInvoices(updatedInvoices);
+      localStorage.setItem(`${STORAGE_PREFIX}invoicer-pro-invoices`, JSON.stringify(updatedInvoices));
+      toast({
+        title: "Status Updated",
+        description: "Invoice status has been updated.",
+      });
+    },
+    createNewInvoice: () => {
+      setInvoiceData({
+        clientName: "",
+        clientEmail: "",
+        clientAddress: "",
+        invoiceNumber: generateInvoiceNumber(),
+        invoiceDate: new Date().toISOString().split('T')[0],
+        dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        lineItems: [
+          { id: Date.now().toString(), description: "", quantity: 1, rate: 0, amount: 0 }
+        ],
+        taxRate: 0,
+        discountAmount: 0,
+        businessName: invoiceData.businessName,
+        businessLogo: invoiceData.businessLogo,
+        businessEmail: invoiceData.businessEmail,
+        businessAddress: invoiceData.businessAddress,
+        currency: invoiceData.currency,
+        notes: '',
+        status: 'unpaid',
+        template: invoiceData.template || 'minimalist',
+        colorTheme: invoiceData.colorTheme || 'blue'
+      });
+    },
+    addLineItem: () => {
+      const newItem = {
+        id: Date.now().toString(),
+        description: "",
+        quantity: 1,
+        rate: 0,
+        amount: 0
+      };
+      setInvoiceData(prev => ({
+        ...prev,
+        lineItems: [...prev.lineItems, newItem]
+      }));
+    },
+    removeLineItem: (id: string) => {
+      if (invoiceData.lineItems.length > 1) {
+        setInvoiceData(prev => ({
+          ...prev,
+          lineItems: prev.lineItems.filter(item => item.id !== id)
+        }));
+      }
+    },
+    updateLineItem: (id: string, field: keyof InvoiceData["lineItems"][number], value: string | number) => {
+      setInvoiceData(prev => ({
+        ...prev,
+        lineItems: prev.lineItems.map(item => {
+          if (item.id === id) {
+            const updated = { ...item, [field]: value };
+            if (field === 'quantity' || field === 'rate') {
+              updated.amount = Number(updated.quantity) * Number(updated.rate);
+            }
+            return updated;
+          }
+          return item;
+        })
+      }));
+    },
+    generateInvoiceNumber: () => {
+      const year = new Date().getFullYear();
+      const month = String(new Date().getMonth() + 1).padStart(2, '0');
+      const lastInvoiceNumber = savedInvoices.length > 0
+        ? Math.max(...savedInvoices.map(inv => {
+            const match = inv.invoiceNumber.match(/(\d+)$/);
+            return match ? parseInt(match[1]) : 0;
+          }))
+        : 0;
+      const nextNumber = String(lastInvoiceNumber + 1).padStart(3, '0');
+      return `INV-${year}-${month}-${nextNumber}`;
+    }
   };
 };
