@@ -14,6 +14,7 @@ import PrintView from "@/components/PrintView";
 import InvoiceList from "@/components/InvoiceList";
 import DashboardStats from "@/components/DashboardStats";
 import DashboardWelcome from "@/components/DashboardWelcome";
+import AnalyticsDashboard from "@/components/AnalyticsDashboard"; // ADD THIS LINE
 import { useInvoiceData } from "@/hooks/useInvoiceData";
 import { formatCurrency, calculateSubtotal, calculateTax, calculateTotal } from "@/utils/invoiceUtils";
 import { exportToPDF, exportToImage } from "@/utils/exportUtils";
@@ -301,6 +302,12 @@ const Index = () => {
         {/* Stats Section */}
         <DashboardStats 
           savedInvoices={savedInvoices} 
+          formatCurrency={getFormatCurrency}
+        />
+
+        {/* ---- ADD ANALYTICS DASHBOARD HERE ---- */}
+        <AnalyticsDashboard
+          savedInvoices={savedInvoices}
           formatCurrency={getFormatCurrency}
         />
 
