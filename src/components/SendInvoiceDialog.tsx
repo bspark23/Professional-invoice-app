@@ -11,24 +11,28 @@ import { InvoiceData } from "@/types/invoice";
 interface SendInvoiceDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onSend: () => void;
   invoiceData: InvoiceData;
 }
 
 const SendInvoiceDialog: React.FC<SendInvoiceDialogProps> = ({
   isOpen,
   onClose,
-  onSend,
   invoiceData
 }) => {
+  // Add defensive check for invoiceData
+  if (!invoiceData) {
+    return null;
+  }
+
   const [emailData, setEmailData] = useState({
     to: invoiceData.clientEmail || '',
-    subject: `Invoice ${invoiceData.invoiceNumber}`,
-    message: `Dear ${invoiceData.clientName},\n\nPlease find attached your invoice.\n\nThank you for your business!`
+    subject: `Invoice ${invoiceData.invoiceNumber || ''}`,
+    message: `Dear ${invoiceData.clientName || 'Client'},\n\nPlease find attached your invoice.\n\nThank you for your business!`
   });
 
   const handleSend = () => {
-    onSend();
+    console.log('Sending invoice email:', emailData);
+    // TODO: Implement actual email sending logic
     onClose();
   };
 

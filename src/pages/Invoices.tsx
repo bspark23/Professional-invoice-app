@@ -68,8 +68,8 @@ const Invoices = () => {
   };
 
   const handleLineItemChange = (id: string, field: keyof LineItem, value: string | number) => {
-    const updatedLineItems = formData.lineItems.map(item =>
-      item.id === id ? { ...item, [field]: value } : item
+    const updatedLineItems = formData.lineItems.map(lineItem =>
+      lineItem.id === id ? { ...lineItem, [field]: value } : lineItem
     );
     setFormData({ ...formData, lineItems: updatedLineItems });
     updateLineItem(id, field, value);
