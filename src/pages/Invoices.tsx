@@ -236,7 +236,20 @@ const Invoices = () => {
 
   const isApiKeyConfigured = () => {
     const config = getApiConfig();
-    return config?.openaiKey && config.openaiKey.trim().length > 0;
+    if (!config) return false;
+    
+    if (config.provider === 'openai') {
+      return config.openaiKey && config.openaiKey.trim().length > 0;
+    } else if (config.provider === 'gemini') {
+      return config.geminiKey && config.geminiKey.trim().length > 0;
+    }
+    
+    return false;
+  };
+
+  const getProviderName = () => {
+    const config = getApiConfig();
+    return config?.provider === 'gemini' ? 'Google Gemini' : 'OpenAI';
   };
 
   return (
@@ -288,7 +301,7 @@ const Invoices = () => {
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-orange-800 font-medium">API Key Required</p>
-                          <p className="text-orange-600 text-sm">Configure your OpenAI API key to use the AI Invoice Assistant.</p>
+                          <p className="text-orange-600 text-sm">Configure your {getProviderName()} API key to use the AI Invoice Assistant.</p>
                         </div>
                         <Button
                           onClick={() => navigate('/settings')}

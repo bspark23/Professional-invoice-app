@@ -9,7 +9,9 @@ import { Eye, EyeOff, Save, Key, Bot } from 'lucide-react';
 import { useAuthLocal } from '@/hooks/useAuthLocal';
 
 interface ApiKeyConfig {
+  provider: 'openai' | 'gemini';
   openaiKey: string;
+  geminiKey: string;
   prompt: string;
   model: string;
 }
@@ -17,7 +19,9 @@ interface ApiKeyConfig {
 const ApiKeySettings: React.FC = () => {
   const { user } = useAuthLocal();
   const [config, setConfig] = useState<ApiKeyConfig>({
+    provider: 'openai',
     openaiKey: '',
+    geminiKey: '',
     prompt: `You are a smart invoice assistant named "InvoiceEase".
 
 Your job is to take any user instruction in plain English and generate a structured invoice in JSON format. This invoice should contain all key financial and business details based on what the user said.
@@ -63,7 +67,8 @@ Always return clean, valid JSON that matches the user's request.`,
     model: 'gpt-3.5-turbo'
   });
 
-  const [showApiKey, setShowApiKey] = useState(false);
+  const [showOpenAIKey, setShowOpenAIKey] = useState(false);
+  const [showGeminiKey, setShowGeminiKey] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   // Load saved configuration on component mount
@@ -97,6 +102,22 @@ Always return clean, valid JSON that matches the user's request.`,
     }
   };
 
+  const getModelOptions = () => {
+    if (config.provider === 'openai') {
+      return [
+        { value: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo (Recommended)' },
+        { value: 'gpt-4', label: 'GPT-4' },
+        { value: 'gpt-4-turbo', label: 'GPT-4 Turbo' }
+      ];
+    } else {
+      return [
+        { value: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash (Recommended)' },
+        { value: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro' },
+        { value: 'gemini-pro', label: 'Gemini Pro' }
+      ];
+    }
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -107,43 +128,99 @@ Always return clean, valid JSON that matches the user's request.`,
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* OpenAI API Key */}
+          {/* AI Provider Selection */}
           <div className="space-y-2">
-            <Label htmlFor="openaiKey" className="flex items-center gap-2">
-              <Key className="w-4 h-4" />
-              OpenAI API Key
-            </Label>
-            <div className="relative">
-              <Input
-                id="openaiKey"
-                type={showApiKey ? 'text' : 'password'}
-                value={config.openaiKey}
-                onChange={(e) => handleInputChange('openaiKey', e.target.value)}
-                placeholder="sk-..."
-                className="pr-10"
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="absolute right-0 top-0 h-full px-3"
-                onClick={() => setShowApiKey(!showApiKey)}
-              >
-                {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </Button>
-            </div>
-            <p className="text-sm text-gray-600">
-              Get your API key from{' '}
-              <a 
-                href="https://platform.openai.com/api-keys" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-blue-600 hover:text-blue-800 underline"
-              >
-                OpenAI Platform
-              </a>
-            </p>
+            <Label htmlFor="provider">AI Provider</Label>
+            <select
+              id="provider"
+              value={config.provider}
+              onChange={(e) => handleInputChange('provider', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="openai">OpenAI</option>
+              <option value="gemini">Google Gemini</option>
+            </select>
           </div>
+
+          {/* OpenAI API Key */}
+          {config.provider === 'openai' && (
+            <div className="space-y-2">
+              <Label htmlFor="openaiKey" className="flex items-center gap-2">
+                <Key className="w-4 h-4" />
+                OpenAI API Key
+              </Label>
+              <div className="relative">
+                <Input
+                  id="openaiKey"
+                  type={showOpenAIKey ? 'text' : 'password'}
+                  value={config.openaiKey}
+                  onChange={(e) => handleInputChange('openaiKey', e.target.value)}
+                  placeholder="sk-..."
+                  className="pr-10"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3"
+                  onClick={() => setShowOpenAIKey(!showOpenAIKey)}
+                >
+                  {showOpenAIKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </Button>
+              </div>
+              <p className="text-sm text-gray-600">
+                Get your API key from{' '}
+                <a 
+                  href="https://platform.openai.com/api-keys" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:text-blue-800 underline"
+                >
+                  OpenAI Platform
+                </a>
+              </p>
+            </div>
+          )}
+
+          {/* Gemini API Key */}
+          {config.provider === 'gemini' && (
+            <div className="space-y-2">
+              <Label htmlFor="geminiKey" className="flex items-center gap-2">
+                <Key className="w-4 h-4" />
+                Google Gemini API Key
+              </Label>
+              <div className="relative">
+                <Input
+                  id="geminiKey"
+                  type={showGeminiKey ? 'text' : 'password'}
+                  value={config.geminiKey}
+                  onChange={(e) => handleInputChange('geminiKey', e.target.value)}
+                  placeholder="AIza..."
+                  className="pr-10"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3"
+                  onClick={() => setShowGeminiKey(!showGeminiKey)}
+                >
+                  {showGeminiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </Button>
+              </div>
+              <p className="text-sm text-gray-600">
+                Get your API key from{' '}
+                <a 
+                  href="https://aistudio.google.com/app/apikey" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:text-blue-800 underline"
+                >
+                  Google AI Studio
+                </a>
+              </p>
+            </div>
+          )}
 
           {/* Model Selection */}
           <div className="space-y-2">
@@ -154,9 +231,11 @@ Always return clean, valid JSON that matches the user's request.`,
               onChange={(e) => handleInputChange('model', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="gpt-3.5-turbo">GPT-3.5 Turbo (Recommended)</option>
-              <option value="gpt-4">GPT-4</option>
-              <option value="gpt-4-turbo">GPT-4 Turbo</option>
+              {getModelOptions().map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -192,7 +271,7 @@ Always return clean, valid JSON that matches the user's request.`,
         <CardContent className="space-y-4">
           <div className="prose text-sm">
             <p>
-              Once you've configured your OpenAI API key, you can use natural language to create invoices:
+              Once you've configured your {config.provider === 'openai' ? 'OpenAI' : 'Google Gemini'} API key, you can use natural language to create invoices:
             </p>
             <ul className="list-disc pl-6 space-y-1">
               <li>"Create an invoice for 5 hoodies at ₦10,000 each for Jerry's Fashion, due in 5 days"</li>
