@@ -24,7 +24,7 @@ import { useInvoiceData } from "@/hooks/useInvoiceData";
 import { useAuthLocal } from "@/hooks/useAuthLocal";
 import { formatCurrency, calculateTotal } from "@/utils/invoiceUtils";
 import ResponsiveNavButtons from "@/components/ResponsiveNavButtons";
-import { CustomTemplate, InvoiceData } from "@/types/invoice";
+import { CustomTemplate, InvoiceData, LineItem } from "@/types/invoice";
 
 const Invoices = () => {
   const { user } = useAuthLocal();
@@ -67,12 +67,12 @@ const Invoices = () => {
     setInvoiceData({ ...formData, [name]: value });
   };
 
-  const handleLineItemChange = (id: string, field: string, value: string | number) => {
+  const handleLineItemChange = (id: string, field: keyof LineItem, value: string | number) => {
     const updatedLineItems = formData.lineItems.map(item =>
       item.id === id ? { ...item, [field]: value } : item
     );
     setFormData({ ...formData, lineItems: updatedLineItems });
-    updateLineItem(id, field as keyof typeof item, value);
+    updateLineItem(id, field, value);
   };
 
   const handleTaxRateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -157,6 +157,22 @@ const Invoices = () => {
     
     console.log("Custom template saved:", savedTemplate);
     return savedTemplate;
+  };
+
+  // Calculate totals for preview
+  const calculateSubtotal = () => {
+    return formData.lineItems.reduce((sum, item) => sum + item.amount, 0);
+  };
+
+  const calculateTax = () => {
+    const subtotal = calculateSubtotal();
+    return subtotal * (formData.taxRate / 100);
+  };
+
+  const calculateTotalAmount = () => {
+    const subtotal = calculateSubtotal();
+    const tax = calculateTax();
+    return subtotal + tax - (formData.discountAmount || 0);
   };
 
   return (
@@ -512,11 +528,11 @@ const Invoices = () => {
         <InvoiceTemplateSelector
           isOpen={isTemplateDialogOpen}
           onClose={() => setIsTemplateDialogOpen(false)}
-          selectedTemplate={selectedTemplate}
+          template={selectedTemplate}
           onSelectTemplate={setSelectedTemplate}
-          selectedColorTheme={selectedColorTheme}
+          colorTheme={selectedColorTheme}
           onSelectColorTheme={setSelectedColorTheme}
-          selectedCustomTemplate={selectedCustomTemplate}
+          customTemplate={selectedCustomTemplate}
           onSelectCustomTemplate={setSelectedCustomTemplate}
           onSaveCustomTemplate={handleSaveCustomTemplate}
         />
@@ -524,16 +540,18 @@ const Invoices = () => {
         <SendInvoiceDialog
           isOpen={isSendDialogOpen}
           onClose={() => setIsSendDialogOpen(false)}
-          invoice={formData}
+          invoiceData={formData}
         />
 
         <InvoicePreviewModal
           isOpen={isPreviewOpen}
           onClose={() => setIsPreviewOpen(false)}
-          invoice={selectedInvoice}
-          template={selectedTemplate}
-          colorTheme={selectedColorTheme}
-          customTemplate={selectedCustomTemplate}
+          invoiceData={selectedInvoice || formData}
+          formatCurrency={formatCurrency}
+          calculateSubtotal={calculateSubtotal}
+          calculateTax={calculateTax}
+          calculateTotal={calculateTotalAmount}
+          onEmail={() => setIsSendDialogOpen(true)}
         />
 
         <SupportBubble onHelpClick={() => setIsHelpCenterOpen(true)} />
