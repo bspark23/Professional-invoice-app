@@ -175,6 +175,11 @@ const Index = () => {
             <Button onClick={toggleDarkMode} variant="outline" size="sm" className="hover:bg-gray-100 dark:hover:bg-gray-700">
               {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </Button>
+            <a href="/expenses">
+              <Button variant="outline" className="hover:bg-green-50 dark:hover:bg-green-900/30">
+                Track Expenses
+              </Button>
+            </a>
             <Button onClick={() => setViewMode('list')} variant="outline" className="hover:bg-blue-50 dark:hover:bg-blue-900/30">
               <Eye className="w-4 h-4 mr-2" />
               View Saved ({savedInvoices.length})

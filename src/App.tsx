@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -10,6 +9,7 @@ import Welcome from "./pages/Welcome";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import LandingPage from "@/components/LandingPage";
+import ExpenseTracker from "./pages/ExpenseTracker";
 
 const queryClient = new QueryClient();
 
@@ -43,6 +43,7 @@ const AppContent = () => {
       <Route path="/" element={<LanguageSelector />} />
       <Route path="/welcome" element={<Welcome />} />
       <Route path="/dashboard" element={<Index />} />
+      <Route path="/expenses" element={<ExpenseTracker />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

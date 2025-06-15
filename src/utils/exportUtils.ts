@@ -33,28 +33,23 @@ export const exportToPDF = (
     const cardH = 273;  // 297mm - (12*2) margin
 
     if (themeObj.type === 'gradient' && themeObj.gradient) {
-      // Simulate a light gradient: overlay a semi-transparent white over base gradient
-      // jsPDF doesn't support gradients directly; so we approximate with pale fill + border
-
-      // Light blue as fallback for "gradient-blue", light purple for "gradient-purple"
-      const gradLightColor =
-        themeObj.value === "gradient-blue"
-          ? [228, 233, 255]
-          : themeObj.value === "gradient-purple"
-          ? [239, 233, 252]
-          : [245, 247, 255];
-      pdf.setFillColor(...gradLightColor);
+      // Lighten the gradient for PDF background - use pale colors instead of deep ones
+      // We approximate "gradient" with a solid light color for PDF for better readability
+      let gradLightColor: [number, number, number];
+      if (themeObj.value === "gradient-blue") {
+        gradLightColor = [230, 238, 255]; // very light blue
+      } else if (themeObj.value === "gradient-purple") {
+        gradLightColor = [242, 235, 255]; // very light purple
+      } else {
+        gradLightColor = [245, 247, 255]; // fallback very light
+      }
+      pdf.setFillColor(gradLightColor[0], gradLightColor[1], gradLightColor[2]);
       pdf.roundedRect(cardX, cardY, cardW, cardH, 6, 6, 'F');
-      // Also white overlay for near-90% white
-      pdf.setFillColor(255, 255, 255, 0.9 * 255);  // Not all pdf viewers handle alpha (so we just use lightest color)
-      pdf.roundedRect(cardX, cardY, cardW, cardH, 6, 6, 'F');
-      // Card border
+      // Card border subtle
       pdf.setDrawColor(200, 200, 230);
-      pdf.roundedRect(cardX, cardY, cardW, cardH, 6, 6, 'S'); // border only
-
+      pdf.roundedRect(cardX, cardY, cardW, cardH, 6, 6, 'S');
     } else if (themeObj.type === 'plain' && themeObj.color) {
-      // Use the specified plain color, but with alpha blending over white
-      // Parse color and blend with white: result = color at 10% + 90% white
+      // Use a very light version of the color (blend with white 90%/10%)
       function hexToRgb(hex: string): [number, number, number] {
         const n = hex.replace("#", "");
         return [
@@ -64,15 +59,13 @@ export const exportToPDF = (
         ];
       }
       const baseRgb = hexToRgb(themeObj.color);
-      // Blend: light = 10% color + 90% white
       const lightRgb: [number, number, number] = [
         Math.round(baseRgb[0] * 0.1 + 255 * 0.9),
         Math.round(baseRgb[1] * 0.1 + 255 * 0.9),
         Math.round(baseRgb[2] * 0.1 + 255 * 0.9),
       ];
-      pdf.setFillColor(...lightRgb);
+      pdf.setFillColor(lightRgb[0], lightRgb[1], lightRgb[2]);
       pdf.roundedRect(cardX, cardY, cardW, cardH, 6, 6, 'F');
-      // Border similar to color, but softer
       pdf.setDrawColor(baseRgb[0], baseRgb[1], baseRgb[2]);
       pdf.roundedRect(cardX, cardY, cardW, cardH, 6, 6, 'S');
     } else {
@@ -325,35 +318,31 @@ export const exportToImage = (
     const cardW = canvas.width - 72;   // 800 - 36*2
     const cardH = canvas.height - 72;
 
-    // Find theme style for light "card" effect
+    // Use light backgrounds for the card area (matching dashboard/print)
     const themeObj2 = colorThemes.find(ct => ct.value === invoiceData.colorTheme) || colorThemes[0];
 
     if (themeObj2.type === "gradient" && themeObj2.gradient) {
-      // Approximate a light gradient as pale color + white overlay
+      // Very light color for gradients
       ctx.save();
       let grad;
       if (themeObj2.value === "gradient-blue") {
         grad = ctx.createLinearGradient(cardX, cardY, cardX + cardW, cardY + cardH);
-        grad.addColorStop(0, "#e4e9ff"); // very light blue
-        grad.addColorStop(1, "#f8faff");
+        grad.addColorStop(0, "#e6eeff"); // very light blue
+        grad.addColorStop(1, "#f5f7ff");
       } else {
         grad = ctx.createLinearGradient(cardX, cardY, cardX + cardW, cardY + cardH);
-        grad.addColorStop(0, "#efe9fc"); // very light purple
-        grad.addColorStop(1, "#f8faff");
+        grad.addColorStop(0, "#f2ebff"); // very light purple
+        grad.addColorStop(1, "#f7faff");
       }
       ctx.fillStyle = grad;
       ctx.fillRect(cardX, cardY, cardW, cardH);
-      ctx.globalAlpha = 0.9; // white overlay
-      ctx.fillStyle = "#fff";
-      ctx.fillRect(cardX, cardY, cardW, cardH);
-      ctx.globalAlpha = 1;
       ctx.restore();
       // border
       ctx.strokeStyle = "#c7d5fc";
       ctx.lineWidth = 2;
       ctx.strokeRect(cardX, cardY, cardW, cardH);
     } else if (themeObj2.type === "plain" && themeObj2.color) {
-      // Blend with white: 10% color, 90% white
+      // Blend with white (lighter version)
       function hexToRgb(hex: string): [number, number, number] {
         const n = hex.replace("#", "");
         return [
@@ -370,7 +359,6 @@ export const exportToImage = (
       ];
       ctx.fillStyle = `rgb(${lightRgb[0]},${lightRgb[1]},${lightRgb[2]})`;
       ctx.fillRect(cardX, cardY, cardW, cardH);
-      // border
       ctx.strokeStyle = `rgb(${baseRgb[0]},${baseRgb[1]},${baseRgb[2]})`;
       ctx.lineWidth = 2;
       ctx.strokeRect(cardX, cardY, cardW, cardH);
