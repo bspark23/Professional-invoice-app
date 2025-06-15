@@ -535,7 +535,7 @@ const Invoices = () => {
       <InvoiceTemplateSelector
         isOpen={isTemplateDialogOpen}
         onClose={() => setIsTemplateDialogOpen(false)}
-        onSelectTemplate={handleTemplateSelect}
+        onTemplateSelect={handleTemplateSelect}
         currentTemplate={invoiceData.template}
         currentColorTheme={invoiceData.colorTheme}
         customTemplates={customTemplates}
