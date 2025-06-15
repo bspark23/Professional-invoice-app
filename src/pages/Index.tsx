@@ -11,8 +11,19 @@ import { Badge } from "@/components/ui/badge";
 import { FileText, Printer, Tag } from "lucide-react";
 import PrintPreviewModal from "@/components/PrintPreviewModal";
 import { currencies } from "@/types/invoice";
+import BusinessBrandingCard, { Branding } from "@/components/BusinessBrandingCard";
 
 const Index: React.FC = () => {
+  // Branding
+  const [branding, setBranding] = useState<Branding>(() => {
+    try {
+      const b = localStorage.getItem("invoiceease-branding");
+      return b ? JSON.parse(b) : { name: "", phone: "", email: "", address: "", logo: "" };
+    } catch {
+      return { name: "", phone: "", email: "", address: "", logo: "" };
+    }
+  });
+
   // Currency handling
   const defaultCurrency = localStorage.getItem("invoicer-pro-currency") || "USD";
   const [currency, setCurrency] = useState<string>(defaultCurrency);
@@ -52,6 +63,9 @@ const Index: React.FC = () => {
 
   return (
     <DashboardLayout>
+      {/* Business Branding Section */}
+      <BusinessBrandingCard onBrandingChange={setBranding} />
+
       {/* Header section */}
       <div className="flex flex-col sm:flex-row items-center sm:justify-between mb-4 gap-3">
         <div>
