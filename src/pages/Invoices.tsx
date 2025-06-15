@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -166,6 +165,14 @@ const Invoices = () => {
     });
   };
 
+  const handleAddNewClient = () => {
+    // For now, just show a toast - this can be expanded later
+    toast({
+      title: "Add New Client",
+      description: "This feature will be implemented soon.",
+    });
+  };
+
   const formatCurrency = (amount: number, currencyCode?: string) => {
     const currency = currencyCode || invoiceData.currency || "USD";
     return new Intl.NumberFormat("en-US", {
@@ -309,7 +316,11 @@ const Invoices = () => {
           <div className="space-y-4">
             <div>
               <Label htmlFor="clientName">Client Name</Label>
-              <ClientSelector clients={clients} onSelect={handleClientSelect} />
+              <ClientSelector 
+                clients={clients} 
+                onSelectClient={handleClientSelect}
+                onAddNewClient={handleAddNewClient}
+              />
             </div>
             <div>
               <Label htmlFor="clientEmail">Client Email</Label>
