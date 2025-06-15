@@ -25,7 +25,7 @@ function getMonthYear(dateString: string) {
 const AnalyticsDashboard = ({ savedInvoices, formatCurrency }: AnalyticsDashboardProps) => {
   // Group invoices by month for count and revenue
   const monthMap: { [month: string]: { count: number; revenue: number } } = {};
-  let paid = 0, unpaid = 0, pending = 0;
+  let paid = 0, unpaid = 0;
 
   savedInvoices.forEach(inv => {
     const month = getMonthYear(inv.invoiceDate);
@@ -40,7 +40,6 @@ const AnalyticsDashboard = ({ savedInvoices, formatCurrency }: AnalyticsDashboar
 
     // payment status breakdown
     if (inv.status === "paid") paid++;
-    else if (inv.status === "pending") pending++;
     else unpaid++;
   });
 
@@ -60,11 +59,10 @@ const AnalyticsDashboard = ({ savedInvoices, formatCurrency }: AnalyticsDashboar
     })).sort((a, b) => new Date(a.month).getTime() - new Date(b.month).getTime())
   , [savedInvoices]);
 
-  // Pie chart data: payment status
+  // Pie chart data: payment status (only paid and unpaid)
   const paymentStatusData = [
     { name: "Paid", value: paid },
     { name: "Unpaid", value: unpaid },
-    { name: "Pending", value: pending },
   ].filter(d => d.value > 0);
 
   return (
@@ -143,8 +141,7 @@ const AnalyticsDashboard = ({ savedInvoices, formatCurrency }: AnalyticsDashboar
               <ChartContainer
                 config={{
                   paid: { label: "Paid", color: "#22c55e" },
-                  unpaid: { label: "Unpaid", color: "#ef4444" },
-                  pending: { label: "Pending", color: "#f59e42" }
+                  unpaid: { label: "Unpaid", color: "#ef4444" }
                 }}
               >
                 <ResponsiveContainer width="100%" height={210}>
