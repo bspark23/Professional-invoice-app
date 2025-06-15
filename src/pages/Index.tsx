@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import CurrencySelector from "@/components/CurrencySelector";
 import DarkModeToggle from "@/components/DarkModeToggle";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Printer, Tag } from "lucide-react";
+import { FileText, Printer, Tag, Eye } from "lucide-react";
 import PrintPreviewModal from "@/components/PrintPreviewModal";
 import { currencies } from "@/types/invoice";
 import BusinessBrandingCard, { Branding } from "@/components/BusinessBrandingCard";
@@ -68,7 +68,14 @@ const Index: React.FC = () => {
     // Pass form and calculations via router state
     navigate("/dashboard/print-preview", {
       state: {
-        form,
+        form: {
+          ...form,
+          businessLogo: branding.logo,
+          businessName: branding.name,
+          businessEmail: branding.email,
+          businessPhone: branding.phone,
+          businessAddress: branding.address,
+        },
         subtotal,
         tax,
         total,
@@ -82,6 +89,17 @@ const Index: React.FC = () => {
 
   return (
     <DashboardLayout>
+      {/* TOP PRINT PREVIEW BUTTON */}
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold text-blue-800 font-inter">Dashboard</h2>
+        <Button
+          variant="default"
+          onClick={handlePreview}
+          className="bg-blue-600 text-white hover:bg-blue-700 transition"
+        >
+          <Eye className="mr-1" size={18}/> Print Preview
+        </Button>
+      </div>
       <div className="flex flex-col gap-6 lg:flex-row animate-fade-in">
 
         {/* Left column: Main content */}

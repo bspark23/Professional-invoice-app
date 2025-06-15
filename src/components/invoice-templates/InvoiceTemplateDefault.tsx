@@ -1,4 +1,3 @@
-
 import React from "react";
 import { InvoiceData } from "@/types/invoice";
 
@@ -22,16 +21,23 @@ function InvoiceTemplateDefault({
 }) {
   return (
     <div className="font-inter text-gray-900 bg-white px-8 py-8 rounded-xl print:rounded-none print:shadow-none print:bg-white">
-      {/* Header */}
-      <div className="flex justify-between items-start mb-8">
+      {/* Branding: Logo + Details at Top */}
+      <div className="flex items-center gap-4 mb-5">
+        {invoiceData.businessLogo && (
+          <img src={invoiceData.businessLogo} alt="Logo" className="h-14 w-14 object-cover rounded shadow" />
+        )}
         <div>
-          {invoiceData.businessLogo && (
-            <img src={invoiceData.businessLogo} alt="Logo" className="h-14 w-14 mb-2 object-contain rounded" />
-          )}
           <div className="font-bold text-xl">{invoiceData.businessName || "Business Name"}</div>
           <div className="text-sm text-gray-500">{invoiceData.businessEmail}</div>
+          <div className="text-sm text-gray-500">{invoiceData.businessPhone}</div>
           <div className="text-sm text-gray-500">{invoiceData.businessAddress}</div>
         </div>
+      </div>
+
+      {/* Header */}
+      <div className="flex justify-between items-start mb-8">
+        <div></div>
+        {/* Empty div keeps space for branding at left */}
         <div className="text-right">
           <h1 className="font-bold text-2xl tracking-widest uppercase mb-2">INVOICE</h1>
           <div className={`rounded-md px-6 py-3 text-blue-700 font-bold ${LITE_BLUE_BG} flex flex-col gap-2 shadow`}>
@@ -163,4 +169,3 @@ function InvoiceTemplateDefault({
 }
 
 export default InvoiceTemplateDefault;
-
