@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Eye, Download, Mail, Palette, Save, Trash2, Edit } from "lucide-react";
+import { Plus, Eye, Download, Mail, Palette, Save, Trash2, Edit, HelpCircle, MessageCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import CurrencySelector from "@/components/CurrencySelector";
 import ClientSelector from "@/components/ClientSelector";
@@ -14,9 +14,11 @@ import InvoicePreviewModal from "@/components/InvoicePreviewModal";
 import LogoSignatureUpload from "@/components/LogoSignatureUpload";
 import InvoiceTemplateSelector from "@/components/InvoiceTemplateSelector";
 import SendInvoiceDialog from "@/components/SendInvoiceDialog";
-import { InvoiceData, LineItem, colorThemes } from "@/types/invoice";
+import InvoicePreview from "@/components/InvoicePreview";
+import { InvoiceData, LineItem } from "@/types/invoice";
 import { Client } from "@/types/client";
 import { useCustomTemplates } from "@/hooks/useCustomTemplates";
+import { useAuthLocal } from "@/hooks/useAuthLocal";
 import SupportBubble from "@/components/SupportBubble";
 import HelpCenter from "@/components/HelpCenter";
 
@@ -32,8 +34,8 @@ const initialInvoiceData: InvoiceData = {
   clientEmail: "client@example.com",
   clientAddress: "456 Client St, City, State, Zip",
   invoiceNumber: "INV-001",
-  invoiceDate: new Date().toISOString(),
-  dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+  invoiceDate: new Date().toISOString().split('T')[0],
+  dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
   currency: "USD",
   lineItems: [{ id: "1", description: "Service 1", quantity: 1, rate: 100, amount: 100 }],
   taxRate: 0,
@@ -60,7 +62,6 @@ const Invoices = () => {
   const [isTemplateDialogOpen, setIsTemplateDialogOpen] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isSendDialogOpen, setIsSendDialogOpen] = useState(false);
-  const [selectedInvoice, setSelectedInvoice] = useState<InvoiceData | null>(null);
   const [clients, setClients] = useState<Client[]>([
     { 
       id: "1", 
@@ -79,14 +80,24 @@ const Invoices = () => {
       createdAt: new Date().toISOString()
     },
   ]);
-  const { toast } = useToast();
-  const userId = "testUser";
-  const { customTemplates, saveCustomTemplate, deleteCustomTemplate, loadCustomTemplates } = useCustomTemplates(userId);
   const [isHelpCenterOpen, setIsHelpCenterOpen] = useState(false);
+  const { toast } = useToast();
+  const { user } = useAuthLocal();
+  const userId = user?.email || "testUser";
+  const { customTemplates, saveCustomTemplate, deleteCustomTemplate, loadCustomTemplates } = useCustomTemplates(userId);
 
   useEffect(() => {
     loadSavedInvoices();
-  }, []);
+    // Set user info if logged in
+    if (user) {
+      setInvoiceData(prev => ({
+        ...prev,
+        businessName: user.profileName || prev.businessName,
+        businessEmail: user.email || prev.businessEmail,
+        signatureName: user.profileName || prev.signatureName
+      }));
+    }
+  }, [user]);
 
   const loadSavedInvoices = () => {
     const storedInvoices = localStorage.getItem("savedInvoices");
@@ -131,7 +142,11 @@ const Invoices = () => {
   const handleLineItemChange = (e: React.ChangeEvent<HTMLInputElement>, id: string) => {
     const { name, value } = e.target;
     const updatedLineItems = invoiceData.lineItems.map((item) =>
-      item.id === id ? { ...item, [name]: value, amount: Number(item.quantity) * Number(item.rate) } : item
+      item.id === id ? { 
+        ...item, 
+        [name]: name === 'quantity' || name === 'rate' ? Number(value) : value,
+        amount: name === 'quantity' ? Number(value) * item.rate : name === 'rate' ? item.quantity * Number(value) : item.amount
+      } : item
     );
     setInvoiceData({ ...invoiceData, lineItems: updatedLineItems });
   };
@@ -166,7 +181,6 @@ const Invoices = () => {
   };
 
   const handleAddNewClient = () => {
-    // For now, just show a toast - this can be expanded later
     toast({
       title: "Add New Client",
       description: "This feature will be implemented soon.",
@@ -219,421 +233,331 @@ const Invoices = () => {
     });
   };
 
+  const calculateTotalForInvoice = (invoice: InvoiceData) => {
+    const subtotal = invoice.lineItems.reduce((acc, item) => acc + Number(item.amount), 0);
+    const tax = subtotal * (invoice.taxRate / 100);
+    return subtotal + tax - invoice.discountAmount;
+  };
+
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <CardTitle className="text-2xl font-bold">Invoices</CardTitle>
-        <div className="space-x-2">
-          <Button onClick={() => setIsHelpCenterOpen(true)}>Help</Button>
-          <Button onClick={() => setIsTemplateDialogOpen(true)}>
-            <Palette className="w-4 h-4 mr-2" />
-            Choose Template
-          </Button>
-          <Button onClick={() => setIsLogoDialogOpen(true)}>
-            <Edit className="w-4 h-4 mr-2" />
-            Edit Logo/Signature
-          </Button>
-          <Button variant="secondary" onClick={() => setInvoiceData(initialInvoiceData)}>
-            <Plus className="w-4 h-4 mr-2" />
-            New Invoice
-          </Button>
+      <div className="bg-white shadow-sm border-b px-4 sm:px-6 lg:px-8 py-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Create Invoice</h1>
+            <p className="text-sm text-gray-500 mt-1">Generate professional invoices for your clients</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setIsHelpCenterOpen(true)}>
+              <HelpCircle className="w-4 h-4 mr-2" />
+              FAQ
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setIsHelpCenterOpen(true)}>
+              <MessageCircle className="w-4 h-4 mr-2" />
+              Chat
+            </Button>
+          </div>
         </div>
       </div>
 
-      <Separator />
-
-      {/* Invoice Form */}
-      <Card className="bg-white shadow-md rounded-md">
-        <CardHeader>
-          <CardTitle>Invoice Details</CardTitle>
-        </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Business Information */}
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="businessName">Business Name</Label>
-              <Input
-                type="text"
-                id="businessName"
-                name="businessName"
-                value={invoiceData.businessName}
-                onChange={handleInputChange}
-              />
-            </div>
-            <div>
-              <Label htmlFor="businessSlogan">Business Slogan</Label>
-              <Input
-                type="text"
-                id="businessSlogan"
-                name="businessSlogan"
-                value={invoiceData.businessSlogan || ""}
-                onChange={handleInputChange}
-              />
-            </div>
-            <div>
-              <Label htmlFor="businessAddress">Business Address</Label>
-              <Textarea
-                id="businessAddress"
-                name="businessAddress"
-                value={invoiceData.businessAddress}
-                onChange={handleInputChange}
-              />
-            </div>
-            <div>
-              <Label htmlFor="businessEmail">Business Email</Label>
-              <Input
-                type="email"
-                id="businessEmail"
-                name="businessEmail"
-                value={invoiceData.businessEmail}
-                onChange={handleInputChange}
-              />
-            </div>
-            <div>
-              <Label htmlFor="businessPhone">Business Phone</Label>
-              <Input
-                type="tel"
-                id="businessPhone"
-                name="businessPhone"
-                value={invoiceData.businessPhone || ""}
-                onChange={handleInputChange}
-              />
-            </div>
-            <div>
-              <Label htmlFor="businessWebsite">Business Website</Label>
-              <Input
-                type="url"
-                id="businessWebsite"
-                name="businessWebsite"
-                value={invoiceData.businessWebsite || ""}
-                onChange={handleInputChange}
-              />
-            </div>
-          </div>
-
-          {/* Client and Invoice Information */}
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="clientName">Client Name</Label>
-              <ClientSelector 
-                clients={clients} 
-                onSelectClient={handleClientSelect}
-                onAddNewClient={handleAddNewClient}
-              />
-            </div>
-            <div>
-              <Label htmlFor="clientEmail">Client Email</Label>
-              <Input
-                type="email"
-                id="clientEmail"
-                name="clientEmail"
-                value={invoiceData.clientEmail}
-                onChange={handleInputChange}
-              />
-            </div>
-            <div>
-              <Label htmlFor="clientAddress">Client Address</Label>
-              <Textarea
-                id="clientAddress"
-                name="clientAddress"
-                value={invoiceData.clientAddress}
-                onChange={handleInputChange}
-              />
-            </div>
-            <div>
-              <Label htmlFor="invoiceNumber">Invoice Number</Label>
-              <Input
-                type="text"
-                id="invoiceNumber"
-                name="invoiceNumber"
-                value={invoiceData.invoiceNumber}
-                onChange={handleInputChange}
-              />
-            </div>
-            <div>
-              <Label htmlFor="invoiceDate">Invoice Date</Label>
-              <Input
-                type="date"
-                id="invoiceDate"
-                name="invoiceDate"
-                value={invoiceData.invoiceDate}
-                onChange={handleInputChange}
-              />
-            </div>
-            <div>
-              <Label htmlFor="dueDate">Due Date</Label>
-              <Input
-                type="date"
-                id="dueDate"
-                name="dueDate"
-                value={invoiceData.dueDate}
-                onChange={handleInputChange}
-              />
-            </div>
-            <div>
-              <Label htmlFor="currency">Currency</Label>
-              <CurrencySelector value={invoiceData.currency} onChange={handleCurrencyChange} />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Line Items */}
-      <Card className="bg-white shadow-md rounded-md">
-        <CardHeader>
-          <CardTitle>Line Items</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead>
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Description
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Quantity
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Rate
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Amount
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {invoiceData.lineItems.map((item) => (
-                  <tr key={item.id}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <Input
-                        type="text"
-                        name="description"
-                        value={item.description}
-                        onChange={(e) => handleLineItemChange(e, item.id)}
-                      />
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <Input
-                        type="number"
-                        name="quantity"
-                        value={item.quantity}
-                        onChange={(e) => handleLineItemChange(e, item.id)}
-                      />
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <Input
-                        type="number"
-                        name="rate"
-                        value={item.rate}
-                        onChange={(e) => handleLineItemChange(e, item.id)}
-                      />
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {formatCurrency(Number(item.amount), invoiceData.currency)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <Button variant="ghost" onClick={() => deleteLineItem(item.id)}>
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <Button variant="secondary" onClick={addLineItem}>
-            <Plus className="w-4 h-4 mr-2" />
-            Add Line Item
-          </Button>
-        </CardContent>
-      </Card>
-
-      {/* Additional Information */}
-      <Card className="bg-white shadow-md rounded-md">
-        <CardHeader>
-          <CardTitle>Additional Information</CardTitle>
-        </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <Label htmlFor="notes">Notes</Label>
-            <Textarea
-              id="notes"
-              name="notes"
-              value={invoiceData.notes}
-              onChange={handleInputChange}
-            />
-          </div>
-          <div>
-            <Label htmlFor="paymentTerms">Payment Terms</Label>
-            <Textarea
-              id="paymentTerms"
-              name="paymentTerms"
-              value={invoiceData.paymentTerms || ""}
-              onChange={handleInputChange}
-            />
-          </div>
-          <div>
-            <Label htmlFor="paymentInstructions">Payment Instructions</Label>
-            <Textarea
-              id="paymentInstructions"
-              name="paymentInstructions"
-              value={invoiceData.paymentInstructions || ""}
-              onChange={handleInputChange}
-            />
-          </div>
-          <div>
-            <Label htmlFor="footerText">Footer Text</Label>
-            <Textarea
-              id="footerText"
-              name="footerText"
-              value={invoiceData.footerText || ""}
-              onChange={handleInputChange}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Bank Details */}
-      <Card className="bg-white shadow-md rounded-md">
-        <CardHeader>
-          <CardTitle>Bank Details</CardTitle>
-        </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <Label htmlFor="accountNumber">Account Number</Label>
-            <Input
-              type="text"
-              id="accountNumber"
-              name="accountNumber"
-              value={invoiceData.accountNumber || ""}
-              onChange={handleInputChange}
-            />
-          </div>
-          <div>
-            <Label htmlFor="bankDetails">Bank Details</Label>
-            <Textarea
-              id="bankDetails"
-              name="bankDetails"
-              value={invoiceData.bankDetails || ""}
-              onChange={handleInputChange}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Totals */}
-      <Card className="bg-white shadow-md rounded-md">
-        <CardHeader>
-          <CardTitle>Totals</CardTitle>
-        </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div>
-            <Label>Subtotal</Label>
-            <div className="font-semibold">{formatCurrency(calculateSubtotal(), invoiceData.currency)}</div>
-          </div>
-          <div>
-            <Label htmlFor="taxRate">Tax Rate (%)</Label>
-            <Input
-              type="number"
-              id="taxRate"
-              name="taxRate"
-              value={invoiceData.taxRate}
-              onChange={handleInputChange}
-            />
-          </div>
-          <div>
-            <Label>Tax Amount</Label>
-            <div className="font-semibold">{formatCurrency(calculateTax(), invoiceData.currency)}</div>
-          </div>
-          <div>
-            <Label htmlFor="discountAmount">Discount Amount</Label>
-            <Input
-              type="number"
-              id="discountAmount"
-              name="discountAmount"
-              value={invoiceData.discountAmount}
-              onChange={handleInputChange}
-            />
-          </div>
-          <div>
-            <Label>Total</Label>
-            <div className="text-xl font-bold">{formatCurrency(calculateTotal(), invoiceData.currency)}</div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Actions */}
-      <div className="flex justify-end space-x-2">
-        <Button variant="outline" onClick={() => setIsPreviewOpen(true)}>
-          <Eye className="w-4 h-4 mr-2" />
-          Preview
-        </Button>
-        <Button onClick={saveInvoice}>
-          <Save className="w-4 h-4 mr-2" />
-          Save Invoice
-        </Button>
-        <Button variant="secondary" onClick={() => setIsSendDialogOpen(true)}>
-          <Mail className="w-4 h-4 mr-2" />
-          Send Invoice
-        </Button>
-        <Button variant="destructive" onClick={() => deleteInvoice(invoiceData.invoiceNumber)}>
-          <Trash2 className="w-4 h-4 mr-2" />
-          Delete Invoice
-        </Button>
-      </div>
-
-      <Separator />
-
-      {/* Saved Invoices */}
-      <div>
-        <h2 className="text-xl font-semibold mb-4">Saved Invoices</h2>
-        {savedInvoices.length === 0 ? (
-          <div className="text-gray-500">No invoices saved yet.</div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {savedInvoices.map((invoice) => (
-              <Card key={invoice.invoiceNumber} className="shadow-sm">
-                <CardHeader>
-                  <CardTitle>Invoice {invoice.invoiceNumber}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p>Client: {invoice.clientName}</p>
-                  <p>Date: {new Date(invoice.invoiceDate).toLocaleDateString()}</p>
-                  <p>Total: {formatCurrency(calculateTotalForInvoice(invoice), invoice.currency)}</p>
-                  <div className="flex justify-end space-x-2 mt-4">
-                    <Button variant="outline" size="sm" onClick={() => editInvoice(invoice)}>
-                      Edit
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Left Side - Invoice Form */}
+          <div className="space-y-6">
+            {/* Invoice Details Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  Invoice Details
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" onClick={() => setIsTemplateDialogOpen(true)}>
+                      <Palette className="w-4 h-4 mr-2" />
+                      Template
                     </Button>
-                    <Button variant="destructive" size="sm" onClick={() => deleteInvoice(invoice.invoiceNumber)}>
-                      Delete
+                    <Button size="sm" variant="outline" onClick={() => setIsLogoDialogOpen(true)}>
+                      <Edit className="w-4 h-4 mr-2" />
+                      Logo
                     </Button>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* People Section */}
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-3 block">People</Label>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                        <span className="text-sm font-medium text-blue-600">
+                          {user?.profileName?.charAt(0) || 'U'}
+                        </span>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-900">
+                          {user?.profileName || 'Your Name'}
+                        </p>
+                        <p className="text-xs text-gray-500">{user?.email || 'your@email.com'}</p>
+                      </div>
+                    </div>
+                    <div>
+                      <Label htmlFor="clientName" className="text-xs text-gray-600">Client</Label>
+                      <ClientSelector 
+                        clients={clients} 
+                        onSelectClient={handleClientSelect}
+                        onAddNewClient={handleAddNewClient}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Invoice Info */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="invoiceNumber" className="text-xs text-gray-600">Invoice Number</Label>
+                    <Input
+                      id="invoiceNumber"
+                      name="invoiceNumber"
+                      value={invoiceData.invoiceNumber}
+                      onChange={handleInputChange}
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="invoiceDate" className="text-xs text-gray-600">Invoice Date</Label>
+                    <Input
+                      type="date"
+                      id="invoiceDate"
+                      name="invoiceDate"
+                      value={invoiceData.invoiceDate}
+                      onChange={handleInputChange}
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="dueDate" className="text-xs text-gray-600">Due Date</Label>
+                    <Input
+                      type="date"
+                      id="dueDate"
+                      name="dueDate"
+                      value={invoiceData.dueDate}
+                      onChange={handleInputChange}
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-600">Currency</Label>
+                    <CurrencySelector value={invoiceData.currency} onChange={handleCurrencyChange} />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Products/Services Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Product</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {invoiceData.lineItems.map((item, index) => (
+                    <div key={item.id} className="grid grid-cols-12 gap-2 items-center p-3 bg-gray-50 rounded-lg">
+                      <div className="col-span-5">
+                        <Label className="text-xs text-gray-600">Item</Label>
+                        <Input
+                          name="description"
+                          value={item.description}
+                          onChange={(e) => handleLineItemChange(e, item.id)}
+                          placeholder="Description"
+                          className="mt-1 text-sm"
+                        />
+                      </div>
+                      <div className="col-span-2">
+                        <Label className="text-xs text-gray-600">Qty</Label>
+                        <Input
+                          type="number"
+                          name="quantity"
+                          value={item.quantity}
+                          onChange={(e) => handleLineItemChange(e, item.id)}
+                          className="mt-1 text-sm"
+                        />
+                      </div>
+                      <div className="col-span-2">
+                        <Label className="text-xs text-gray-600">Rate</Label>
+                        <Input
+                          type="number"
+                          name="rate"
+                          value={item.rate}
+                          onChange={(e) => handleLineItemChange(e, item.id)}
+                          className="mt-1 text-sm"
+                        />
+                      </div>
+                      <div className="col-span-2">
+                        <Label className="text-xs text-gray-600">Amount</Label>
+                        <div className="mt-1 p-2 bg-white rounded border text-sm font-medium">
+                          {formatCurrency(item.amount)}
+                        </div>
+                      </div>
+                      <div className="col-span-1 flex justify-center">
+                        {invoiceData.lineItems.length > 1 && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => deleteLineItem(item.id)}
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  
+                  <Button variant="outline" onClick={addLineItem} className="w-full">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add New Line
+                  </Button>
+
+                  {/* Totals */}
+                  <div className="mt-6 pt-4 border-t space-y-3">
+                    <div className="flex justify-between text-sm">
+                      <span>Subtotal</span>
+                      <span className="font-medium">{formatCurrency(calculateSubtotal())}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm">
+                      <div className="flex items-center gap-2">
+                        <span>Tax</span>
+                        <Input
+                          type="number"
+                          name="taxRate"
+                          value={invoiceData.taxRate}
+                          onChange={handleInputChange}
+                          className="w-16 h-6 text-xs"
+                          placeholder="0"
+                        />
+                        <span>%</span>
+                      </div>
+                      <span className="font-medium">{formatCurrency(calculateTax())}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm">
+                      <div className="flex items-center gap-2">
+                        <span>Discount</span>
+                        <Input
+                          type="number"
+                          name="discountAmount"
+                          value={invoiceData.discountAmount}
+                          onChange={handleInputChange}
+                          className="w-20 h-6 text-xs"
+                          placeholder="0"
+                        />
+                      </div>
+                      <span className="font-medium">-{formatCurrency(invoiceData.discountAmount)}</span>
+                    </div>
+                    <div className="flex justify-between text-lg font-bold pt-2 border-t">
+                      <span>Total</span>
+                      <span>{formatCurrency(calculateTotal())}</span>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Action Buttons */}
+            <div className="flex flex-wrap gap-3">
+              <Button onClick={saveInvoice} className="flex-1 sm:flex-none">
+                <Save className="w-4 h-4 mr-2" />
+                Save Invoice
+              </Button>
+              <Button variant="outline" onClick={() => setIsPreviewOpen(true)}>
+                <Eye className="w-4 h-4 mr-2" />
+                Preview
+              </Button>
+              <Button variant="outline" onClick={() => setIsSendDialogOpen(true)}>
+                <Mail className="w-4 h-4 mr-2" />
+                Send
+              </Button>
+            </div>
           </div>
-        )}
+
+          {/* Right Side - Preview */}
+          <div className="lg:sticky lg:top-6">
+            <Card className="h-fit">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <Eye className="w-5 h-5" />
+                    Preview
+                  </CardTitle>
+                  <Badge variant="secondary">
+                    {invoiceData.template || 'Default'}
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="p-2">
+                <div className="bg-white border rounded-lg overflow-hidden" style={{ height: '600px', overflowY: 'auto' }}>
+                  <div className="transform scale-75 origin-top-left" style={{ width: '133.33%', height: '133.33%' }}>
+                    <InvoicePreview
+                      invoiceData={invoiceData}
+                      formatCurrency={formatCurrency}
+                      calculateSubtotal={calculateSubtotal}
+                      calculateTax={calculateTax}
+                      calculateTotal={calculateTotal}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
-      
-      {/* Support Bubble */}
+
+      {/* Modals */}
+      <InvoicePreviewModal
+        isOpen={isPreviewOpen}
+        onClose={() => setIsPreviewOpen(false)}
+        invoiceData={invoiceData}
+        formatCurrency={formatCurrency}
+        calculateSubtotal={calculateSubtotal}
+        calculateTax={calculateTax}
+        calculateTotal={calculateTotal}
+        onEmail={() => setIsSendDialogOpen(true)}
+      />
+
+      <LogoSignatureUpload
+        isOpen={isLogoDialogOpen}
+        onClose={() => setIsLogoDialogOpen(false)}
+        onLogoUpload={handleLogoUpload}
+        onSignatureUpload={handleSignatureUpload}
+        currentLogo={invoiceData.businessLogo}
+        currentSignature={invoiceData.signatureImage}
+      />
+
+      <InvoiceTemplateSelector
+        isOpen={isTemplateDialogOpen}
+        onClose={() => setIsTemplateDialogOpen(false)}
+        onSelectTemplate={handleTemplateSelect}
+        currentTemplate={invoiceData.template}
+        currentColorTheme={invoiceData.colorTheme}
+        customTemplates={customTemplates}
+        onSaveCustomTemplate={saveCustomTemplate}
+        onDeleteCustomTemplate={deleteCustomTemplate}
+      />
+
+      <SendInvoiceDialog
+        isOpen={isSendDialogOpen}
+        onClose={() => setIsSendDialogOpen(false)}
+        onSend={handleSendInvoice}
+        invoiceData={invoiceData}
+      />
+
       <SupportBubble onHelpClick={() => setIsHelpCenterOpen(true)} />
       
-      {/* Help Center Modal */}
       <HelpCenter 
         isOpen={isHelpCenterOpen} 
         onClose={() => setIsHelpCenterOpen(false)} 
       />
     </div>
   );
-
-  function calculateTotalForInvoice(invoice: InvoiceData) {
-    const subtotal = invoice.lineItems.reduce((acc, item) => acc + Number(item.amount), 0);
-    const tax = subtotal * (invoice.taxRate / 100);
-    return subtotal + tax - invoice.discountAmount;
-  }
 };
 
 export default Invoices;
