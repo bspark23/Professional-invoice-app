@@ -1,31 +1,42 @@
+
 import { useState, useEffect } from "react";
 import { Client, ClientFormData } from "@/types/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuthLocal } from "@/hooks/useAuthLocal";
 
-// Supports multiple profiles: data saved by profileId for isolation/persistence
-export const useClients = (profileId?: string | null) => {
+// Supports multiple profiles AND users: data saved by user (email/profileName) and profileId for isolation/persistence
+export const useClients = (profileId?: string | null, userId?: string | null) => {
   const { toast } = useToast();
-  const STORAGE_PREFIX = profileId ? `profile-${profileId}-` : "";
+  // Namespace using user and profile (like invoices)
+  const STORAGE_PREFIX = userId 
+    ? profileId ? `user-${userId}-profile-${profileId}-` : `user-${userId}-`
+    : profileId ? `anon-profile-${profileId}-` : "anon-";
+
   const [clients, setClients] = useState<Client[]>([]);
 
   useEffect(() => {
-    if (!profileId) return;
-    const savedClients = localStorage.getItem(`${STORAGE_PREFIX}invoicer-pro-clients`);
+    if (!profileId || !userId) return;
+    const savedClients = localStorage.getItem(
+      `${STORAGE_PREFIX}invoicer-pro-clients`
+    );
     if (savedClients) {
       try {
         const parsed = JSON.parse(savedClients);
         setClients(parsed);
       } catch (error) {
-        console.log('Error loading saved clients:', error);
+        console.log("Error loading saved clients:", error);
       }
     }
     // eslint-disable-next-line
-  }, [profileId]);
+  }, [profileId, userId]);
 
   const saveClients = (clientList: Client[]) => {
-    if (!profileId) return;
+    if (!profileId || !userId) return;
     setClients(clientList);
-    localStorage.setItem(`${STORAGE_PREFIX}invoicer-pro-clients`, JSON.stringify(clientList));
+    localStorage.setItem(
+      `${STORAGE_PREFIX}invoicer-pro-clients`,
+      JSON.stringify(clientList)
+    );
   };
 
   const addClient = (clientData: ClientFormData) => {
@@ -47,7 +58,7 @@ export const useClients = (profileId?: string | null) => {
   };
 
   const updateClient = (id: string, clientData: ClientFormData) => {
-    const updatedClients = clients.map(client =>
+    const updatedClients = clients.map((client) =>
       client.id === id ? { ...client, ...clientData } : client
     );
     saveClients(updatedClients);
@@ -59,7 +70,7 @@ export const useClients = (profileId?: string | null) => {
   };
 
   const deleteClient = (id: string) => {
-    const updatedClients = clients.filter(client => client.id !== id);
+    const updatedClients = clients.filter((client) => client.id !== id);
     saveClients(updatedClients);
 
     toast({
@@ -69,7 +80,7 @@ export const useClients = (profileId?: string | null) => {
   };
 
   const getClientById = (id: string) => {
-    return clients.find(client => client.id === id);
+    return clients.find((client) => client.id === id);
   };
 
   return {
@@ -80,3 +91,4 @@ export const useClients = (profileId?: string | null) => {
     getClientById,
   };
 };
+

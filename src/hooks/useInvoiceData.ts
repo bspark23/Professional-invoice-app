@@ -2,13 +2,29 @@
 import { useState, useEffect } from "react";
 import { InvoiceData, LineItem } from "@/types/invoice";
 import { useToast } from "@/hooks/use-toast";
+import { useAuthLocal } from "@/hooks/useAuthLocal";
 
-// Now always use profileId as namespace for persistence
-export const useInvoiceData = (profileId?: string | null) => {
-  // Place helper at the top so it's always in scope!
+// Always use profileId AND user for persistence
+export const useInvoiceData = (
+  profileId?: string | null,
+  userId?: string | null
+) => {
+  // Helper: build namespace using both user and profile
+  function getNamespace() {
+    if (userId) {
+      return profileId
+        ? `user-${userId}-profile-${profileId}-`
+        : `user-${userId}-`;
+    }
+    // fallback (should never happen)
+    return profileId ? `anon-profile-${profileId}-` : "anon-";
+  }
+  const STORAGE_PREFIX = getNamespace();
+
   const generateInvoiceNumber = () => {
-    const STORAGE_PREFIX = profileId ? `profile-${profileId}-` : "";
-    const savedInvoicesData = localStorage.getItem(`${STORAGE_PREFIX}invoicer-pro-invoices`);
+    const savedInvoicesData = localStorage.getItem(
+      `${STORAGE_PREFIX}invoicer-pro-invoices`
+    );
     let savedInvoices: InvoiceData[] = [];
     if (savedInvoicesData) {
       try {
@@ -18,29 +34,33 @@ export const useInvoiceData = (profileId?: string | null) => {
       }
     }
     const year = new Date().getFullYear();
-    const month = String(new Date().getMonth() + 1).padStart(2, '0');
-    const lastInvoiceNumber = savedInvoices.length > 0
-      ? Math.max(...savedInvoices.map(inv => {
-          const match = inv.invoiceNumber.match(/(\d+)$/);
-          return match ? parseInt(match[1]) : 0;
-        }))
-      : 0;
-    const nextNumber = String(lastInvoiceNumber + 1).padStart(3, '0');
+    const month = String(new Date().getMonth() + 1).padStart(2, "0");
+    const lastInvoiceNumber =
+      savedInvoices.length > 0
+        ? Math.max(
+            ...savedInvoices.map((inv) => {
+              const match = inv.invoiceNumber.match(/(\d+)$/);
+              return match ? parseInt(match[1]) : 0;
+            })
+          )
+        : 0;
+    const nextNumber = String(lastInvoiceNumber + 1).padStart(3, "0");
     return `INV-${year}-${month}-${nextNumber}`;
   };
 
   const { toast } = useToast();
-  const STORAGE_PREFIX = profileId ? `profile-${profileId}-` : "";
   const [savedInvoices, setSavedInvoices] = useState<InvoiceData[]>([]);
   const [invoiceData, setInvoiceData] = useState<InvoiceData>({
     clientName: "",
     clientEmail: "",
     clientAddress: "",
     invoiceNumber: "",
-    invoiceDate: new Date().toISOString().split('T')[0],
-    dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    invoiceDate: new Date().toISOString().split("T")[0],
+    dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split("T")[0],
     lineItems: [
-      { id: '1', description: "", quantity: 1, rate: 0, amount: 0 }
+      { id: "1", description: "", quantity: 1, rate: 0, amount: 0 },
     ],
     taxRate: 0,
     discountAmount: 0,
@@ -48,43 +68,48 @@ export const useInvoiceData = (profileId?: string | null) => {
     businessLogo: "",
     businessEmail: "",
     businessAddress: "",
-    currency: 'USD',
-    notes: '',
-    status: 'unpaid',
-    template: 'minimalist',
-    colorTheme: 'blue'
+    currency: "USD",
+    notes: "",
+    status: "unpaid",
+    template: "minimalist",
+    colorTheme: "blue",
   });
 
-  // If profileId is not set, do not run any side-effects
+  // If profileId/userId is not set, do not run any side-effects
   useEffect(() => {
-    if (!profileId) return;
+    if (!profileId || !userId) return;
     const savedData = localStorage.getItem(`${STORAGE_PREFIX}invoicer-pro-data`);
     if (savedData) {
       try {
         const parsed = JSON.parse(savedData);
-        setInvoiceData(prev => ({ ...prev, ...parsed }));
+        setInvoiceData((prev) => ({ ...prev, ...parsed }));
       } catch (error) {
-        console.log('Error loading saved data:', error);
+        console.log("Error loading saved data:", error);
       }
     }
 
-    const savedInvoicesData = localStorage.getItem(`${STORAGE_PREFIX}invoicer-pro-invoices`);
+    const savedInvoicesData = localStorage.getItem(
+      `${STORAGE_PREFIX}invoicer-pro-invoices`
+    );
     if (savedInvoicesData) {
       try {
         const parsed = JSON.parse(savedInvoicesData);
         setSavedInvoices(parsed);
       } catch (error) {
-        console.log('Error loading saved invoices:', error);
+        console.log("Error loading saved invoices:", error);
       }
     }
 
     if (!invoiceData.invoiceNumber) {
-      setInvoiceData(prev => ({ ...prev, invoiceNumber: generateInvoiceNumber() }));
+      setInvoiceData((prev) => ({
+        ...prev,
+        invoiceNumber: generateInvoiceNumber(),
+      }));
     }
     // eslint-disable-next-line
-  }, [profileId]); // trigger re-key if profileId changes
+  }, [profileId, userId]); // re-run if user or profile switches
 
-  // All storage reads/writes use STORAGE_PREFIX scoped by profileId
+  // All storage reads/writes use STORAGE_PREFIX scoped by user/profileId
 
   return {
     invoiceData,
@@ -92,22 +117,27 @@ export const useInvoiceData = (profileId?: string | null) => {
     savedInvoices,
     setSavedInvoices,
     saveInvoiceData: () => {
-      if (!profileId) return;
-      localStorage.setItem(`${STORAGE_PREFIX}invoicer-pro-data`, JSON.stringify(invoiceData));
+      if (!profileId || !userId) return;
+      localStorage.setItem(
+        `${STORAGE_PREFIX}invoicer-pro-data`,
+        JSON.stringify(invoiceData)
+      );
       toast({
         title: "Invoice Data Saved",
         description: "Your current invoice data has been saved locally.",
       });
     },
     saveInvoice: () => {
-      if (!profileId) return;
+      if (!profileId || !userId) return;
       const invoiceToSave = {
         ...invoiceData,
         id: invoiceData.id || Date.now().toString(),
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
       };
       const existingInvoices = [...savedInvoices];
-      const existingIndex = existingInvoices.findIndex(inv => inv.id === invoiceToSave.id);
+      const existingIndex = existingInvoices.findIndex(
+        (inv) => inv.id === invoiceToSave.id
+      );
 
       if (existingIndex >= 0) {
         existingInvoices[existingIndex] = invoiceToSave;
@@ -116,8 +146,11 @@ export const useInvoiceData = (profileId?: string | null) => {
       }
 
       setSavedInvoices(existingInvoices);
-      localStorage.setItem(`${STORAGE_PREFIX}invoicer-pro-invoices`, JSON.stringify(existingInvoices));
-      setInvoiceData(prev => ({ ...prev, id: invoiceToSave.id }));
+      localStorage.setItem(
+        `${STORAGE_PREFIX}invoicer-pro-invoices`,
+        JSON.stringify(existingInvoices)
+      );
+      setInvoiceData((prev) => ({ ...prev, id: invoiceToSave.id }));
 
       toast({
         title: "Invoice Saved",
@@ -132,24 +165,35 @@ export const useInvoiceData = (profileId?: string | null) => {
       });
     },
     deleteInvoice: (invoiceId: string) => {
-      if (!profileId) return;
-      const updatedInvoices = savedInvoices.filter(inv => inv.id !== invoiceId);
+      if (!profileId || !userId) return;
+      const updatedInvoices = savedInvoices.filter(
+        (inv) => inv.id !== invoiceId
+      );
       setSavedInvoices(updatedInvoices);
-      localStorage.setItem(`${STORAGE_PREFIX}invoicer-pro-invoices`, JSON.stringify(updatedInvoices));
+      localStorage.setItem(
+        `${STORAGE_PREFIX}invoicer-pro-invoices`,
+        JSON.stringify(updatedInvoices)
+      );
       toast({
         title: "Invoice Deleted",
         description: "Invoice has been deleted successfully.",
       });
     },
     toggleInvoiceStatus: (invoiceId: string) => {
-      if (!profileId) return;
-      const updatedInvoices = savedInvoices.map(inv =>
+      if (!profileId || !userId) return;
+      const updatedInvoices = savedInvoices.map((inv) =>
         inv.id === invoiceId
-          ? { ...inv, status: inv.status === 'paid' ? 'unpaid' : 'paid' as 'paid' | 'unpaid' }
+          ? {
+              ...inv,
+              status: inv.status === "paid" ? "unpaid" : ("paid" as "paid" | "unpaid"),
+            }
           : inv
       );
       setSavedInvoices(updatedInvoices);
-      localStorage.setItem(`${STORAGE_PREFIX}invoicer-pro-invoices`, JSON.stringify(updatedInvoices));
+      localStorage.setItem(
+        `${STORAGE_PREFIX}invoicer-pro-invoices`,
+        JSON.stringify(updatedInvoices)
+      );
       toast({
         title: "Status Updated",
         description: "Invoice status has been updated.",
@@ -161,10 +205,18 @@ export const useInvoiceData = (profileId?: string | null) => {
         clientEmail: "",
         clientAddress: "",
         invoiceNumber: generateInvoiceNumber(),
-        invoiceDate: new Date().toISOString().split('T')[0],
-        dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        invoiceDate: new Date().toISOString().split("T")[0],
+        dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+          .toISOString()
+          .split("T")[0],
         lineItems: [
-          { id: Date.now().toString(), description: "", quantity: 1, rate: 0, amount: 0 }
+          {
+            id: Date.now().toString(),
+            description: "",
+            quantity: 1,
+            rate: 0,
+            amount: 0,
+          },
         ],
         taxRate: 0,
         discountAmount: 0,
@@ -173,10 +225,10 @@ export const useInvoiceData = (profileId?: string | null) => {
         businessEmail: invoiceData.businessEmail,
         businessAddress: invoiceData.businessAddress,
         currency: invoiceData.currency,
-        notes: '',
-        status: 'unpaid',
-        template: invoiceData.template || 'minimalist',
-        colorTheme: invoiceData.colorTheme || 'blue'
+        notes: "",
+        status: "unpaid",
+        template: invoiceData.template || "minimalist",
+        colorTheme: invoiceData.colorTheme || "blue",
       });
     },
     addLineItem: () => {
@@ -185,34 +237,38 @@ export const useInvoiceData = (profileId?: string | null) => {
         description: "",
         quantity: 1,
         rate: 0,
-        amount: 0
+        amount: 0,
       };
-      setInvoiceData(prev => ({
+      setInvoiceData((prev) => ({
         ...prev,
-        lineItems: [...prev.lineItems, newItem]
+        lineItems: [...prev.lineItems, newItem],
       }));
     },
     removeLineItem: (id: string) => {
       if (invoiceData.lineItems.length > 1) {
-        setInvoiceData(prev => ({
+        setInvoiceData((prev) => ({
           ...prev,
-          lineItems: prev.lineItems.filter(item => item.id !== id)
+          lineItems: prev.lineItems.filter((item) => item.id !== id),
         }));
       }
     },
-    updateLineItem: (id: string, field: keyof InvoiceData["lineItems"][number], value: string | number) => {
-      setInvoiceData(prev => ({
+    updateLineItem: (
+      id: string,
+      field: keyof InvoiceData["lineItems"][number],
+      value: string | number
+    ) => {
+      setInvoiceData((prev) => ({
         ...prev,
-        lineItems: prev.lineItems.map(item => {
+        lineItems: prev.lineItems.map((item) => {
           if (item.id === id) {
             const updated = { ...item, [field]: value };
-            if (field === 'quantity' || field === 'rate') {
+            if (field === "quantity" || field === "rate") {
               updated.amount = Number(updated.quantity) * Number(updated.rate);
             }
             return updated;
           }
           return item;
-        })
+        }),
       }));
     },
     generateInvoiceNumber,

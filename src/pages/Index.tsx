@@ -25,6 +25,8 @@ import InvoiceActivityTimeline from "@/components/InvoiceActivityTimeline";
 import { useInvoiceActivity } from "@/hooks/useInvoiceActivity";
 import { useProfiles } from "@/hooks/useProfiles";
 import ProfileSwitcher from "@/components/ProfileSwitcher";
+import { useAuthLocal } from "@/hooks/useAuthLocal";
+import { useClients } from "@/hooks/useClients";
 
 const Index = () => {
   const { toast } = useToast();
@@ -39,7 +41,11 @@ const Index = () => {
   // NEW: Use profile management
   const { profiles, activeProfileId, activeProfile, setActiveProfile, createProfile, deleteProfile } = useProfiles();
 
-  // Pass profileId to hooks to segregate their data
+  // NEW: Use Auth for userId (email/profile)
+  const { user } = useAuthLocal();
+  const userId = user?.email || user?.profileName || null;
+
+  // Pass profileId AND userId to hooks to segregate their data
   const activity = useInvoiceActivity();
   const {
     invoiceData,
@@ -54,7 +60,7 @@ const Index = () => {
     removeLineItem,
     updateLineItem,
     generateInvoiceNumber
-  } = useInvoiceData(activeProfileId);
+  } = useInvoiceData(activeProfileId, userId);
 
   // Toggle dark mode
   const toggleDarkMode = () => {
