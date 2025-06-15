@@ -33,6 +33,9 @@ const Index = () => {
   const [viewMode, setViewMode] = useState<'create' | 'list' | 'print'>('create');
   const [isDarkMode, setIsDarkMode] = useState(false);
 
+  // Custom uploaded template state must be here, BEFORE any returns:
+  const [customTemplateContent, setCustomTemplateContent] = useState<string | null>(null);
+
   // NEW: Use profile management
   const { profiles, activeProfileId, activeProfile, setActiveProfile, createProfile, deleteProfile } = useProfiles();
 
@@ -207,9 +210,6 @@ const Index = () => {
       />
     );
   }
-
-  // Custom uploaded template state (image or HTML)
-  const [customTemplateContent, setCustomTemplateContent] = useState<string | null>(null);
 
   // Add "custom" to the template options
   const templateOptions = [
