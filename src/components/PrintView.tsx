@@ -11,6 +11,7 @@ interface PrintViewProps {
   calculateTax: () => number;
   calculateTotal: () => number;
   customTemplateContent?: string | null;
+  onBack?: () => void;
 }
 
 const PrintView = ({
@@ -20,15 +21,24 @@ const PrintView = ({
   calculateTax,
   calculateTotal,
   customTemplateContent,
+  onBack,
 }: PrintViewProps) => {
   const navigate = useNavigate();
+
+  const handleGoToDashboard = () => {
+    if (onBack) {
+      onBack();
+    } else {
+      navigate("/dashboard");
+    }
+  };
 
   return (
     <div className="bg-white dark:bg-gray-800 min-h-screen flex flex-col items-center justify-center py-4">
       {/* Go to Dashboard button - hidden in print */}
-      <div className="w-full max-w-3xl flex justify-end mb-3">
+      <div className="w-full max-w-3xl flex justify-end mb-3 print:hidden">
         <Button
-          onClick={() => navigate("/dashboard")}
+          onClick={handleGoToDashboard}
           className="mb-3"
           variant="outline"
           style={{
@@ -52,7 +62,7 @@ const PrintView = ({
       </div>
       <style>{`
         @media print {
-          button, .mb-3 { display: none !important; }
+          .print\\:hidden, button, .mb-3 { display: none !important; }
           body { background: white !important; }
         }
       `}</style>
@@ -61,3 +71,4 @@ const PrintView = ({
 };
 
 export default PrintView;
+

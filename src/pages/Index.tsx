@@ -185,6 +185,7 @@ const Index = () => {
         calculateTax={getCalculateTax}
         calculateTotal={getCalculateTotal}
         customTemplateContent={customTemplateContent || ""}
+        onBack={() => setViewMode('create')}
       />
     );
   }
