@@ -1,46 +1,20 @@
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
+import { Smile } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ImagePlus, Smile } from "lucide-react";
 
-type Branding = {
-  name: string;
-  phone: string;
-  email: string;
-  address: string;
-  logo: string;
+const defaultBranding = {
+  name: "",
+  phone: "",
+  email: "",
+  address: "",
+  logo: ""
 };
 
-const BRANDING_KEY = "invoiceease-branding";
-
-function getBrandingLocal(): Branding {
-  try {
-    const b = localStorage.getItem(BRANDING_KEY);
-    if (!b) return { name: "", phone: "", email: "", address: "", logo: "" };
-    return JSON.parse(b);
-  } catch {
-    return { name: "", phone: "", email: "", address: "", logo: "" };
-  }
-}
-
-function saveBrandingLocal(branding: Branding) {
-  localStorage.setItem(BRANDING_KEY, JSON.stringify(branding));
-}
-
-export interface BusinessBrandingCardProps {
-  onBrandingChange?: (branding: Branding) => void;
-}
-
-const BusinessBrandingCard: React.FC<BusinessBrandingCardProps> = ({ onBrandingChange }) => {
-  const [branding, setBranding] = useState<Branding>(getBrandingLocal());
-  const fileInput = useRef<HTMLInputElement|null>(null);
-
-  useEffect(() => {
-    saveBrandingLocal(branding);
-    if (onBrandingChange) onBrandingChange(branding);
-    // eslint-disable-next-line
-  }, [branding]);
+const BrandingSection: React.FC = () => {
+  const [branding, setBranding] = useState(defaultBranding);
+  const fileInput = useRef<HTMLInputElement | null>(null);
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -51,22 +25,21 @@ const BusinessBrandingCard: React.FC<BusinessBrandingCardProps> = ({ onBrandingC
   };
 
   return (
-    <div className="mb-5 rounded-2xl shadow flex flex-col md:flex-row p-0 bg-white dark:bg-gray-900 overflow-hidden">
-      {/* Left: Logo Upload + Welcome, with gradient */}
-      <div className="flex flex-col items-center justify-center md:justify-start gap-3 px-7 py-6 md:py-12 bg-gradient-to-br from-blue-200 via-blue-100 to-blue-50 w-full md:w-64">
+    <div className="mb-4 rounded-2xl shadow-lg flex flex-col md:flex-row bg-gradient-to-r from-blue-100 via-blue-200 to-blue-50 overflow-hidden">
+      {/* Branding Gradient Area */}
+      <aside className="flex flex-col items-center justify-center p-8 gap-3 w-full md:w-64 bg-gradient-to-br from-blue-400/50 to-purple-300/40">
         <div className="relative h-24 w-24 rounded-full bg-white border-2 border-blue-200 flex items-center justify-center overflow-hidden shadow-lg">
           {branding.logo
             ? <img src={branding.logo} alt="Logo" className="object-cover h-full w-full"/>
             : (
-              <ImagePlus className="text-blue-400" size={42} />
+              <span className="text-blue-400 font-bold text-xl">Add Logo</span>
             )}
         </div>
         <Button
           type="button"
           size="sm"
-          variant="secondary"
-          className="w-full mt-2"
           onClick={() => fileInput.current?.click()}
+          className="w-full mt-2"
         >
           {branding.logo ? "Change Logo" : "Upload Logo"}
         </Button>
@@ -77,18 +50,18 @@ const BusinessBrandingCard: React.FC<BusinessBrandingCardProps> = ({ onBrandingC
           className="hidden"
           onChange={handleLogoChange}
         />
-        <div className="mt-4 w-full">
+        <div className="mt-6 w-full text-center">
           <div className="flex gap-1 items-center justify-center mb-1">
-            <Smile className="inline-block text-yellow-400" size={18} />
-            <span className="text-blue-700 font-bold text-base">Welcome!</span>
+            <Smile className="inline-block text-yellow-400" size={20} />
+            <span className="text-blue-700 font-bold text-base">Welcome to InvoiceEase!</span>
           </div>
-          <div className="text-xs text-center text-blue-600">
-            Personalize your business details for professional invoices.
+          <div className="text-xs text-blue-700 font-medium">
+            Personalize your business for professional invoices. 🧾
           </div>
         </div>
-      </div>
-      {/* Right: Business details form */}
-      <div className="flex-grow grid grid-cols-1 sm:grid-cols-2 gap-4 p-6 md:p-8">
+      </aside>
+      {/* Business Details Form */}
+      <div className="flex-grow grid grid-cols-1 sm:grid-cols-2 gap-6 p-8 bg-white">
         <div>
           <label className="text-xs font-medium text-gray-500">Business Name</label>
           <Input
@@ -131,5 +104,4 @@ const BusinessBrandingCard: React.FC<BusinessBrandingCardProps> = ({ onBrandingC
   );
 };
 
-export type { Branding };
-export default BusinessBrandingCard;
+export default BrandingSection;
