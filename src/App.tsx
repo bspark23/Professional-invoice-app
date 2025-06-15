@@ -5,7 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { LanguageProvider } from "@/context/LanguageContext";
-import { RequireLandingPage } from "@/components/RequireLandingPage";
+import RequireLandingPage from "@/components/RequireLandingPage";
 import Dashboard from "@/pages/Dashboard";
 import Invoices from "@/pages/Invoices";
 import LPO from "@/pages/LPO";
