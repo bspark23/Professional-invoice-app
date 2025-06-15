@@ -85,7 +85,20 @@ Always return clean, valid JSON that matches the user's request.`,
   }, [user?.email]);
 
   const handleInputChange = (field: keyof ApiKeyConfig, value: string) => {
-    setConfig(prev => ({ ...prev, [field]: value }));
+    setConfig(prev => {
+      const newConfig = { ...prev, [field]: value };
+      
+      // Auto-update model when provider changes
+      if (field === 'provider') {
+        if (value === 'openai') {
+          newConfig.model = 'gpt-3.5-turbo';
+        } else if (value === 'gemini') {
+          newConfig.model = 'gemini-1.5-flash';
+        }
+      }
+      
+      return newConfig;
+    });
   };
 
   const handleSave = () => {
@@ -218,6 +231,11 @@ Always return clean, valid JSON that matches the user's request.`,
                 >
                   Google AI Studio
                 </a>
+                {config.provider === 'gemini' && (
+                  <span className="block mt-1 text-orange-600 font-medium">
+                    ⚠️ Make sure to enable the Generative Language API in your Google Cloud Console first!
+                  </span>
+                )}
               </p>
             </div>
           )}
@@ -281,6 +299,22 @@ Always return clean, valid JSON that matches the user's request.`,
             <p className="mt-4">
               The AI will automatically generate structured invoice data that you can then customize and save.
             </p>
+            {config.provider === 'gemini' && (
+              <div className="mt-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                <p className="text-orange-800 font-medium">Important for Google Gemini users:</p>
+                <p className="text-orange-700 text-sm mt-1">
+                  You must enable the Generative Language API in your Google Cloud Console before using the API key. 
+                  Visit the <a 
+                    href="https://console.developers.google.com/apis/api/generativelanguage.googleapis.com/overview?project=164994802997" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="underline"
+                  >
+                    API Console
+                  </a> to enable it, then wait a few minutes before trying again.
+                </p>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
