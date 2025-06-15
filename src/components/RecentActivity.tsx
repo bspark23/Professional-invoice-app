@@ -48,35 +48,35 @@ const RecentActivity: React.FC = () => {
       id: 1,
       type: 'created',
       description: 'Invoice #012 created',
-      timestamp: new Date(),
+      timestamp: new Date().toISOString(),
       details: 'for Acme Corp - $2,500.00'
     },
     {
       id: 2,
       type: 'payment',
       description: 'Payment received',
-      timestamp: new Date(Date.now() - 300000),
+      timestamp: new Date(Date.now() - 300000).toISOString(),
       details: 'Invoice #011 - $1,800.00'
     },
     {
       id: 3,
       type: 'client',
       description: 'Client updated',
-      timestamp: new Date(Date.now() - 600000),
+      timestamp: new Date(Date.now() - 600000).toISOString(),
       details: 'TechCorp contact information'
     },
     {
       id: 4,
       type: 'estimate',
       description: 'Estimate generated',
-      timestamp: new Date(Date.now() - 900000),
+      timestamp: new Date(Date.now() - 900000).toISOString(),
       details: 'EST-2024-015 for WebFlow Inc'
     },
     {
       id: 5,
       type: 'email',
       description: 'Email sent',
-      timestamp: new Date(Date.now() - 1200000),
+      timestamp: new Date(Date.now() - 1200000).toISOString(),
       details: 'Invoice #010 to client@example.com'
     }
   ];

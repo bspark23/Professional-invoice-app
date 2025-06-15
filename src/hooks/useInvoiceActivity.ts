@@ -1,10 +1,13 @@
+
 import { useCallback, useEffect, useState } from "react";
 import { useAuthLocal } from "@/hooks/useAuthLocal";
 
 export type ActivityEvent = {
-  type: "created" | "edited" | "downloaded";
+  id?: number;
+  type: "created" | "edited" | "downloaded" | "payment" | "client" | "email" | "estimate";
   timestamp: string;
   description: string;
+  details?: string;
 };
 
 function getUserKey(userId?: string | null) {

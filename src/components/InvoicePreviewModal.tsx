@@ -1,8 +1,7 @@
-
 import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Download, Print, Mail, X } from "lucide-react";
+import { Download, Printer, Mail, X } from "lucide-react";
 import InvoicePreview from "./InvoicePreview";
 import { InvoiceData } from "@/types/invoice";
 
@@ -41,7 +40,7 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
             <DialogTitle>Invoice Preview</DialogTitle>
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={handlePrint}>
-                <Print className="w-4 h-4 mr-2" />
+                <Printer className="w-4 h-4 mr-2" />
                 Print
               </Button>
               {onEmail && (
