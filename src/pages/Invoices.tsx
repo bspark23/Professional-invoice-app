@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import NewDashboardSidebar from "@/components/NewDashboardSidebar";
@@ -18,6 +19,7 @@ import {
 import { useInvoiceData } from "@/hooks/useInvoiceData";
 import { useClients } from "@/hooks/useClients";
 import { useAuthLocal } from "@/hooks/useAuthLocal";
+import { useCustomTemplates } from "@/hooks/useCustomTemplates";
 import { currencies } from "@/types/invoice";
 import { formatCurrency, calculateTotal } from "@/utils/invoiceUtils";
 import InvoiceTemplateSelector from "@/components/InvoiceTemplateSelector";

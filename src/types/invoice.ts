@@ -30,10 +30,26 @@ export interface InvoiceData {
   colorTheme?: 'blue' | 'green' | 'gray' | 'purple' | 'red' | 'orange' | 'teal' | 'gradient-blue' | 'gradient-purple';
   signatureImage?: string;
   accountNumber?: string;
-  bankDetails?: string; // editable multi-line string, shows as bank account/info in invoice
-  signatureName?: string; // e.g. Jane Smith
-  signaturePosition?: string; // e.g. Founder & CEO
-  signatureNote?: string; // Extra note, optional
+  bankDetails?: string;
+  signatureName?: string;
+  signaturePosition?: string;
+  signatureNote?: string;
+  // New customizable fields
+  businessSlogan?: string;
+  businessPhone?: string;
+  businessWebsite?: string;
+  paymentTerms?: string;
+  customFields?: { [key: string]: string };
+  customTemplate?: string; // For uploaded templates
+}
+
+export interface CustomTemplate {
+  id: string;
+  name: string;
+  content: string; // HTML content or image data URL
+  type: 'html' | 'image';
+  createdAt: string;
+  userId: string;
 }
 
 export const colorThemes = [
@@ -57,4 +73,3 @@ export const currencies = [
   { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar' },
   { code: 'AUD', symbol: 'A$', name: 'Australian Dollar' },
 ];
-

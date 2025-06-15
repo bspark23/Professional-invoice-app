@@ -37,8 +37,8 @@ const InvoiceTemplateMinimalist: React.FC<InvoiceTemplateMinimalistProps> = ({
               </div>
             )}
             <div>
-              <h1 className="text-2xl font-bold">{invoiceData.businessName || "BUSINESS"}</h1>
-              <p className="text-red-100">Your Slogan Here</p>
+              <h1 className="text-2xl font-bold">{invoiceData.businessName || "YOUR BUSINESS NAME"}</h1>
+              <p className="text-red-100">{invoiceData.businessSlogan || "Your Business Slogan"}</p>
             </div>
           </div>
           <div className="bg-red-600 px-6 py-3 rounded-l-lg">
@@ -51,11 +51,17 @@ const InvoiceTemplateMinimalist: React.FC<InvoiceTemplateMinimalistProps> = ({
       <div className="p-8">
         <div className="grid grid-cols-2 gap-8 mb-8">
           <div>
-            <h3 className="text-sm font-semibold text-gray-600 mb-3">BILL TO:</h3>
+            <h3 className="text-sm font-semibold text-gray-600 mb-3">FROM:</h3>
             <div className="text-gray-800">
               <p className="font-semibold text-lg mb-1">{invoiceData.businessName}</p>
-              <p className="text-sm">{invoiceData.businessAddress}</p>
+              <p className="text-sm whitespace-pre-line">{invoiceData.businessAddress}</p>
               <p className="text-sm">{invoiceData.businessEmail}</p>
+              {invoiceData.businessPhone && (
+                <p className="text-sm">{invoiceData.businessPhone}</p>
+              )}
+              {invoiceData.businessWebsite && (
+                <p className="text-sm">{invoiceData.businessWebsite}</p>
+              )}
             </div>
           </div>
           <div className="text-right">
@@ -75,6 +81,9 @@ const InvoiceTemplateMinimalist: React.FC<InvoiceTemplateMinimalistProps> = ({
           <div>
             <p><span className="font-semibold">Invoice Date:</span> {new Date(invoiceData.invoiceDate).toLocaleDateString()}</p>
             <p><span className="font-semibold">Due Date:</span> {new Date(invoiceData.dueDate).toLocaleDateString()}</p>
+            {invoiceData.paymentTerms && (
+              <p><span className="font-semibold">Payment Terms:</span> {invoiceData.paymentTerms}</p>
+            )}
           </div>
           <div className="text-right">
             <p><span className="font-semibold">Invoice No:</span> {invoiceData.invoiceNumber}</p>
@@ -120,14 +129,19 @@ const InvoiceTemplateMinimalist: React.FC<InvoiceTemplateMinimalistProps> = ({
             <div className="bg-gray-800 text-white p-6 rounded">
               <h3 className="font-semibold mb-4">Payment Info:</h3>
               <div className="space-y-2 text-sm">
-                <p><span className="text-gray-300">Account No:</span> 0000 000 000</p>
-                <p><span className="text-gray-300">A/C Name:</span> Freeman</p>
-                <p><span className="text-gray-300">Bank Details:</span> Add your bank details</p>
+                <p><span className="text-gray-300">Account No:</span> {invoiceData.accountNumber || "0000 000 000"}</p>
+                <p><span className="text-gray-300">A/C Name:</span> {invoiceData.businessName}</p>
+                <div className="text-gray-300">
+                  <span>Bank Details:</span>
+                  <div className="mt-1 whitespace-pre-line">
+                    {invoiceData.bankDetails || "Add your bank details"}
+                  </div>
+                </div>
               </div>
               <div className="mt-6">
                 <p className="font-semibold mb-2">Thank you for your business!</p>
                 <p className="text-xs text-gray-300">
-                  Terms: Lorem ipsum dolor sit amet, consectetur adipiscing elit sed do eiusmod tempor
+                  {invoiceData.paymentTerms || "Payment terms and conditions"}
                 </p>
               </div>
             </div>
@@ -141,7 +155,7 @@ const InvoiceTemplateMinimalist: React.FC<InvoiceTemplateMinimalistProps> = ({
               </div>
               {invoiceData.taxRate > 0 && (
                 <div className="flex justify-between py-2">
-                  <span className="font-semibold">Tax:</span>
+                  <span className="font-semibold">Tax ({invoiceData.taxRate}%):</span>
                   <span className="font-semibold">{formatCurrency(tax, invoiceData.currency)}</span>
                 </div>
               )}
@@ -184,8 +198,11 @@ const InvoiceTemplateMinimalist: React.FC<InvoiceTemplateMinimalistProps> = ({
               />
             )}
             <div className="border-t border-gray-400 pt-2 text-sm text-gray-600 w-48">
-              <p className="font-semibold">MR. FREEMAN GOAL</p>
-              <p className="text-xs">Executive Director</p>
+              <p className="font-semibold">{invoiceData.signatureName || "AUTHORIZED SIGNATURE"}</p>
+              <p className="text-xs">{invoiceData.signaturePosition || "Position"}</p>
+              {invoiceData.signatureNote && (
+                <p className="text-xs mt-1">{invoiceData.signatureNote}</p>
+              )}
             </div>
           </div>
         </div>
@@ -206,7 +223,7 @@ const InvoiceTemplateMinimalist: React.FC<InvoiceTemplateMinimalistProps> = ({
             <div className="w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
               <span className="text-xs">📞</span>
             </div>
-            <span>000 1234 6789</span>
+            <span>{invoiceData.businessPhone || "000 1234 6789"}</span>
           </div>
           <div className="flex items-center space-x-2">
             <div className="w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
@@ -218,7 +235,7 @@ const InvoiceTemplateMinimalist: React.FC<InvoiceTemplateMinimalistProps> = ({
             <div className="w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
               <span className="text-xs">📍</span>
             </div>
-            <span>123 St, Street Address Country State, Zip Code - 1234</span>
+            <span>{invoiceData.businessAddress || "123 St, Street Address Country State, Zip Code - 1234"}</span>
           </div>
         </div>
       </div>
