@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -20,6 +21,8 @@ const AppContent = () => {
 
   const handleGetStarted = () => {
     setShowLandingPage(false);
+    // Set localStorage flag to avoid future redirects
+    localStorage.setItem("invoicecraft-has-visited", "true");
     navigate('/');
   };
 
@@ -66,3 +69,4 @@ const App = () => {
 };
 
 export default App;
+

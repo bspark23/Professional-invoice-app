@@ -18,6 +18,7 @@ import { formatCurrency, calculateSubtotal, calculateTax, calculateTotal } from 
 import { exportToPDF, exportToImage } from "@/utils/exportUtils";
 import { colorThemes } from "@/types/invoice";
 import SignatureInput from "@/components/SignatureInput";
+import { Link } from "react-router-dom"; // Add this import
 
 const Index = () => {
   const { toast } = useToast();
@@ -175,16 +176,16 @@ const Index = () => {
             <Button onClick={toggleDarkMode} variant="outline" size="sm" className="hover:bg-gray-100 dark:hover:bg-gray-700">
               {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </Button>
-            <a href="/calendar">
+            <Link to="/calendar">
               <Button variant="outline" className="hover:bg-yellow-50 dark:hover:bg-yellow-900/30">
                 Calendar View
               </Button>
-            </a>
-            <a href="/expenses">
+            </Link>
+            <Link to="/expenses">
               <Button variant="outline" className="hover:bg-green-50 dark:hover:bg-green-900/30">
                 Track Expenses
               </Button>
-            </a>
+            </Link>
             <Button onClick={() => setViewMode('list')} variant="outline" className="hover:bg-blue-50 dark:hover:bg-blue-900/30">
               <Eye className="w-4 h-4 mr-2" />
               View Saved ({savedInvoices.length})
