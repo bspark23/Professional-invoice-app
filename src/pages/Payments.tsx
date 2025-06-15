@@ -291,7 +291,7 @@ const Payments: React.FC = () => {
                           <SelectValue placeholder="Select invoice" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">No invoice</SelectItem>
+                          <SelectItem value="none">No invoice</SelectItem>
                           {savedInvoices.map((invoice) => (
                             <SelectItem key={invoice.id} value={invoice.id!}>
                               {invoice.invoiceNumber} - {invoice.clientName}
