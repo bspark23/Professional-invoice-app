@@ -773,7 +773,7 @@ const Invoices: React.FC = () => {
         <InvoiceTemplateSelector
           isOpen={isTemplateDialogOpen}
           onClose={() => setIsTemplateDialogOpen(false)}
-          onTemplateSelect={(template, colorTheme, customTemplateId) => {
+          onSelect={(template, colorTheme, customTemplateId) => {
             setSelectedTemplate(template);
             setSelectedColorTheme(colorTheme);
             if (customTemplateId) setSelectedCustomTemplate(customTemplateId);
@@ -781,7 +781,10 @@ const Invoices: React.FC = () => {
           }}
           currentTemplate={selectedTemplate}
           currentColorTheme={selectedColorTheme}
-          onSaveCustomTemplate={(template) => console.log('Custom template:', template)}
+          onSaveCustomTemplate={(template) => {
+            console.log('Custom template:', template);
+            return template; // Return the template to satisfy the type requirement
+          }}
           onDeleteCustomTemplate={(templateId) => console.log('Delete template:', templateId)}
         />
 
