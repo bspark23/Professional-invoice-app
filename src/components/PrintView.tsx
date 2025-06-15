@@ -1,10 +1,10 @@
-
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Download, FileText, Printer, ChevronDown } from "lucide-react";
 import { InvoiceData, currencies, colorThemes } from "@/types/invoice";
+import SendInvoiceDialog from "./SendInvoiceDialog";
 
 interface PrintViewProps {
   invoiceData: InvoiceData;
@@ -87,7 +87,8 @@ const PrintView = ({
   exportToPDF,
   exportToImage,
   setViewMode,
-}: PrintViewProps) => {
+  userProfile,
+}: PrintViewProps & { userProfile?: any }) => {
   const colorTheme = invoiceData.colorTheme || "blue";
   const color = COLOR_CLASSES_EXTENDED[colorTheme as keyof typeof COLOR_CLASSES_EXTENDED] || COLOR_CLASSES.blue;
   const themeObj = colorThemes.find(ct => ct.value === colorTheme);
@@ -103,6 +104,8 @@ const PrintView = ({
       background: `linear-gradient(0deg, ${themeObj.color}1A 0%, #fff 100%)`
     };
   }
+
+  const [sendOpen, setSendOpen] = useState(false);
 
   return (
     // Outer page (always white, including print)
@@ -141,6 +144,9 @@ const PrintView = ({
             </DropdownMenu>
             <Button onClick={() => setViewMode('create')} variant="outline">
               Back to Edit
+            </Button>
+            <Button onClick={() => setSendOpen(true)} className="bg-purple-600 hover:bg-purple-700">
+              Send Invoice
             </Button>
           </div>
         </div>
@@ -274,6 +280,16 @@ const PrintView = ({
           </div>
         </div>
       </div>
+      <SendInvoiceDialog
+        open={sendOpen}
+        setOpen={setSendOpen}
+        invoiceData={invoiceData}
+        userProfile={userProfile}
+        getFormatCurrency={formatCurrency}
+        getSubtotal={calculateSubtotal}
+        getTax={calculateTax}
+        getTotal={calculateTotal}
+      />
     </div>
   );
 };

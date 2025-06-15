@@ -116,6 +116,26 @@ const Index = () => {
     activity.addEvent("created", `Invoice draft started.`);
   };
 
+  // Login handler: Use business name as unique identifier
+  const handleLogin = () => {
+    let name = invoiceData.businessName.trim();
+    if (!name) return;
+    let profile = profiles.find(p => p.name === name);
+    if (!profile) {
+      // Create new profile
+      profile = createProfile({
+        name,
+        logo: "",
+        email: "",
+        address: "",
+      });
+    }
+    if (profile) {
+      setActiveProfile(profile.id);
+      setIsLoggedIn(true);
+    }
+  };
+
   if (!isLoggedIn) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:bg-gradient-to-br dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-4">
@@ -141,7 +161,7 @@ const Index = () => {
               />
             </div>
             <Button 
-              onClick={() => setIsLoggedIn(true)}
+              onClick={handleLogin}
               className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
             >
               {t("getStarted") || "Get Started"}
@@ -163,6 +183,8 @@ const Index = () => {
         exportToPDF={handleExportToPDF}
         exportToImage={handleExportToImage}
         setViewMode={setViewMode}
+        // Pass the active profile for user email purposes
+        userProfile={activeProfile}
       />
     );
   }
