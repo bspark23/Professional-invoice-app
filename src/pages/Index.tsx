@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useInvoiceData } from "@/hooks/useInvoiceData";
@@ -13,8 +14,23 @@ const Index = () => {
   const { user } = useAuthLocal();
   const profileId = user?.email || user?.profileName || "anon"; // unique ID per user
   const userId = user?.email || user?.profileName; // unique ID per user
-  const { savedInvoices, createNewInvoice } = useInvoiceData(profileId, userId);
+  const {
+    savedInvoices,
+    createNewInvoice,
+    toggleInvoiceStatus,
+    loadInvoice,
+    deleteInvoice,
+  } = useInvoiceData(profileId, userId);
   const { clients } = useClients(profileId, userId);
+
+  // Minimal formatCurrency for demonstration
+  const formatCurrency = (amount: number, currencyCode: string = "USD") =>
+    `${currencyCode} ${amount.toFixed(2)}`;
+
+  // Provide stub functions for missing props in InvoiceList
+  const [viewMode, setViewMode] = React.useState<'create' | 'list' | 'print'>('list');
+  const [isDarkMode, setIsDarkMode] = React.useState(false);
+  const toggleDarkMode = () => setIsDarkMode((d) => !d);
 
   return (
     <div className="p-4 max-w-5xl mx-auto">
@@ -30,8 +46,18 @@ const Index = () => {
 
       <ClientList clients={clients} />
 
-      <InvoiceList invoices={savedInvoices} />
-      {/* Add a button to view notes */}
+      <InvoiceList
+        savedInvoices={savedInvoices}
+        formatCurrency={formatCurrency}
+        toggleInvoiceStatus={toggleInvoiceStatus}
+        loadInvoice={loadInvoice}
+        deleteInvoice={deleteInvoice}
+        setViewMode={setViewMode}
+        isDarkMode={isDarkMode}
+        toggleDarkMode={toggleDarkMode}
+      />
+
+      {/* Button to view notes */}
       <div className="mb-4 flex flex-row justify-end">
         <button
           className="bg-primary text-white rounded px-3 py-2 hover:bg-primary/90 transition-colors"

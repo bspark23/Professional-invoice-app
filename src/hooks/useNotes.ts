@@ -2,6 +2,7 @@
 import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuthLocal } from "@/hooks/useAuthLocal";
 
 // Note type
 export type Note = {
@@ -14,33 +15,38 @@ export type Note = {
 
 export function useNotes() {
   const queryClient = useQueryClient();
+  const { user } = useAuthLocal();
 
   // Fetch all notes for the logged-in user
   const { data: notes, isLoading, error } = useQuery<Note[]>({
-    queryKey: ["notes"],
+    queryKey: ["notes", user?.email], // make this user-scoped
     queryFn: async () => {
+      if (!user) return [];
       const { data, error } = await supabase
         .from("notes")
         .select("*")
+        .eq("user_id", user?.email) // using email as user_id for demo
         .order("updated_at", { ascending: false });
       if (error) throw error;
       return data || [];
     },
+    enabled: !!user,
   });
 
   // Add a new note
   const addNote = useMutation({
     mutationFn: async (content: string) => {
+      if (!user) throw new Error("Not authenticated");
       const { data, error } = await supabase
         .from("notes")
-        .insert([{ content }])
+        .insert([{ content, user_id: user.email }]) // FIX: add user_id
         .select()
         .single();
       if (error) throw error;
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notes"] });
+      queryClient.invalidateQueries({ queryKey: ["notes", user?.email] });
     },
   });
 
@@ -57,7 +63,7 @@ export function useNotes() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notes"] });
+      queryClient.invalidateQueries({ queryKey: ["notes", user?.email] });
     },
   });
 
@@ -72,7 +78,7 @@ export function useNotes() {
       return id;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notes"] });
+      queryClient.invalidateQueries({ queryKey: ["notes", user?.email] });
     },
   });
 
