@@ -23,7 +23,7 @@ const NewDashboardSidebar: React.FC = () => {
     { icon: FileText, label: "Invoices", path: "/invoices" },
     { icon: Users, label: "Clients", path: "/clients" },
     { icon: CreditCard, label: "Payments", path: "/payments" },
-    { icon: BarChart3, label: "Reports", path: "/reports" },
+    { icon: BarChart3, label: "Expenses", path: "/expenses" },
     { icon: Settings, label: "Settings", path: "/settings" },
     { icon: HelpCircle, label: "Help", path: "/help" },
   ];
