@@ -233,7 +233,7 @@ const LandingPage = ({
         </div>
       </div>
 
-      {/* Voluntary Contribution CTA */}
+      {/* Voluntary Contribution CTA - keep only ONE button that navigates to the page */}
       <div className="flex justify-center mt-8">
         <Button 
           variant="secondary" 
@@ -244,9 +244,6 @@ const LandingPage = ({
           Voluntary Contribution
         </Button>
       </div>
-
-      {/* Voluntary Contribution Section */}
-      <VoluntaryContribution />
 
       {/* Stats Section */}
       <div className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm py-20">
