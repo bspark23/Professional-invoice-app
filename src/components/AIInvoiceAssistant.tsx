@@ -3,10 +3,11 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Bot, Send, Loader2 } from 'lucide-react';
+import { Bot, Send, Loader2, AlertCircle } from 'lucide-react';
 import { useInvoiceData } from '@/hooks/useInvoiceData';
 import { useAuthLocal } from '@/hooks/useAuthLocal';
 import { InvoiceData } from '@/types/invoice';
+import { toast } from '@/hooks/use-toast';
 
 interface AIInvoiceAssistantProps {
   onInvoiceGenerated?: (invoice: InvoiceData) => void;
@@ -18,6 +19,7 @@ const AIInvoiceAssistant: React.FC<AIInvoiceAssistantProps> = ({ onInvoiceGenera
   const [userInput, setUserInput] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [lastGeneratedInvoice, setLastGeneratedInvoice] = useState<InvoiceData | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const getApiConfig = () => {
     const savedConfig = localStorage.getItem(`apiConfig_${user?.email || 'default'}`);
@@ -36,11 +38,17 @@ const AIInvoiceAssistant: React.FC<AIInvoiceAssistantProps> = ({ onInvoiceGenera
     
     const apiConfig = getApiConfig();
     if (!apiConfig?.openaiKey) {
-      alert('Please configure your OpenAI API key in Settings > AI Assistant first.');
+      setError('Please configure your OpenAI API key in Settings > AI Assistant first.');
+      toast({
+        title: "API Key Required",
+        description: "Please configure your OpenAI API key in Settings first.",
+        variant: "destructive",
+      });
       return;
     }
 
     setIsGenerating(true);
+    setError(null);
 
     try {
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -67,7 +75,26 @@ const AIInvoiceAssistant: React.FC<AIInvoiceAssistantProps> = ({ onInvoiceGenera
       });
 
       if (!response.ok) {
-        throw new Error(`API request failed: ${response.statusText}`);
+        const errorData = await response.json();
+        let errorMessage = `API request failed (${response.status})`;
+        
+        if (errorData.error) {
+          if (errorData.error.code === 'insufficient_quota') {
+            errorMessage = 'Your OpenAI API key has exceeded its quota. Please check your billing in your OpenAI account.';
+          } else if (errorData.error.code === 'invalid_api_key') {
+            errorMessage = 'Invalid API key. Please check your OpenAI API key in Settings.';
+          } else {
+            errorMessage = errorData.error.message || errorMessage;
+          }
+        }
+        
+        setError(errorMessage);
+        toast({
+          title: "Generation Failed",
+          description: errorMessage,
+          variant: "destructive",
+        });
+        return;
       }
 
       const data = await response.json();
@@ -107,10 +134,22 @@ const AIInvoiceAssistant: React.FC<AIInvoiceAssistantProps> = ({ onInvoiceGenera
       setLastGeneratedInvoice(invoiceData);
       onInvoiceGenerated?.(invoiceData);
       setUserInput('');
+      setError(null);
+      
+      toast({
+        title: "Invoice Generated!",
+        description: `Invoice #${invoiceData.invoiceNumber} for ${invoiceData.clientName} has been created.`,
+      });
       
     } catch (error) {
       console.error('Error generating invoice:', error);
-      alert('Failed to generate invoice. Please check your API key and try again.');
+      const errorMessage = 'Failed to generate invoice. Please check your API key and try again.';
+      setError(errorMessage);
+      toast({
+        title: "Generation Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
     } finally {
       setIsGenerating(false);
     }
@@ -125,6 +164,16 @@ const AIInvoiceAssistant: React.FC<AIInvoiceAssistantProps> = ({ onInvoiceGenera
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        {error && (
+          <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
+            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm text-red-800 font-medium">Error</p>
+              <p className="text-sm text-red-600 mt-1">{error}</p>
+            </div>
+          </div>
+        )}
+
         <div>
           <Textarea
             value={userInput}
@@ -158,7 +207,7 @@ Examples:
           )}
         </Button>
 
-        {lastGeneratedInvoice && (
+        {lastGeneratedInvoice && !error && (
           <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
             <p className="text-sm text-green-800 font-medium">
               ✅ Invoice generated successfully!
