@@ -1,121 +1,143 @@
 
-import React, { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { InvoiceData } from "@/types/invoice";
-import { PaymentReceipt, paymentMethods } from "@/types/receipt";
-import { usePaymentReceipts } from "@/hooks/usePaymentReceipts";
-import { useAuthLocal } from "@/hooks/useAuthLocal";
-import { CreditCard, Plus } from "lucide-react";
+import React, { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Save, Receipt } from 'lucide-react';
+import { usePaymentReceipts } from '@/hooks/usePaymentReceipts';
+import { useAuthLocal } from '@/hooks/useAuthLocal';
+import { PaymentReceipt, paymentMethods } from '@/types/receipt';
+import { v4 as uuidv4 } from 'uuid';
 
 interface PaymentFormProps {
-  invoices: InvoiceData[];
-  onPaymentRecorded?: (receipt: PaymentReceipt) => void;
+  invoiceNumber?: string;
+  onReceiptCreated?: (receipt: PaymentReceipt) => void;
 }
 
-const PaymentForm: React.FC<PaymentFormProps> = ({ invoices, onPaymentRecorded }) => {
-  const { user, profiles, currentProfile } = useAuthLocal();
-  const { saveReceipt } = usePaymentReceipts(currentProfile?.id, user?.email);
-  const [open, setOpen] = useState(false);
+const PaymentForm: React.FC<PaymentFormProps> = ({ invoiceNumber, onReceiptCreated }) => {
+  const { user } = useAuthLocal();
+  const { createReceipt } = usePaymentReceipts();
   
   const [formData, setFormData] = useState({
-    invoiceNumber: "",
-    payerName: "",
-    payerEmail: "",
-    payerAddress: "",
-    amountPaid: "",
-    paymentMethod: "",
-    paymentDate: new Date().toISOString().split("T")[0],
-    notes: "",
+    invoiceNumber: invoiceNumber || '',
+    payerName: '',
+    payerEmail: '',
+    payerAddress: '',
+    amountPaid: '',
+    paymentMethod: '',
+    paymentDate: new Date().toISOString().split('T')[0],
+    notes: '',
+    currency: 'USD'
   });
 
-  const selectedInvoice = invoices.find(inv => inv.invoiceNumber === formData.invoiceNumber);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Get business info from user profile or use defaults
+  const businessName = user?.profileName || user?.email || 'Your Business';
+  const businessEmail = user?.email || 'business@example.com';
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const generateReceiptNumber = () => {
+    const now = new Date();
+    return `RCP-${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}-${Date.now().toString().slice(-6)}`;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!selectedInvoice) {
-      return;
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+
+    try {
+      const receipt: PaymentReceipt = {
+        id: uuidv4(),
+        receiptNumber: generateReceiptNumber(),
+        invoiceId: uuidv4(),
+        invoiceNumber: formData.invoiceNumber,
+        payerName: formData.payerName,
+        payerEmail: formData.payerEmail || undefined,
+        payerAddress: formData.payerAddress || undefined,
+        payeeName: businessName,
+        payeeEmail: businessEmail,
+        payeeAddress: 'Business Address', // Could be enhanced with user profile
+        amountPaid: parseFloat(formData.amountPaid),
+        paymentMethod: formData.paymentMethod,
+        paymentDate: formData.paymentDate,
+        notes: formData.notes || undefined,
+        currency: formData.currency,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      createReceipt(receipt);
+      
+      // Reset form
+      setFormData({
+        invoiceNumber: '',
+        payerName: '',
+        payerEmail: '',
+        payerAddress: '',
+        amountPaid: '',
+        paymentMethod: '',
+        paymentDate: new Date().toISOString().split('T')[0],
+        notes: '',
+        currency: 'USD'
+      });
+
+      onReceiptCreated?.(receipt);
+      
+      alert('Payment receipt created successfully!');
+    } catch (error) {
+      console.error('Error creating receipt:', error);
+      alert('Failed to create receipt. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
-
-    const receipt = saveReceipt({
-      invoiceId: selectedInvoice.id,
-      invoiceNumber: formData.invoiceNumber,
-      payerName: formData.payerName,
-      payerEmail: formData.payerEmail || undefined,
-      payerAddress: formData.payerAddress || undefined,
-      payeeName: selectedInvoice.businessName,
-      payeeEmail: selectedInvoice.businessEmail || undefined,
-      payeeAddress: selectedInvoice.businessAddress || undefined,
-      amountPaid: parseFloat(formData.amountPaid),
-      paymentMethod: formData.paymentMethod,
-      paymentDate: formData.paymentDate,
-      notes: formData.notes || undefined,
-      currency: selectedInvoice.currency,
-    });
-
-    if (receipt && onPaymentRecorded) {
-      onPaymentRecorded(receipt);
-    }
-
-    // Reset form
-    setFormData({
-      invoiceNumber: "",
-      payerName: "",
-      payerEmail: "",
-      payerAddress: "",
-      amountPaid: "",
-      paymentMethod: "",
-      paymentDate: new Date().toISOString().split("T")[0],
-      notes: "",
-    });
-    setOpen(false);
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button className="bg-green-600 hover:bg-green-700 text-white">
-          <CreditCard className="w-4 h-4 mr-2" />
+    <Card className="w-full max-w-2xl mx-auto">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Receipt className="w-5 h-5" />
           Record Payment
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Record Payment Receipt</DialogTitle>
-        </DialogHeader>
-        
-        <form onSubmit={handleSubmit} className="space-y-4">
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Payment Details */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="invoiceNumber">Invoice Number *</Label>
-              <Select value={formData.invoiceNumber} onValueChange={(value) => setFormData(prev => ({ ...prev, invoiceNumber: value }))}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select invoice" />
-                </SelectTrigger>
-                <SelectContent>
-                  {invoices.map((invoice) => (
-                    <SelectItem key={invoice.id} value={invoice.invoiceNumber}>
-                      {invoice.invoiceNumber} - {invoice.clientName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div>
+              <Label htmlFor="invoiceNumber">Invoice Number</Label>
+              <Input
+                id="invoiceNumber"
+                name="invoiceNumber"
+                value={formData.invoiceNumber}
+                onChange={handleInputChange}
+                placeholder="INV-2024-001"
+                required
+              />
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="amountPaid">Amount Paid *</Label>
+            <div>
+              <Label htmlFor="amountPaid">Amount Paid</Label>
               <Input
                 id="amountPaid"
+                name="amountPaid"
                 type="number"
                 step="0.01"
                 value={formData.amountPaid}
-                onChange={(e) => setFormData(prev => ({ ...prev, amountPaid: e.target.value }))}
+                onChange={handleInputChange}
                 placeholder="0.00"
                 required
               />
@@ -123,9 +145,9 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ invoices, onPaymentRecorded }
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="paymentMethod">Payment Method *</Label>
-              <Select value={formData.paymentMethod} onValueChange={(value) => setFormData(prev => ({ ...prev, paymentMethod: value }))}>
+            <div>
+              <Label htmlFor="paymentMethod">Payment Method</Label>
+              <Select value={formData.paymentMethod} onValueChange={(value) => handleSelectChange('paymentMethod', value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select payment method" />
                 </SelectTrigger>
@@ -138,88 +160,80 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ invoices, onPaymentRecorded }
                 </SelectContent>
               </Select>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="paymentDate">Payment Date *</Label>
+            <div>
+              <Label htmlFor="paymentDate">Payment Date</Label>
               <Input
                 id="paymentDate"
+                name="paymentDate"
                 type="date"
                 value={formData.paymentDate}
-                onChange={(e) => setFormData(prev => ({ ...prev, paymentDate: e.target.value }))}
+                onChange={handleInputChange}
                 required
               />
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="payerName">Payer Name *</Label>
-            <Input
-              id="payerName"
-              value={formData.payerName}
-              onChange={(e) => setFormData(prev => ({ ...prev, payerName: e.target.value }))}
-              placeholder="Enter payer's name"
-              required
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="payerEmail">Payer Email</Label>
-              <Input
-                id="payerEmail"
-                type="email"
-                value={formData.payerEmail}
-                onChange={(e) => setFormData(prev => ({ ...prev, payerEmail: e.target.value }))}
-                placeholder="payer@example.com"
-              />
+          {/* Payer Information */}
+          <div className="space-y-4">
+            <h3 className="font-semibold text-lg">Payer Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="payerName">Payer Name</Label>
+                <Input
+                  id="payerName"
+                  name="payerName"
+                  value={formData.payerName}
+                  onChange={handleInputChange}
+                  placeholder="John Doe"
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="payerEmail">Payer Email (Optional)</Label>
+                <Input
+                  id="payerEmail"
+                  name="payerEmail"
+                  type="email"
+                  value={formData.payerEmail}
+                  onChange={handleInputChange}
+                  placeholder="john@example.com"
+                />
+              </div>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="payerAddress">Payer Address</Label>
-              <Input
+            <div>
+              <Label htmlFor="payerAddress">Payer Address (Optional)</Label>
+              <Textarea
                 id="payerAddress"
+                name="payerAddress"
                 value={formData.payerAddress}
-                onChange={(e) => setFormData(prev => ({ ...prev, payerAddress: e.target.value }))}
-                placeholder="Payer's address"
+                onChange={handleInputChange}
+                placeholder="123 Main St, City, State, ZIP"
+                rows={2}
               />
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="notes">Notes</Label>
+          {/* Notes */}
+          <div>
+            <Label htmlFor="notes">Notes (Optional)</Label>
             <Textarea
               id="notes"
+              name="notes"
               value={formData.notes}
-              onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-              placeholder="Additional payment notes (optional)"
+              onChange={handleInputChange}
+              placeholder="Additional payment notes..."
               rows={3}
             />
           </div>
 
-          {selectedInvoice && (
-            <Card className="bg-blue-50 dark:bg-blue-900/20">
-              <CardContent className="pt-4">
-                <h4 className="font-medium mb-2">Invoice Details</h4>
-                <div className="text-sm space-y-1">
-                  <p><span className="font-medium">Client:</span> {selectedInvoice.clientName}</p>
-                  <p><span className="font-medium">Date:</span> {selectedInvoice.invoiceDate}</p>
-                  <p><span className="font-medium">Currency:</span> {selectedInvoice.currency}</p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          <div className="flex justify-end space-x-2 pt-4">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={!formData.invoiceNumber || !formData.amountPaid || !formData.payerName || !formData.paymentMethod}>
-              Generate Receipt
-            </Button>
-          </div>
+          {/* Submit Button */}
+          <Button type="submit" disabled={isSubmitting} className="w-full">
+            <Save className="w-4 h-4 mr-2" />
+            {isSubmitting ? 'Creating Receipt...' : 'Create Payment Receipt'}
+          </Button>
         </form>
-      </DialogContent>
-    </Dialog>
+      </CardContent>
+    </Card>
   );
 };
 

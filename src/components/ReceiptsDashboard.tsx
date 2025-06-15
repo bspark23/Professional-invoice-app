@@ -1,100 +1,175 @@
 
-import React, { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { usePaymentReceipts } from "@/hooks/usePaymentReceipts";
-import { useAuthLocal } from "@/hooks/useAuthLocal";
-import { PaymentReceipt } from "@/types/receipt";
-import { formatCurrency } from "@/utils/invoiceUtils";
-import { downloadAsPDF, generateFileName } from "@/utils/downloadUtils";
-import ReceiptTemplate from "./ReceiptTemplate";
-import { Search, Download, Eye, Trash2, Receipt } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Search, Download, Eye, Plus, Receipt } from 'lucide-react';
+import { usePaymentReceipts } from '@/hooks/usePaymentReceipts';
+import { useAuthLocal } from '@/hooks/useAuthLocal';
+import PaymentForm from './PaymentForm';
+import ReceiptTemplate from './ReceiptTemplate';
+import { formatCurrency } from '@/utils/invoiceUtils';
+import { PaymentReceipt } from '@/types/receipt';
+import { jsPDF } from 'jspdf';
+import html2canvas from 'html2canvas';
 
 const ReceiptsDashboard: React.FC = () => {
-  const { user, currentProfile } = useAuthLocal();
-  const { receipts, deleteReceipt } = usePaymentReceipts(currentProfile?.id, user?.email);
-  const [searchTerm, setSearchTerm] = useState("");
+  const { user } = useAuthLocal();
+  const { receipts } = usePaymentReceipts();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [selectedReceipt, setSelectedReceipt] = useState<PaymentReceipt | null>(null);
-  const [previewOpen, setPreviewOpen] = useState(false);
+  const [showReceiptPreview, setShowReceiptPreview] = useState(false);
 
+  // Filter receipts based on search
   const filteredReceipts = receipts.filter(receipt =>
     receipt.receiptNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
     receipt.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
     receipt.payerName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleDownloadPDF = async (receipt: PaymentReceipt) => {
-    try {
-      setSelectedReceipt(receipt);
-      // Wait for the template to render
-      setTimeout(async () => {
-        const filename = generateFileName(receipt.receiptNumber, receipt.payerName, 'pdf');
-        await downloadAsPDF(`receipt-${receipt.id}`, filename);
-      }, 100);
-    } catch (error) {
-      console.error('Error downloading receipt:', error);
-    }
-  };
-
-  const handlePreview = (receipt: PaymentReceipt) => {
+  const handleDownloadReceipt = async (receipt: PaymentReceipt) => {
     setSelectedReceipt(receipt);
-    setPreviewOpen(true);
+    setShowReceiptPreview(true);
+    
+    // Wait for the preview to render
+    setTimeout(async () => {
+      const element = document.getElementById('receipt-preview');
+      if (!element) return;
+
+      try {
+        const canvas = await html2canvas(element, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff'
+        });
+
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF({
+          orientation: 'portrait',
+          unit: 'mm',
+          format: 'a4'
+        });
+
+        const imgWidth = 210;
+        const pageHeight = 295;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+        pdf.save(`receipt-${receipt.receiptNumber}.pdf`);
+        
+        setShowReceiptPreview(false);
+      } catch (error) {
+        console.error('Error generating PDF:', error);
+      }
+    }, 500);
   };
 
-  const totalReceipts = receipts.length;
-  const totalAmount = receipts.reduce((sum, receipt) => sum + receipt.amountPaid, 0);
+  const handleViewReceipt = (receipt: PaymentReceipt) => {
+    setSelectedReceipt(receipt);
+    setShowReceiptPreview(true);
+  };
+
+  if (showPaymentForm) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold">Record New Payment</h2>
+          <Button variant="outline" onClick={() => setShowPaymentForm(false)}>
+            Back to Receipts
+          </Button>
+        </div>
+        <PaymentForm onReceiptCreated={() => setShowPaymentForm(false)} />
+      </div>
+    );
+  }
+
+  if (showReceiptPreview && selectedReceipt) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold">Receipt Preview</h2>
+          <div className="flex gap-2">
+            <Button onClick={() => handleDownloadReceipt(selectedReceipt)}>
+              <Download className="w-4 h-4 mr-2" />
+              Download PDF
+            </Button>
+            <Button variant="outline" onClick={() => setShowReceiptPreview(false)}>
+              Close
+            </Button>
+          </div>
+        </div>
+        <div id="receipt-preview">
+          <ReceiptTemplate receipt={selectedReceipt} />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Payment Receipts</h2>
-          <p className="text-gray-600 dark:text-gray-300">Manage and download payment receipts</p>
-        </div>
-        <div className="flex items-center gap-4">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <h2 className="text-2xl font-bold flex items-center gap-2">
+          <Receipt className="w-6 h-6" />
+          Payment Receipts
+        </h2>
+        <Button onClick={() => setShowPaymentForm(true)}>
+          <Plus className="w-4 h-4 mr-2" />
+          Record Payment
+        </Button>
+      </div>
+
+      {/* Search */}
+      <Card>
+        <CardContent className="p-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <Input
-              placeholder="Search receipts..."
+              placeholder="Search receipts by number, invoice, or payer name..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-64"
+              className="pl-10"
             />
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-300">Total Receipts</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">{totalReceipts}</p>
-              </div>
-              <Receipt className="w-8 h-8 text-blue-600" />
+            <div className="text-center">
+              <p className="text-2xl font-bold">{receipts.length}</p>
+              <p className="text-gray-600">Total Receipts</p>
             </div>
           </CardContent>
         </Card>
-
         <Card>
           <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-300">Total Amount Received</p>
-                <p className="text-2xl font-bold text-green-600">{formatCurrency(totalAmount, 'USD')}</p>
-              </div>
-              <Receipt className="w-8 h-8 text-green-600" />
+            <div className="text-center">
+              <p className="text-2xl font-bold">
+                {formatCurrency(receipts.reduce((sum, r) => sum + r.amountPaid, 0))}
+              </p>
+              <p className="text-gray-600">Total Received</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-center">
+              <p className="text-2xl font-bold">
+                {new Set(receipts.map(r => r.invoiceNumber)).size}
+              </p>
+              <p className="text-gray-600">Invoices Paid</p>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Receipts Table */}
+      {/* Receipts List */}
       <Card>
         <CardHeader>
           <CardTitle>Recent Receipts</CardTitle>
@@ -103,100 +178,66 @@ const ReceiptsDashboard: React.FC = () => {
           {filteredReceipts.length === 0 ? (
             <div className="text-center py-8">
               <Receipt className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500">No payment receipts found</p>
-              <p className="text-sm text-gray-400 mt-1">Record your first payment to see receipts here</p>
+              <p className="text-gray-500 mb-4">
+                {searchTerm ? 'No receipts found matching your search.' : 'No payment receipts yet.'}
+              </p>
+              {!searchTerm && (
+                <Button onClick={() => setShowPaymentForm(true)}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Record Your First Payment
+                </Button>
+              )}
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left p-2 font-medium text-gray-600 dark:text-gray-300">Receipt #</th>
-                    <th className="text-left p-2 font-medium text-gray-600 dark:text-gray-300">Invoice #</th>
-                    <th className="text-left p-2 font-medium text-gray-600 dark:text-gray-300">Payer</th>
-                    <th className="text-left p-2 font-medium text-gray-600 dark:text-gray-300">Amount</th>
-                    <th className="text-left p-2 font-medium text-gray-600 dark:text-gray-300">Payment Date</th>
-                    <th className="text-left p-2 font-medium text-gray-600 dark:text-gray-300">Method</th>
-                    <th className="text-left p-2 font-medium text-gray-600 dark:text-gray-300">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredReceipts.map((receipt) => (
-                    <tr key={receipt.id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-800">
-                      <td className="p-2 font-medium">{receipt.receiptNumber}</td>
-                      <td className="p-2">{receipt.invoiceNumber}</td>
-                      <td className="p-2">{receipt.payerName}</td>
-                      <td className="p-2 font-medium text-green-600">
-                        {formatCurrency(receipt.amountPaid, receipt.currency)}
-                      </td>
-                      <td className="p-2">{new Date(receipt.paymentDate).toLocaleDateString()}</td>
-                      <td className="p-2">
-                        <Badge variant="outline">{receipt.paymentMethod}</Badge>
-                      </td>
-                      <td className="p-2">
-                        <div className="flex space-x-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handlePreview(receipt)}
-                            className="h-8 w-8 p-0"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleDownloadPDF(receipt)}
-                            className="h-8 w-8 p-0"
-                          >
-                            <Download className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => deleteReceipt(receipt.id)}
-                            className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="space-y-3">
+              {filteredReceipts.map((receipt) => (
+                <div
+                  key={receipt.id}
+                  className="p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="font-semibold">{receipt.receiptNumber}</h3>
+                        <Badge variant="outline">
+                          Invoice: {receipt.invoiceNumber}
+                        </Badge>
+                        <Badge variant="secondary">
+                          {receipt.paymentMethod}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-1">
+                        <span className="font-medium">Payer:</span> {receipt.payerName}
+                      </p>
+                      <p className="text-sm text-gray-600 mb-1">
+                        <span className="font-medium">Amount:</span> {formatCurrency(receipt.amountPaid, receipt.currency)}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        <span className="font-medium">Date:</span> {new Date(receipt.paymentDate).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleViewReceipt(receipt)}
+                      >
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => handleDownloadReceipt(receipt)}
+                      >
+                        <Download className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </CardContent>
       </Card>
-
-      {/* Preview Dialog */}
-      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Receipt Preview</DialogTitle>
-          </DialogHeader>
-          {selectedReceipt && (
-            <div className="mt-4">
-              <ReceiptTemplate receipt={selectedReceipt} />
-              <div className="flex justify-end space-x-2 mt-6 pt-4 border-t">
-                <Button variant="outline" onClick={() => setPreviewOpen(false)}>
-                  Close
-                </Button>
-                <Button onClick={() => handleDownloadPDF(selectedReceipt)}>
-                  <Download className="w-4 h-4 mr-2" />
-                  Download PDF
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Hidden receipt templates for PDF generation */}
-      <div className="hidden">
-        {selectedReceipt && <ReceiptTemplate receipt={selectedReceipt} />}
-      </div>
     </div>
   );
 };
