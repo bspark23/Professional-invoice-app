@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import {
   Download,
@@ -35,6 +34,7 @@ import { useInvoiceData } from "@/hooks/useInvoiceData";
 import { useAuthLocal } from "@/hooks/useAuthLocal";
 import { formatCurrency, calculateTotal } from "@/utils/invoiceUtils";
 import ResponsiveNavButtons from "@/components/ResponsiveNavButtons";
+import { InvoiceData as ImportedInvoiceData } from "@/types/invoice";
 
 interface LineItem {
   id: string;
@@ -45,7 +45,7 @@ interface LineItem {
 
 interface InvoiceData {
   invoiceNumber: string;
-  date: string;
+  invoiceDate: string;
   dueDate: string;
   clientName: string;
   clientEmail: string;
@@ -70,6 +70,7 @@ interface InvoiceData {
   accountNumber: string;
   bankDetails: string;
   paymentTerms: string;
+  discountAmount: number;
 }
 
 const Invoices: React.FC = () => {
@@ -89,7 +90,7 @@ const Invoices: React.FC = () => {
 
   const [formData, setFormData] = useState<InvoiceData>({
     invoiceNumber: "INV-" + Math.floor(Math.random() * 1000),
-    date: new Date().toLocaleDateString(),
+    invoiceDate: new Date().toLocaleDateString(),
     dueDate: new Date(new Date().setDate(new Date().getDate() + 30)).toLocaleDateString(),
     clientName: "",
     clientEmail: "",
@@ -114,6 +115,7 @@ const Invoices: React.FC = () => {
     accountNumber: '',
     bankDetails: '',
     paymentTerms: '',
+    discountAmount: 0,
   });
 
   useEffect(() => {
@@ -175,12 +177,56 @@ const Invoices: React.FC = () => {
   };
 
   const handleSaveInvoice = () => {
-    saveInvoice(formData);
+    // Convert local InvoiceData to ImportedInvoiceData format
+    const invoiceToSave: ImportedInvoiceData = {
+      ...formData,
+      id: uuidv4(),
+      createdAt: new Date().toISOString(),
+      lineItems: formData.lineItems.map(item => ({
+        ...item,
+        amount: item.quantity * item.rate
+      }))
+    };
+    saveInvoice(invoiceToSave);
     alert("Invoice saved!");
   };
 
-  const loadInvoice = (invoice: InvoiceData) => {
-    setFormData(invoice);
+  const loadInvoice = (invoice: ImportedInvoiceData) => {
+    const loadedInvoice: InvoiceData = {
+      invoiceNumber: invoice.invoiceNumber,
+      invoiceDate: invoice.invoiceDate,
+      dueDate: invoice.dueDate,
+      clientName: invoice.clientName,
+      clientEmail: invoice.clientEmail,
+      clientAddress: invoice.clientAddress,
+      businessName: invoice.businessName,
+      businessEmail: invoice.businessEmail,
+      businessAddress: invoice.businessAddress,
+      businessPhone: invoice.businessPhone || "",
+      businessWebsite: invoice.businessWebsite || "",
+      businessSlogan: invoice.businessSlogan || "",
+      lineItems: invoice.lineItems.map(item => ({
+        id: item.id,
+        description: item.description,
+        quantity: item.quantity,
+        rate: item.rate
+      })),
+      subtotal: calculateTotal(invoice) - (invoice.taxRate / 100 * calculateTotal(invoice)) + invoice.discountAmount,
+      taxRate: invoice.taxRate,
+      taxAmount: (invoice.taxRate / 100) * calculateTotal(invoice),
+      total: calculateTotal(invoice),
+      notes: invoice.notes,
+      terms: invoice.paymentTerms || "",
+      currency: invoice.currency,
+      status: invoice.status,
+      businessLogo: invoice.businessLogo,
+      signatureImage: invoice.signatureImage,
+      accountNumber: invoice.accountNumber || "",
+      bankDetails: invoice.bankDetails || "",
+      paymentTerms: invoice.paymentTerms || "",
+      discountAmount: invoice.discountAmount
+    };
+    setFormData(loadedInvoice);
   };
 
   const handlePreview = () => {
@@ -273,12 +319,12 @@ const Invoices: React.FC = () => {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="date">Date</Label>
+                        <Label htmlFor="invoiceDate">Date</Label>
                         <Input
                           type="text"
-                          id="date"
-                          name="date"
-                          value={formData.date}
+                          id="invoiceDate"
+                          name="invoiceDate"
+                          value={formData.invoiceDate}
                           onChange={handleInputChange}
                         />
                       </div>
@@ -431,6 +477,7 @@ const Invoices: React.FC = () => {
                           variant="destructive"
                           size="sm"
                           onClick={() => removeLineItem(item.id)}
+                          disabled={formData.lineItems.length === 1}
                         >
                           Remove
                         </Button>
@@ -612,7 +659,7 @@ const Invoices: React.FC = () => {
                             <div className="text-right">
                               <h1 className="text-4xl font-bold">INVOICE</h1>
                               <p>Invoice Number: {formData.invoiceNumber}</p>
-                              <p>Date: {formData.date}</p>
+                              <p>Date: {formData.invoiceDate}</p>
                               <p>Due Date: {formData.dueDate}</p>
                             </div>
                           </div>
@@ -722,7 +769,7 @@ const Invoices: React.FC = () => {
                               </Badge>
                             </div>
                             <div className="space-y-2 text-sm text-gray-600">
-                              <p>Date: {invoice.date}</p>
+                              <p>Date: {invoice.invoiceDate}</p>
                               <p>Total: {formatCurrency(calculateTotal(invoice))}</p>
                             </div>
                             <div className="flex gap-2 mt-3">
@@ -739,7 +786,41 @@ const Invoices: React.FC = () => {
                                 size="sm"
                                 variant="outline"
                                 onClick={() => {
-                                  setSelectedInvoice(invoice);
+                                  const convertedInvoice: InvoiceData = {
+                                    invoiceNumber: invoice.invoiceNumber,
+                                    invoiceDate: invoice.invoiceDate,
+                                    dueDate: invoice.dueDate,
+                                    clientName: invoice.clientName,
+                                    clientEmail: invoice.clientEmail,
+                                    clientAddress: invoice.clientAddress,
+                                    businessName: invoice.businessName,
+                                    businessEmail: invoice.businessEmail,
+                                    businessAddress: invoice.businessAddress,
+                                    businessPhone: invoice.businessPhone || "",
+                                    businessWebsite: invoice.businessWebsite || "",
+                                    businessSlogan: invoice.businessSlogan || "",
+                                    lineItems: invoice.lineItems.map(item => ({
+                                      id: item.id,
+                                      description: item.description,
+                                      quantity: item.quantity,
+                                      rate: item.rate
+                                    })),
+                                    subtotal: calculateTotal(invoice) - (invoice.taxRate / 100 * calculateTotal(invoice)) + invoice.discountAmount,
+                                    taxRate: invoice.taxRate,
+                                    taxAmount: (invoice.taxRate / 100) * calculateTotal(invoice),
+                                    total: calculateTotal(invoice),
+                                    notes: invoice.notes,
+                                    terms: invoice.paymentTerms || "",
+                                    currency: invoice.currency,
+                                    status: invoice.status,
+                                    businessLogo: invoice.businessLogo,
+                                    signatureImage: invoice.signatureImage,
+                                    accountNumber: invoice.accountNumber || "",
+                                    bankDetails: invoice.bankDetails || "",
+                                    paymentTerms: invoice.paymentTerms || "",
+                                    discountAmount: invoice.discountAmount
+                                  };
+                                  setSelectedInvoice(convertedInvoice);
                                   setIsPreviewOpen(true);
                                 }}
                                 className="flex-1 text-xs"
@@ -764,8 +845,6 @@ const Invoices: React.FC = () => {
 
         {/* Modals */}
         <LogoSignatureUpload
-          isOpen={isLogoDialogOpen}
-          onClose={() => setIsLogoDialogOpen(false)}
           onLogoUpload={(logoUrl) => setFormData({...formData, businessLogo: logoUrl})}
           onSignatureUpload={(signatureUrl) => setFormData({...formData, signatureImage: signatureUrl})}
           currentLogo={formData.businessLogo}
