@@ -6,7 +6,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import LanguageSelector from "./pages/LanguageSelector";
 import Welcome from "./pages/Welcome";
-import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import LandingPage from "@/components/LandingPage";
 import ExpenseTracker from "./pages/ExpenseTracker";
@@ -59,7 +58,7 @@ const AppContent = () => {
         <LanguageDropdown />
       </div>
       <Routes>
-        <Route path="/" element={<LanguageSelector />} />
+        <Route path="/" element={<Welcome />} />
         <Route path="/welcome" element={<Welcome />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/signin" element={<SignIn />} />

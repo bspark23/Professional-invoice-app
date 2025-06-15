@@ -2,7 +2,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { InvoiceData, currencies, colorThemes } from "@/types/invoice";
-import InvoiceTemplateDefault from "./invoice-templates/InvoiceTemplateDefault";
 import InvoiceTemplateClassic from "./invoice-templates/InvoiceTemplateClassic";
 import InvoiceTemplateModern from "./invoice-templates/InvoiceTemplateModern";
 import InvoiceTemplateBold from "./invoice-templates/InvoiceTemplateBold";
@@ -133,15 +132,11 @@ const InvoicePreview = ({
         />
       );
     default:
-      // fallback to default
+      // Fallback: basic placeholder until default template is (re)implemented
       return (
-        <InvoiceTemplateDefault
-          invoiceData={invoiceData}
-          formatCurrency={formatCurrency}
-          calculateSubtotal={calculateSubtotal}
-          calculateTax={calculateTax}
-          calculateTotal={calculateTotal}
-        />
+        <div className="p-6 bg-white rounded-lg text-gray-700 border border-gray-200 text-center">
+          Invoice preview template not available.
+        </div>
       );
   }
 };
