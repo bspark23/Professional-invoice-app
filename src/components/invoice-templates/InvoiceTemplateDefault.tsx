@@ -2,145 +2,165 @@
 import React from "react";
 import { InvoiceData } from "@/types/invoice";
 
-interface InvoiceTemplateProps {
-  invoiceData: InvoiceData;
-  formatCurrency: (amount: number, currencyCode?: string) => string;
-  calculateSubtotal: () => number;
-  calculateTax: () => number;
-  calculateTotal: () => number;
-}
-const InvoiceTemplateDefault: React.FC<InvoiceTemplateProps> = ({
+// COLOR: Use landing page style blue
+const PRIMARY_BLUE = "bg-gradient-to-br from-blue-500 to-blue-700";
+const PRIMARY_TXT = "text-blue-700";
+
+function InvoiceTemplateDefault({
   invoiceData,
   formatCurrency,
   calculateSubtotal,
   calculateTax,
   calculateTotal
-}) => {
+}: {
+  invoiceData: InvoiceData;
+  formatCurrency: (amount: number, currencyCode?: string) => string;
+  calculateSubtotal: () => number;
+  calculateTax: () => number;
+  calculateTotal: () => number;
+}) {
   return (
-    <div className="bg-white shadow-xl rounded-xl border max-w-2xl mx-auto text-gray-800" style={{ fontFamily: "Segoe UI, Arial, sans-serif", minWidth: "340px" }}>
-      {/* Top colored bar */}
-      <div className="h-7 w-full rounded-t-xl" style={{ background: "#142c2e" }}></div>
-      <div className="px-8 py-6">
-        <div className="flex justify-between items-center mb-3">
-          <div>
-            {/* Logo */}
-            {invoiceData.businessLogo ? (
-              <img src={invoiceData.businessLogo} alt="Logo" className="w-14 h-14 object-contain mb-2" />
-            ) : (
-              <div className="w-14 h-14 flex items-center justify-center rounded-full bg-gray-200 mb-2 text-xs">Logo</div>
-            )}
-            <div className="text-xs text-gray-500 font-semibold">{invoiceData.businessName}</div>
-            <div className="text-xs text-gray-400">{invoiceData.businessAddress}</div>
-            <div className="text-xs text-gray-400">{invoiceData.businessEmail}</div>
-          </div>
-          <div className="text-right">
-            <div className="uppercase tracking-widest font-bold text-lg mb-1 mt-2">Invoice</div>
-            <div className="text-xs text-gray-600">Number: <span className="font-semibold">{invoiceData.invoiceNumber}</span></div>
-            <div className="text-xs text-gray-600">Issue Date: <span className="font-semibold">{invoiceData.invoiceDate}</span></div>
-            <div className="text-xs text-gray-600">Due Date: <span className="font-semibold">{invoiceData.dueDate}</span></div>
-            <div className="text-xs font-bold text-gray-600 mt-1">Total Due: {formatCurrency(calculateTotal())}</div>
-          </div>
+    <div className="font-inter text-gray-900 bg-white px-8 py-8 rounded-xl print:rounded-none print:shadow-none print:bg-white">
+      {/* Header */}
+      <div className="flex justify-between items-start mb-8">
+        <div>
+          {invoiceData.businessLogo && (
+            <img src={invoiceData.businessLogo} alt="Logo" className="h-14 w-14 mb-2 object-contain rounded" />
+          )}
+          <div className="font-bold text-xl">{invoiceData.businessName || "Business Name"}</div>
+          <div className="text-sm text-gray-500">{invoiceData.businessEmail}</div>
+          <div className="text-sm text-gray-500">{invoiceData.businessAddress}</div>
         </div>
-
-        <div className="mt-2 mb-4 grid grid-cols-2 gap-4">
-          <div>
-            <div className="font-bold text-xs text-gray-900 mb-1">BILL FROM:</div>
-            <div className="text-xs font-semibold">{invoiceData.businessName}</div>
-            <div className="text-xs">{invoiceData.businessAddress}</div>
-            <div className="text-xs">{invoiceData.businessEmail}</div>
-          </div>
-          <div>
-            <div className="font-bold text-xs text-gray-900 mb-1">BILL TO:</div>
-            <div className="text-xs font-semibold">{invoiceData.clientName}</div>
-            <div className="text-xs">{invoiceData.clientAddress}</div>
-            <div className="text-xs">{invoiceData.clientEmail}</div>
-          </div>
-        </div>
-
-        {/* Line items table */}
-        <div className="border-2 rounded-lg border-gray-200">
-          <div className="grid grid-cols-4 text-xs font-bold bg-gray-100 text-gray-700 border-b border-gray-200 py-2 px-2">
-            <div className="col-span-2 pl-2">DESCRIPTION</div>
-            <div className="text-center">QTY</div>
-            <div className="text-right pr-2">PRICE</div>
-          </div>
-          {invoiceData.lineItems.map((item) => (
-            <div key={item.id} className="grid grid-cols-4 text-xs border-b border-gray-200 last:border-none">
-              <div className="col-span-2 pl-2 py-2">{item.description}</div>
-              <div className="text-center py-2">{item.quantity}</div>
-              <div className="text-right pr-2 py-2">{formatCurrency(item.amount)}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* Terms and totals */}
-        <div className="flex flex-col md:flex-row mt-4 gap-4">
-          {/* Terms */}
-          <div className="flex-1 text-xs text-gray-600">
-            <div className="font-semibold text-gray-900 mb-1">TERMS & CONDITIONS:</div>
-            {/* Use only user's notes/terms */}
-            {invoiceData.notes
-              ? <div className="whitespace-pre-line">{invoiceData.notes}</div>
-              : <span className="italic text-gray-400">No terms or notes provided.</span>
-            }
-          </div>
-          {/* Totals */}
-          <div className="flex-1 max-w-xs ml-auto space-y-1">
-            <div className="flex justify-between text-xs">
-              <span>SUBTOTAL</span>
-              <span>{formatCurrency(calculateSubtotal())}</span>
-            </div>
-            <div className="flex justify-between text-xs">
-              <span>TAX ({invoiceData.taxRate}%)</span>
-              <span>{formatCurrency(calculateTax())}</span>
-            </div>
-            {invoiceData.discountAmount > 0 && (
-              <div className="flex justify-between text-xs">
-                <span>DISCOUNT</span>
-                <span>-{formatCurrency(invoiceData.discountAmount)}</span>
+        <div className="text-right">
+          <h1 className="font-bold text-2xl tracking-widest uppercase mb-2">INVOICE</h1>
+          <div className={`rounded-md px-6 py-3 text-white font-bold ${PRIMARY_BLUE} flex flex-col gap-2 shadow`}>
+            <div className="flex flex-row justify-between gap-10">
+              <div>
+                <div className="text-xs uppercase opacity-90">Date</div>
+                <div className="text-sm">{invoiceData.invoiceDate}</div>
               </div>
-            )}
-            <div className="flex justify-between font-bold text-base mt-2">
-              <span>AMOUNT DUE</span>
-              <span className="bg-green-200 px-2 rounded">{formatCurrency(calculateTotal())}</span>
+              <div>
+                <div className="text-xs uppercase opacity-90">Invoice No</div>
+                <div className="text-sm">{invoiceData.invoiceNumber}</div>
+              </div>
+            </div>
+            <div className="mt-2 flex flex-col items-end">
+              <div className="uppercase text-xs opacity-80">Total Due</div>
+              <span className="text-lg tracking-wide font-extrabold">{formatCurrency(calculateTotal(), invoiceData.currency)}</span>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Signature row */}
-        <div className="flex flex-col md:flex-row items-end justify-between mt-8 pt-3 border-t border-gray-200">
-          <div>
-            <div className="text-xs mb-2">Bank details:</div>
-            {invoiceData.bankDetails ? (
-              <div className="text-xs text-gray-500 whitespace-pre-line">
-                {invoiceData.bankDetails}
-              </div>
-            ) : (
-              <div className="text-xs text-gray-400 italic">Not provided.</div>
-            )}
-          </div>
-          <div className="flex flex-col items-end mt-4 md:mt-0">
-            {invoiceData.signatureImage && (
-              <img
-                src={invoiceData.signatureImage}
-                alt="Signature"
-                className="w-48 h-16 object-contain border rounded bg-white mb-1"
-              />
-            )}
-            <div className="text-sm font-signature">{invoiceData.signatureName || "Jane Smith"}</div>
-            <div className="text-xs text-gray-700 font-semibold mt-[-2px]">
-              {invoiceData.signaturePosition || "Founder & CEO"}
+      {/* Bill To */}
+      <div className="flex justify-between mb-6">
+        <div>
+          <div className="font-semibold text-gray-600 text-sm">Billed To:</div>
+          <div className="font-bold text-base">{invoiceData.clientName}</div>
+          <div className="text-sm text-gray-500">{invoiceData.clientAddress}</div>
+          <div className="text-sm text-gray-500">{invoiceData.clientEmail}</div>
+        </div>
+        <div>
+          <div className="text-sm text-gray-600 font-semibold">Due Date</div>
+          <div className="font-semibold">{invoiceData.dueDate}</div>
+        </div>
+      </div>
+
+      {/* Items Table */}
+      <div className="rounded-lg overflow-hidden border border-blue-200 mb-8">
+        {/* Table header */}
+        <div className={`${PRIMARY_BLUE} text-white font-bold flex`}>
+          <div className="w-12 text-center py-3"></div>
+          <div className="flex-1 py-3 px-2">Description</div>
+          <div className="w-24 py-3 text-center">Price</div>
+          <div className="w-20 py-3 text-center">Quantity</div>
+          <div className="w-28 py-3 px-2 text-right">Total</div>
+        </div>
+        {/* Line items */}
+        {invoiceData.lineItems.map((item, idx) => (
+          <div
+            key={item.id}
+            className="flex border-b last:border-b-0 border-blue-50 hover:bg-blue-50/60 transition"
+          >
+            <div className="w-12 p-3 flex items-center justify-center text-blue-600 font-semibold">{idx + 1}</div>
+            <div className="flex-1 p-3">
+              <div className="font-medium">{item.description}</div>
+              {/* Optionally, you can render extra item notes in light text here */}
             </div>
-            {(invoiceData.signatureNote || invoiceData.businessName) && (
-              <div className="text-xs text-gray-500">
-                {invoiceData.signatureNote || `For ${invoiceData.businessName}`}
-              </div>
+            <div className="w-24 p-3 text-center">{formatCurrency(item.rate, invoiceData.currency)}</div>
+            <div className="w-20 p-3 text-center">{item.quantity}</div>
+            <div className="w-28 p-3 text-right font-semibold">{formatCurrency(item.amount, invoiceData.currency)}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Totals summary */}
+      <div className="flex flex-col items-end gap-1 mb-8">
+        <div className="flex gap-10">
+          <div className="flex flex-col gap-1 min-w-[180px]">
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-600">Subtotal:</span>
+              <span className="font-semibold">{formatCurrency(calculateSubtotal(), invoiceData.currency)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-600">Tax & VAT:</span>
+              <span className="font-semibold">{formatCurrency(calculateTax(), invoiceData.currency)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-600">Discount:</span>
+              <span className="font-semibold">-{formatCurrency(invoiceData.discountAmount, invoiceData.currency)}</span>
+            </div>
+            <div className="h-2"></div>
+            <div className={`flex justify-between font-extrabold text-lg ${PRIMARY_TXT}`}>
+              <span>TOTAL</span>
+              <span>{formatCurrency(calculateTotal(), invoiceData.currency)}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Payment Methods & Signature */}
+      <div className="flex gap-4 mb-6">
+        <div className="flex-1">
+          <div className={`${PRIMARY_BLUE} text-white text-xs font-bold px-4 py-2 rounded-t`}>
+            PAYMENT METHOD
+          </div>
+          <div className="border-x border-b border-blue-200 rounded-b px-4 py-3">
+            {/* Example fields, you can customize them */}
+            <div className="text-sm">PayPal: your@email.com</div>
+            {invoiceData.accountNumber && (
+              <div className="text-sm">Account Number: {invoiceData.accountNumber}</div>
+            )}
+            {invoiceData.bankDetails && (
+              <div className="text-sm whitespace-pre-line">{invoiceData.bankDetails}</div>
             )}
           </div>
+        </div>
+        <div className="flex-1 flex flex-col justify-between items-end pr-4">
+          <div className="text-sm mb-2 font-medium">Thank you for business with us!</div>
+          {invoiceData.signatureImage && (
+            <img src={invoiceData.signatureImage} alt="Signature" className="h-10 mb-1 object-contain" />
+          )}
+          {invoiceData.signatureName && (
+            <div className="font-semibold">{invoiceData.signatureName}</div>
+          )}
+          {invoiceData.signaturePosition && (
+            <div className="text-xs text-gray-500">{invoiceData.signaturePosition}</div>
+          )}
+        </div>
+      </div>
+
+      {/* Footer info */}
+      <div className="flex items-center w-full justify-between gap-2 border-t pt-4 text-xs text-gray-500">
+        <div>
+          <b>Terms:</b> {invoiceData.notes || "Payment due within 7 days unless otherwise stated."}
+        </div>
+        <div>
+          <b>Address:</b> {invoiceData.businessAddress}
         </div>
       </div>
     </div>
   );
-};
+}
 
 export default InvoiceTemplateDefault;
