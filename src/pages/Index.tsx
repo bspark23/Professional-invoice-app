@@ -211,9 +211,10 @@ const Index = () => {
     );
   }
 
-  // Add "custom" to the template options
+  // Add "corporate" and "custom" to the template options
   const templateOptions = [
     { value: "minimalist", label: "Reference (Default)" },
+    { value: "corporate", label: "Corporate (New)" },
     { value: "classic", label: "Classic" },
     { value: "modern", label: "Modern" },
     { value: "bold", label: "Bold" },

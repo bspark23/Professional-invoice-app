@@ -9,6 +9,7 @@ import InvoiceTemplateBold from "./invoice-templates/InvoiceTemplateBold";
 import InvoiceTemplateElegant from "./invoice-templates/InvoiceTemplateElegant";
 import InvoiceTemplateHorizontal from "./invoice-templates/InvoiceTemplateHorizontal";
 import InvoiceTemplateCustom from "./invoice-templates/InvoiceTemplateCustom";
+import InvoiceTemplateCorporate from "./invoice-templates/InvoiceTemplateCorporate";
 
 interface InvoicePreviewProps {
   invoiceData: InvoiceData;
@@ -54,6 +55,16 @@ const InvoicePreview = ({
   const themeObj = getTheme(colorTheme);
 
   switch (template) {
+    case "corporate":
+      return (
+        <InvoiceTemplateCorporate
+          invoiceData={invoiceData}
+          formatCurrency={formatCurrency}
+          calculateSubtotal={calculateSubtotal}
+          calculateTax={calculateTax}
+          calculateTotal={calculateTotal}
+        />
+      );
     case "minimalist":
       return (
         <InvoiceTemplateDefault

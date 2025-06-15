@@ -25,7 +25,7 @@ export interface InvoiceData {
   notes: string;
   status: 'paid' | 'unpaid';
   createdAt?: string;
-  template?: 'minimalist' | 'bordered' | 'modern' | 'classic' | 'bold' | 'elegant' | 'horizontal' | 'custom'; // <-- updated
+  template?: 'minimalist' | 'bordered' | 'modern' | 'classic' | 'bold' | 'elegant' | 'horizontal' | 'corporate' | 'custom'; // <-- updated
   colorTheme?: 'blue' | 'green' | 'gray' | 'purple' | 'red' | 'orange' | 'teal' | 'gradient-blue' | 'gradient-purple'; // all options
   signatureImage?: string; // New field for the signature image
 }
