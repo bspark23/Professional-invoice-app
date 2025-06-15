@@ -7,12 +7,14 @@ import { useInvoiceData } from "@/hooks/useInvoiceData";
 import { useAuthLocal } from "@/hooks/useAuthLocal";
 import { formatCurrency, calculateTotal } from "@/utils/invoiceUtils";
 import AnalyticsDashboard from "@/components/AnalyticsDashboard";
-import { useInvoiceActivity } from "@/hooks/useInvoiceActivity";
+import RecentActivity from "@/components/RecentActivity";
+import QuickAccessPanel from "@/components/QuickAccessPanel";
+import { useNavigate } from "react-router-dom";
 
 const NewDashboardContent: React.FC = () => {
   const { user } = useAuthLocal();
   const { savedInvoices } = useInvoiceData(null, user?.email || user?.profileName);
-  const { events } = useInvoiceActivity();
+  const navigate = useNavigate();
 
   // Calculate dynamic stats
   const totalInvoiced = savedInvoices.reduce((sum, invoice) => {
@@ -90,13 +92,6 @@ const NewDashboardContent: React.FC = () => {
     }
   ];
 
-  const quickActions = [
-    { title: "Create Invoice", description: "Generate a new invoice", color: "bg-blue-500" },
-    { title: "Add Client", description: "Add a new client", color: "bg-green-500" },
-    { title: "View Reports", description: "Check analytics", color: "bg-purple-500" },
-    { title: "Send Reminder", description: "Follow up payments", color: "bg-orange-500" },
-  ];
-
   return (
     <div className="p-6 bg-gray-50">
       {/* Header */}
@@ -105,7 +100,7 @@ const NewDashboardContent: React.FC = () => {
           <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
           <p className="text-gray-600">Welcome back! Here's what's happening with your business today.</p>
         </div>
-        <Button className="bg-blue-600 hover:bg-blue-700">
+        <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => navigate('/invoices')}>
           <Plus className="w-4 h-4 mr-2" />
           Create Invoice
         </Button>
@@ -149,31 +144,14 @@ const NewDashboardContent: React.FC = () => {
       {/* Analytics Dashboard with Charts */}
       <AnalyticsDashboard savedInvoices={savedInvoices} formatCurrency={formatCurrency} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        {/* Quick Actions */}
-        <Card className="bg-white">
-          <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {quickActions.map((action, index) => (
-                <div key={index} className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 cursor-pointer">
-                  <div className={`w-10 h-10 ${action.color} rounded-lg flex items-center justify-center`}>
-                    <Plus className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">{action.title}</p>
-                    <p className="text-sm text-gray-500">{action.description}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
+        {/* Quick Access Panel */}
+        <div className="lg:col-span-1">
+          <QuickAccessPanel />
+        </div>
 
         {/* Top Paying Clients */}
-        <Card className="bg-white">
+        <Card className="bg-white lg:col-span-1">
           <CardHeader>
             <CardTitle>Top Paying Clients</CardTitle>
           </CardHeader>
@@ -202,7 +180,7 @@ const NewDashboardContent: React.FC = () => {
         </Card>
 
         {/* Top Selling Products/Services */}
-        <Card className="bg-white">
+        <Card className="bg-white lg:col-span-1">
           <CardHeader>
             <CardTitle>Top Products/Services</CardTitle>
           </CardHeader>
@@ -229,41 +207,12 @@ const NewDashboardContent: React.FC = () => {
             </div>
           </CardContent>
         </Card>
-      </div>
 
-      {/* Activity Feed */}
-      <Card className="bg-white">
-        <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {events.length > 0 ? events.slice(0, 10).map((event, index) => (
-              <div key={index} className="flex items-center gap-3 p-3 border-b border-gray-100 last:border-b-0">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                  event.type === 'created' ? 'bg-blue-100' :
-                  event.type === 'edited' ? 'bg-yellow-100' :
-                  'bg-green-100'
-                }`}>
-                  <FileText className={`w-4 h-4 ${
-                    event.type === 'created' ? 'text-blue-600' :
-                    event.type === 'edited' ? 'text-yellow-600' :
-                    'text-green-600'
-                  }`} />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900">{event.description}</p>
-                  <p className="text-xs text-gray-500">
-                    {new Date(event.timestamp).toLocaleDateString()} at {new Date(event.timestamp).toLocaleTimeString()}
-                  </p>
-                </div>
-              </div>
-            )) : (
-              <p className="text-gray-500 text-center py-4">No recent activity</p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+        {/* Recent Activity */}
+        <div className="lg:col-span-1">
+          <RecentActivity />
+        </div>
+      </div>
     </div>
   );
 };
