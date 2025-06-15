@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,7 +18,7 @@ interface PaymentFormProps {
 
 const PaymentForm: React.FC<PaymentFormProps> = ({ invoiceNumber, onReceiptCreated }) => {
   const { user } = useAuthLocal();
-  const { createReceipt } = usePaymentReceipts();
+  const { saveReceipt } = usePaymentReceipts();
   
   const [formData, setFormData] = useState({
     invoiceNumber: invoiceNumber || '',
@@ -48,11 +47,6 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ invoiceNumber, onReceiptCreat
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const generateReceiptNumber = () => {
-    const now = new Date();
-    return `RCP-${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}-${Date.now().toString().slice(-6)}`;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
@@ -60,10 +54,8 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ invoiceNumber, onReceiptCreat
     setIsSubmitting(true);
 
     try {
-      const receipt: PaymentReceipt = {
-        id: uuidv4(),
-        receiptNumber: generateReceiptNumber(),
-        invoiceId: uuidv4(),
+      const receiptData: Omit<PaymentReceipt, 'id' | 'receiptNumber' | 'createdAt' | 'updatedAt'> = {
+        invoiceId: `inv-${Date.now()}`,
         invoiceNumber: formData.invoiceNumber,
         payerName: formData.payerName,
         payerEmail: formData.payerEmail || undefined,
@@ -76,11 +68,9 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ invoiceNumber, onReceiptCreat
         paymentDate: formData.paymentDate,
         notes: formData.notes || undefined,
         currency: formData.currency,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
       };
 
-      createReceipt(receipt);
+      const receipt = saveReceipt(receiptData);
       
       // Reset form
       setFormData({

@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Download, Eye, Mail, Save, Image, Edit, FileText } from "lucide-react";
+import { Download, Eye, Mail, Save, Image, Edit, FileText, Bot } from "lucide-react";
 import { v4 as uuidv4 } from 'uuid';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -20,6 +20,7 @@ import LogoSignatureUpload from "@/components/LogoSignatureUpload";
 import SendInvoiceDialog from "@/components/SendInvoiceDialog";
 import InvoicePreviewModal from "@/components/InvoicePreviewModal";
 import InvoiceTemplateMinimalist from "@/components/invoice-templates/InvoiceTemplateMinimalist";
+import AIInvoiceAssistant from "@/components/AIInvoiceAssistant";
 import { useInvoiceData } from "@/hooks/useInvoiceData";
 import { useAuthLocal } from "@/hooks/useAuthLocal";
 import { formatCurrency, calculateTotal } from "@/utils/invoiceUtils";
@@ -53,6 +54,7 @@ const Invoices = () => {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<InvoiceData | null>(null);
   const [isHelpCenterOpen, setIsHelpCenterOpen] = useState(false);
+  const [showAIAssistant, setShowAIAssistant] = useState(false);
 
   // Check for LPO conversion on mount
   useEffect(() => {
@@ -110,6 +112,12 @@ const Invoices = () => {
   useEffect(() => {
     setFormData(invoiceData);
   }, [invoiceData]);
+
+  const handleAIInvoiceGenerated = (aiInvoice: InvoiceData) => {
+    setFormData(aiInvoice);
+    setInvoiceData(aiInvoice);
+    setShowAIAssistant(false);
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -225,6 +233,14 @@ const Invoices = () => {
               <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Invoice Management</h1>
             </div>
             <div className="flex items-center gap-2">
+              <Button
+                onClick={() => setShowAIAssistant(!showAIAssistant)}
+                variant={showAIAssistant ? "default" : "outline"}
+                className="flex items-center gap-2"
+              >
+                <Bot className="w-4 h-4" />
+                AI Assistant
+              </Button>
               <ResponsiveNavButtons 
                 onHelpClick={() => setIsHelpCenterOpen(true)}
                 onChatClick={() => setIsHelpCenterOpen(true)}
@@ -235,6 +251,13 @@ const Invoices = () => {
 
           {/* Main content */}
           <div className="p-4 sm:p-6">
+            {/* AI Assistant Section */}
+            {showAIAssistant && (
+              <div className="mb-6">
+                <AIInvoiceAssistant onInvoiceGenerated={handleAIInvoiceGenerated} />
+              </div>
+            )}
+
             {/* Invoice form and preview layout */}
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
               {/* Invoice Form */}
