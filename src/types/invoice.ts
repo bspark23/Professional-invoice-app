@@ -19,15 +19,16 @@ export interface InvoiceData {
   discountAmount: number;
   businessName: string;
   businessLogo?: string;
-  businessEmail: string;    // <--- Added
-  businessAddress: string;  // <--- Added
+  businessEmail: string;
+  businessAddress: string;
   currency: string;
   notes: string;
   status: 'paid' | 'unpaid';
   createdAt?: string;
-  template?: 'minimalist' | 'bordered' | 'modern' | 'classic' | 'bold' | 'elegant' | 'horizontal' | 'corporate' | 'custom'; // <-- updated
-  colorTheme?: 'blue' | 'green' | 'gray' | 'purple' | 'red' | 'orange' | 'teal' | 'gradient-blue' | 'gradient-purple'; // all options
-  signatureImage?: string; // New field for the signature image
+  template?: 'minimalist' | 'bordered' | 'modern' | 'classic' | 'bold' | 'elegant' | 'horizontal' | 'corporate' | 'custom';
+  colorTheme?: 'blue' | 'green' | 'gray' | 'purple' | 'red' | 'orange' | 'teal' | 'gradient-blue' | 'gradient-purple';
+  signatureImage?: string;
+  accountNumber?: string;
 }
 
 export const colorThemes = [

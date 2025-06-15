@@ -65,6 +65,16 @@ const InvoiceForm = ({
                 onChange={(e) => setInvoiceData(prev => ({ ...prev, businessName: e.target.value }))}
               />
             </div>
+            {/* --- ACCOUNT NUMBER FIELD --- */}
+            <div>
+              <Label htmlFor="account-number">Account Number</Label>
+              <Input
+                id="account-number"
+                placeholder="Account Number"
+                value={invoiceData.accountNumber || ""}
+                onChange={(e) => setInvoiceData(prev => ({ ...prev, accountNumber: e.target.value }))}
+              />
+            </div>
             <div>
               <Label htmlFor="business-logo">Company Logo</Label>
               <div className="flex items-center gap-4">
