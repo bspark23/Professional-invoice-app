@@ -34,44 +34,12 @@ import { useInvoiceData } from "@/hooks/useInvoiceData";
 import { useAuthLocal } from "@/hooks/useAuthLocal";
 import { formatCurrency, calculateTotal } from "@/utils/invoiceUtils";
 import ResponsiveNavButtons from "@/components/ResponsiveNavButtons";
-import { InvoiceData as ImportedInvoiceData } from "@/types/invoice";
+import { InvoiceData as ImportedInvoiceData, LineItem as ImportedLineItem } from "@/types/invoice";
 
-interface LineItem {
-  id: string;
-  description: string;
-  quantity: number;
-  rate: number;
-}
+// Use imported types directly
+interface LineItem extends ImportedLineItem {}
 
-interface InvoiceData {
-  invoiceNumber: string;
-  invoiceDate: string;
-  dueDate: string;
-  clientName: string;
-  clientEmail: string;
-  clientAddress: string;
-  businessName: string;
-  businessEmail: string;
-  businessAddress: string;
-  businessPhone: string;
-  businessWebsite: string;
-  businessSlogan: string;
-  lineItems: LineItem[];
-  subtotal: number;
-  taxRate: number;
-  taxAmount: number;
-  total: number;
-  notes: string;
-  terms: string;
-  currency: string;
-  status: 'paid' | 'unpaid' | 'pending';
-  businessLogo?: string;
-  signatureImage?: string;
-  accountNumber: string;
-  bankDetails: string;
-  paymentTerms: string;
-  discountAmount: number;
-}
+interface InvoiceData extends ImportedInvoiceData {}
 
 const Invoices: React.FC = () => {
   const location = useLocation();
@@ -101,21 +69,23 @@ const Invoices: React.FC = () => {
     businessPhone: "",
     businessWebsite: "",
     businessSlogan: "",
-    lineItems: [{ id: uuidv4(), description: "", quantity: 1, rate: 0 }],
-    subtotal: 0,
+    lineItems: [{ 
+      id: uuidv4(), 
+      description: "", 
+      quantity: 1, 
+      rate: 0,
+      amount: 0
+    }],
     taxRate: 7.5,
-    taxAmount: 0,
-    total: 0,
+    discountAmount: 0,
     notes: "",
-    terms: "",
     currency: "USD",
-    status: 'pending',
+    status: 'unpaid',
     businessLogo: '',
     signatureImage: '',
     accountNumber: '',
     bankDetails: '',
     paymentTerms: '',
-    discountAmount: 0,
   });
 
   useEffect(() => {
@@ -130,16 +100,30 @@ const Invoices: React.FC = () => {
   const handleLineItemChange = (id: string, field: string, value: any) => {
     setFormData(prevFormData => ({
       ...prevFormData,
-      lineItems: prevFormData.lineItems.map(item =>
-        item.id === id ? { ...item, [field]: value } : item
-      ),
+      lineItems: prevFormData.lineItems.map(item => {
+        if (item.id === id) {
+          const updatedItem = { ...item, [field]: value };
+          // Calculate amount when quantity or rate changes
+          if (field === 'quantity' || field === 'rate') {
+            updatedItem.amount = Number(updatedItem.quantity) * Number(updatedItem.rate);
+          }
+          return updatedItem;
+        }
+        return item;
+      }),
     }));
   };
 
   const addLineItem = () => {
     setFormData(prevFormData => ({
       ...prevFormData,
-      lineItems: [...prevFormData.lineItems, { id: uuidv4(), description: "", quantity: 1, rate: 0 }],
+      lineItems: [...prevFormData.lineItems, { 
+        id: uuidv4(), 
+        description: "", 
+        quantity: 1, 
+        rate: 0,
+        amount: 0
+      }],
     }));
   };
 
@@ -151,15 +135,14 @@ const Invoices: React.FC = () => {
   };
 
   const calculateInvoice = () => {
-    const subtotal = formData.lineItems.reduce((sum, item) => sum + (item.quantity * item.rate), 0);
-    const taxAmount = subtotal * (formData.taxRate / 100);
-    const total = subtotal + taxAmount;
-
+    const updatedLineItems = formData.lineItems.map(item => ({
+      ...item,
+      amount: item.quantity * item.rate
+    }));
+    
     setFormData(prevFormData => ({
       ...prevFormData,
-      subtotal,
-      taxAmount,
-      total,
+      lineItems: updatedLineItems,
     }));
   };
 
@@ -172,7 +155,7 @@ const Invoices: React.FC = () => {
     setFormData({ ...formData, currency: value });
   };
 
-  const handleStatusChange = (value: 'paid' | 'unpaid' | 'pending') => {
+  const handleStatusChange = (value: 'paid' | 'unpaid') => {
     setFormData({ ...formData, status: value });
   };
 
@@ -182,10 +165,6 @@ const Invoices: React.FC = () => {
       ...formData,
       id: uuidv4(),
       createdAt: new Date().toISOString(),
-      lineItems: formData.lineItems.map(item => ({
-        ...item,
-        amount: item.quantity * item.rate
-      }))
     };
     saveInvoice(invoiceToSave);
     alert("Invoice saved!");
@@ -193,38 +172,11 @@ const Invoices: React.FC = () => {
 
   const loadInvoice = (invoice: ImportedInvoiceData) => {
     const loadedInvoice: InvoiceData = {
-      invoiceNumber: invoice.invoiceNumber,
-      invoiceDate: invoice.invoiceDate,
-      dueDate: invoice.dueDate,
-      clientName: invoice.clientName,
-      clientEmail: invoice.clientEmail,
-      clientAddress: invoice.clientAddress,
-      businessName: invoice.businessName,
-      businessEmail: invoice.businessEmail,
-      businessAddress: invoice.businessAddress,
-      businessPhone: invoice.businessPhone || "",
-      businessWebsite: invoice.businessWebsite || "",
-      businessSlogan: invoice.businessSlogan || "",
+      ...invoice,
       lineItems: invoice.lineItems.map(item => ({
-        id: item.id,
-        description: item.description,
-        quantity: item.quantity,
-        rate: item.rate
-      })),
-      subtotal: calculateTotal(invoice) - (invoice.taxRate / 100 * calculateTotal(invoice)) + invoice.discountAmount,
-      taxRate: invoice.taxRate,
-      taxAmount: (invoice.taxRate / 100) * calculateTotal(invoice),
-      total: calculateTotal(invoice),
-      notes: invoice.notes,
-      terms: invoice.paymentTerms || "",
-      currency: invoice.currency,
-      status: invoice.status,
-      businessLogo: invoice.businessLogo,
-      signatureImage: invoice.signatureImage,
-      accountNumber: invoice.accountNumber || "",
-      bankDetails: invoice.bankDetails || "",
-      paymentTerms: invoice.paymentTerms || "",
-      discountAmount: invoice.discountAmount
+        ...item,
+        amount: item.amount || (item.quantity * item.rate)
+      }))
     };
     setFormData(loadedInvoice);
   };
@@ -527,11 +479,11 @@ const Invoices: React.FC = () => {
                     </div>
 
                     <div>
-                      <Label htmlFor="terms">Terms & Conditions</Label>
+                      <Label htmlFor="paymentTerms">Terms & Conditions</Label>
                       <Textarea
-                        id="terms"
-                        name="terms"
-                        value={formData.terms}
+                        id="paymentTerms"
+                        name="paymentTerms"
+                        value={formData.paymentTerms}
                         onChange={handleInputChange}
                         rows={3}
                       />
@@ -562,24 +514,12 @@ const Invoices: React.FC = () => {
                     </div>
 
                     <div>
-                      <Label htmlFor="paymentTerms">Payment Terms</Label>
-                      <Textarea
-                        id="paymentTerms"
-                        name="paymentTerms"
-                        value={formData.paymentTerms}
-                        onChange={handleInputChange}
-                        rows={3}
-                      />
-                    </div>
-
-                    <div>
                       <Label htmlFor="status">Status</Label>
                       <Select value={formData.status} onValueChange={handleStatusChange}>
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="pending">Pending</SelectItem>
                           <SelectItem value="paid">Paid</SelectItem>
                           <SelectItem value="unpaid">Unpaid</SelectItem>
                         </SelectContent>
@@ -686,16 +626,16 @@ const Invoices: React.FC = () => {
                                   <td className="py-2">{item.description}</td>
                                   <td className="text-right py-2">{item.quantity}</td>
                                   <td className="text-right py-2">{formatCurrency(item.rate)}</td>
-                                  <td className="text-right py-2">{formatCurrency(item.quantity * item.rate)}</td>
+                                  <td className="text-right py-2">{formatCurrency(item.amount)}</td>
                                 </tr>
                               ))}
                             </tbody>
                           </table>
 
                           <div className="text-right mt-4">
-                            <p>Subtotal: {formatCurrency(formData.subtotal)}</p>
-                            <p>Tax ({formData.taxRate}%): {formatCurrency(formData.taxAmount)}</p>
-                            <h2 className="text-2xl font-bold">Total: {formatCurrency(formData.total)}</h2>
+                            <p>Subtotal: {formatCurrency(formData.lineItems.reduce((sum, item) => sum + item.amount, 0))}</p>
+                            <p>Tax ({formData.taxRate}%): {formatCurrency(formData.lineItems.reduce((sum, item) => sum + item.amount, 0) * (formData.taxRate / 100))}</p>
+                            <h2 className="text-2xl font-bold">Total: {formatCurrency(formData.lineItems.reduce((sum, item) => sum + item.amount, 0) * (1 + formData.taxRate / 100))}</h2>
                           </div>
 
                           <div className="mt-8">
@@ -705,14 +645,13 @@ const Invoices: React.FC = () => {
 
                           <div className="mt-8">
                             <h3>Terms & Conditions:</h3>
-                            <p>{formData.terms}</p>
+                            <p>{formData.paymentTerms}</p>
                           </div>
 
                           <div className="mt-8">
                             <h3>Payment Information:</h3>
                             <p>Account Number: {formData.accountNumber}</p>
                             <p>Bank Details: {formData.bankDetails}</p>
-                            <p>Payment Terms: {formData.paymentTerms}</p>
                           </div>
 
                           {formData.signatureImage && (
@@ -786,41 +725,7 @@ const Invoices: React.FC = () => {
                                 size="sm"
                                 variant="outline"
                                 onClick={() => {
-                                  const convertedInvoice: InvoiceData = {
-                                    invoiceNumber: invoice.invoiceNumber,
-                                    invoiceDate: invoice.invoiceDate,
-                                    dueDate: invoice.dueDate,
-                                    clientName: invoice.clientName,
-                                    clientEmail: invoice.clientEmail,
-                                    clientAddress: invoice.clientAddress,
-                                    businessName: invoice.businessName,
-                                    businessEmail: invoice.businessEmail,
-                                    businessAddress: invoice.businessAddress,
-                                    businessPhone: invoice.businessPhone || "",
-                                    businessWebsite: invoice.businessWebsite || "",
-                                    businessSlogan: invoice.businessSlogan || "",
-                                    lineItems: invoice.lineItems.map(item => ({
-                                      id: item.id,
-                                      description: item.description,
-                                      quantity: item.quantity,
-                                      rate: item.rate
-                                    })),
-                                    subtotal: calculateTotal(invoice) - (invoice.taxRate / 100 * calculateTotal(invoice)) + invoice.discountAmount,
-                                    taxRate: invoice.taxRate,
-                                    taxAmount: (invoice.taxRate / 100) * calculateTotal(invoice),
-                                    total: calculateTotal(invoice),
-                                    notes: invoice.notes,
-                                    terms: invoice.paymentTerms || "",
-                                    currency: invoice.currency,
-                                    status: invoice.status,
-                                    businessLogo: invoice.businessLogo,
-                                    signatureImage: invoice.signatureImage,
-                                    accountNumber: invoice.accountNumber || "",
-                                    bankDetails: invoice.bankDetails || "",
-                                    paymentTerms: invoice.paymentTerms || "",
-                                    discountAmount: invoice.discountAmount
-                                  };
-                                  setSelectedInvoice(convertedInvoice);
+                                  setSelectedInvoice(invoice);
                                   setIsPreviewOpen(true);
                                 }}
                                 className="flex-1 text-xs"
@@ -845,6 +750,8 @@ const Invoices: React.FC = () => {
 
         {/* Modals */}
         <LogoSignatureUpload
+          isOpen={isLogoDialogOpen}
+          onClose={() => setIsLogoDialogOpen(false)}
           onLogoUpload={(logoUrl) => setFormData({...formData, businessLogo: logoUrl})}
           onSignatureUpload={(signatureUrl) => setFormData({...formData, signatureImage: signatureUrl})}
           currentLogo={formData.businessLogo}
@@ -854,7 +761,7 @@ const Invoices: React.FC = () => {
         <InvoiceTemplateSelector
           isOpen={isTemplateDialogOpen}
           onClose={() => setIsTemplateDialogOpen(false)}
-          onSelectTemplate={(template, colorTheme, customTemplateId) => {
+          onTemplateSelect={(template, colorTheme, customTemplateId) => {
             setSelectedTemplate(template);
             setSelectedColorTheme(colorTheme);
             if (customTemplateId) setSelectedCustomTemplate(customTemplateId);
