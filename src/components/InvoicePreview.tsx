@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -64,16 +65,6 @@ const InvoicePreview = ({
           calculateTotal={calculateTotal}
         />
       );
-    case "minimalist":
-      return (
-        <InvoiceTemplateDefault
-          invoiceData={invoiceData}
-          formatCurrency={formatCurrency}
-          calculateSubtotal={calculateSubtotal}
-          calculateTax={calculateTax}
-          calculateTotal={calculateTotal}
-        />
-      );
     case "classic":
       return (
         <InvoiceTemplateClassic
@@ -132,7 +123,7 @@ const InvoicePreview = ({
         />
       );
     default:
-      // Fallback: basic placeholder until default template is (re)implemented
+      // Fallback: basic placeholder until template is implemented
       return (
         <div className="p-6 bg-white rounded-lg text-gray-700 border border-gray-200 text-center">
           Invoice preview template not available.
