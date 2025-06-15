@@ -402,14 +402,16 @@ const Index = () => {
 
           {/* Right Column - Invoice Preview and Activity */}
           <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-xl border-0 overflow-hidden space-y-2">
-            <InvoicePreview
-              invoiceData={invoiceData}
-              formatCurrency={getFormatCurrency}
-              calculateSubtotal={getCalculateSubtotal}
-              calculateTax={getCalculateTax}
-              calculateTotal={getCalculateTotal}
-              customTemplateContent={customTemplateContent || ""}
-            />
+            <div id="invoice-preview">
+              <InvoicePreview
+                invoiceData={invoiceData}
+                formatCurrency={getFormatCurrency}
+                calculateSubtotal={getCalculateSubtotal}
+                calculateTax={getCalculateTax}
+                calculateTotal={getCalculateTotal}
+                customTemplateContent={customTemplateContent || ""}
+              />
+            </div>
             <InvoiceActivityTimeline events={activity.events} />
           </div>
         </div>
