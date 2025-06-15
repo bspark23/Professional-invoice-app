@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -19,6 +18,7 @@ import SignIn from "./pages/SignIn";
 import { AuthProvider, useAuthLocal } from "@/hooks/useAuthLocal";
 import Settings from "./pages/Settings";
 import VoluntaryContributionPage from "./pages/VoluntaryContributionPage";
+import Notes from "./pages/Notes";
 
 const queryClient = new QueryClient();
 
@@ -67,6 +67,7 @@ const AppContent = () => {
         <Route path="/expenses" element={user ? <ExpenseTracker /> : <SignIn />} />
         <Route path="/calendar" element={user ? <CalendarView /> : <SignIn />} />
         <Route path="/voluntary-contribution" element={<VoluntaryContributionPage />} />
+        <Route path="/notes" element={<Notes />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </>
