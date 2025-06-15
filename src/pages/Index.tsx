@@ -35,21 +35,6 @@ const Index = () => {
   // NEW: Use profile management
   const { profiles, activeProfileId, activeProfile, setActiveProfile, createProfile, deleteProfile } = useProfiles();
 
-  // Updated: Only show dashboard if a profile is selected
-  if (!activeProfileId) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-8 max-w-sm w-full border border-gray-200 dark:border-gray-700 text-center">
-          <h2 className="text-2xl font-bold mb-4">{t("selectBusiness") || "Select or Add a Business Profile"}</h2>
-          <ProfileSwitcher />
-          {profiles.length === 0 && (
-            <p className="text-gray-600 mt-4">{t("noBusinessProfile") || "You don't have any business profiles yet. Add one above to get started!"}</p>
-          )}
-        </div>
-      </div>
-    );
-  }
-
   // Pass profileId to hooks to segregate their data
   const activity = useInvoiceActivity();
   const {
