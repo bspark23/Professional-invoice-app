@@ -19,12 +19,16 @@ import { exportToPDF, exportToImage } from "@/utils/exportUtils";
 import { colorThemes } from "@/types/invoice";
 import SignatureInput from "@/components/SignatureInput";
 import { Link } from "react-router-dom"; // Add this import
+import InvoiceActivityTimeline from "@/components/InvoiceActivityTimeline";
+import { useInvoiceActivity } from "@/hooks/useInvoiceActivity";
 
 const Index = () => {
   const { toast } = useToast();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [viewMode, setViewMode] = useState<'create' | 'list' | 'print'>('create');
   const [isDarkMode, setIsDarkMode] = useState(false);
+
+  const activity = useInvoiceActivity();
 
   const {
     invoiceData,
@@ -67,14 +71,42 @@ const Index = () => {
 
   const handleExportToPDF = () => {
     exportToPDF(invoiceData, getFormatCurrency, getCalculateSubtotal, getCalculateTax, getCalculateTotal, toast);
+    activity.addEvent("downloaded", `Invoice ${invoiceData.invoiceNumber} exported as PDF.`);
   };
 
   const handleExportToImage = (format: 'png' | 'jpeg') => {
     exportToImage(format, invoiceData, getFormatCurrency, getCalculateSubtotal, getCalculateTax, getCalculateTotal, toast);
+    activity.addEvent("downloaded", `Invoice ${invoiceData.invoiceNumber} exported as ${format.toUpperCase()}.`);
   };
 
   const printInvoice = () => {
     setViewMode('print');
+  };
+
+  const handleSaveInvoice = () => {
+    saveInvoice();
+    activity.addEvent("edited", `Invoice ${invoiceData.invoiceNumber} was saved or updated.`);
+  };
+
+  const handleSaveInvoiceData = () => {
+    saveInvoiceData();
+    activity.addEvent("edited", `Draft for invoice ${invoiceData.invoiceNumber} was saved.`);
+  };
+
+  const handleCreateNewInvoice = () => {
+    const newLineItem = {
+      id: Date.now().toString(),
+      description: '',
+      quantity: 1,
+      rate: 0,
+      amount: 0
+    };
+    setInvoiceData(prev => ({
+      ...prev,
+      invoiceNumber: generateInvoiceNumber(),
+      lineItems: [newLineItem]
+    }));
+    activity.addEvent("created", `Invoice draft started.`);
   };
 
   if (!isLoggedIn) {
@@ -190,11 +222,11 @@ const Index = () => {
               <Eye className="w-4 h-4 mr-2" />
               View Saved ({savedInvoices.length})
             </Button>
-            <Button onClick={saveInvoiceData} variant="outline" className="hover:bg-yellow-50 dark:hover:bg-yellow-900/30">
+            <Button onClick={handleSaveInvoiceData} variant="outline" className="hover:bg-yellow-50 dark:hover:bg-yellow-900/30">
               <Save className="w-4 h-4 mr-2" />
               Save Draft
             </Button>
-            <Button onClick={saveInvoice} variant="outline" className="bg-green-50 hover:bg-green-100 dark:bg-green-900/30 dark:hover:bg-green-800/50">
+            <Button onClick={handleSaveInvoice} variant="outline" className="bg-green-50 hover:bg-green-100 dark:bg-green-900/30 dark:hover:bg-green-800/50">
               <FileText className="w-4 h-4 mr-2" />
               Save Invoice
             </Button>
@@ -231,20 +263,7 @@ const Index = () => {
         {/* Welcome Section */}
         <DashboardWelcome 
           businessName={invoiceData.businessName} 
-          onCreateNew={() => {
-            const newLineItem = {
-              id: Date.now().toString(),
-              description: '',
-              quantity: 1,
-              rate: 0,
-              amount: 0
-            };
-            setInvoiceData(prev => ({
-              ...prev,
-              invoiceNumber: generateInvoiceNumber(),
-              lineItems: [newLineItem]
-            }));
-          }}
+          onCreateNew={handleCreateNewInvoice}
         />
 
         {/* Stats Section */}
@@ -304,8 +323,8 @@ const Index = () => {
             />
           </div>
 
-          {/* Right Column - Invoice Preview */}
-          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-xl border-0 overflow-hidden">
+          {/* Right Column - Invoice Preview and Activity */}
+          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-xl border-0 overflow-hidden space-y-2">
             <InvoicePreview
               invoiceData={invoiceData}
               formatCurrency={getFormatCurrency}
@@ -313,6 +332,7 @@ const Index = () => {
               calculateTax={getCalculateTax}
               calculateTotal={getCalculateTotal}
             />
+            <InvoiceActivityTimeline events={activity.events} />
           </div>
         </div>
 
