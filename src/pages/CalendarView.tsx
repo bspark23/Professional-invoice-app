@@ -4,6 +4,9 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useInvoiceData } from "@/hooks/useInvoiceData";
 import { Calendar } from "@/components/ui/calendar";
 import clsx from "clsx";
+import { useNavigate } from "react-router-dom";
+import { useLanguage } from "@/context/LanguageContext";
+import { Button } from "@/components/ui/button";
 
 type CalendarEvent = {
   id: string;
@@ -14,12 +17,12 @@ type CalendarEvent = {
 
 export default function CalendarView() {
   const { savedInvoices } = useInvoiceData();
+  const { t } = useLanguage();
+  const navigate = useNavigate();
 
-  // Map invoice due dates to events
   const [monthData, setMonthData] = useState<{ [date: string]: CalendarEvent[] }>({});
 
   useEffect(() => {
-    // Populate monthData: { 'YYYY-MM-DD': [events] }
     const map: { [date: string]: CalendarEvent[] } = {};
     savedInvoices.forEach(inv => {
       if (!inv.dueDate) return;
@@ -34,10 +37,8 @@ export default function CalendarView() {
     setMonthData(map);
   }, [savedInvoices]);
 
-  // Generate a list of due dates for modifiers (dates as Date objects)
   const datesWithInvoices = Object.keys(monthData).map(ds => new Date(ds));
 
-  // Define custom classNames for Calendar
   const calendarClassNames = {
     months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
     month: "space-y-4",
@@ -70,7 +71,6 @@ export default function CalendarView() {
     day_withInvoices: "day-with-invoices relative"
   };
 
-  // Adds colored dot to days with invoices after the calendar renders
   useEffect(() => {
     setTimeout(() => {
       document.querySelectorAll(".day-with-invoices").forEach(day => {
@@ -90,7 +90,6 @@ export default function CalendarView() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:bg-gradient-to-br dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex flex-col items-center py-8">
-      {/* Inline style for the colored dot */}
       <style>
         {`
           .invoice-dot {
@@ -111,13 +110,20 @@ export default function CalendarView() {
       <Card className="w-full max-w-3xl shadow-2xl border-0 bg-white/95 dark:bg-gray-800/95 backdrop-blur mb-8">
         <CardHeader>
           <CardTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Invoice Calendar
+            {t("invoiceCalendarTitle")}
           </CardTitle>
           <p className="text-gray-600 dark:text-gray-300">
-            See when your invoices are due at a glance.
+            {t("invoiceCalendarSubtitle")}
           </p>
         </CardHeader>
         <CardContent className="flex flex-col items-center py-4">
+          <Button
+            variant="outline"
+            className="mb-4"
+            onClick={() => navigate("/dashboard")}
+          >
+            ← {t("goBackDashboard")}
+          </Button>
           <Calendar
             mode="single"
             selected={undefined}
@@ -135,10 +141,9 @@ export default function CalendarView() {
             classNames={calendarClassNames}
             onDayClick={() => { }}
           />
-          {/* List of invoices/due dates below calendar */}
           <div className="mt-6 w-full">
             <h3 className="font-semibold text-blue-700 dark:text-blue-300 mb-2">
-              Due Invoices
+              {t("dueInvoices")}
             </h3>
             <ul>
               {Object.entries(monthData)
@@ -152,7 +157,7 @@ export default function CalendarView() {
                           : "bg-yellow-200 text-yellow-800"
                           }`}
                       >
-                        {e.paid ? "Paid" : "Due"}
+                        {e.paid ? t("paid") : t("due")}
                       </span>
                       <span className="font-bold">{e.name}</span>
                       <span className="text-gray-500">{date}</span>
@@ -166,4 +171,3 @@ export default function CalendarView() {
     </div>
   );
 }
-

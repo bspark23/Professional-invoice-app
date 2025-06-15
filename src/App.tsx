@@ -12,6 +12,8 @@ import NotFound from "./pages/NotFound";
 import LandingPage from "@/components/LandingPage";
 import ExpenseTracker from "./pages/ExpenseTracker";
 import CalendarView from "./pages/CalendarView";
+import { LanguageProvider } from "@/context/LanguageContext";
+import LanguageDropdown from "@/components/LanguageDropdown";
 
 const queryClient = new QueryClient();
 
@@ -21,12 +23,10 @@ const AppContent = () => {
 
   const handleGetStarted = () => {
     setShowLandingPage(false);
-    // Set localStorage flag to avoid future redirects
     localStorage.setItem("invoicecraft-has-visited", "true");
     navigate('/');
   };
 
-  // Always show the Landing Page first until the user clicks "Get Started"
   if (showLandingPage) {
     return (
       <LandingPage
@@ -41,32 +41,38 @@ const AppContent = () => {
     );
   }
 
-  // Show app proper after landing page is dismissed
   return (
-    <Routes>
-      <Route path="/" element={<LanguageSelector />} />
-      <Route path="/welcome" element={<Welcome />} />
-      <Route path="/dashboard" element={<Index />} />
-      <Route path="/expenses" element={<ExpenseTracker />} />
-      <Route path="/calendar" element={<CalendarView />} />
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+    <>
+      {/* Language dropdown placed here for global visibility */}
+      <div className="fixed top-4 right-4 z-50">
+        <LanguageDropdown />
+      </div>
+      <Routes>
+        <Route path="/" element={<LanguageSelector />} />
+        <Route path="/welcome" element={<Welcome />} />
+        <Route path="/dashboard" element={<Index />} />
+        <Route path="/expenses" element={<ExpenseTracker />} />
+        <Route path="/calendar" element={<CalendarView />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </>
   );
 };
 
 const App = () => {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <AppContent />
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
+    <LanguageProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <AppContent />
+          </BrowserRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </LanguageProvider>
   );
 };
 
 export default App;
-
