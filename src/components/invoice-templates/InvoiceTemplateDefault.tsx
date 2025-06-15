@@ -2,9 +2,10 @@
 import React from "react";
 import { InvoiceData } from "@/types/invoice";
 
-// COLOR: Use landing page style blue
-const PRIMARY_BLUE = "bg-gradient-to-br from-blue-500 to-blue-700";
-const PRIMARY_TXT = "text-blue-700";
+// LITE BLUE: Use landing page soft blue accents
+const LITE_BLUE_BG = "bg-gradient-to-br from-blue-100 to-blue-200";
+const LITE_BLUE_BORDER = "border-blue-200";
+const LITE_BLUE_TXT = "text-blue-600";
 
 function InvoiceTemplateDefault({
   invoiceData,
@@ -33,7 +34,7 @@ function InvoiceTemplateDefault({
         </div>
         <div className="text-right">
           <h1 className="font-bold text-2xl tracking-widest uppercase mb-2">INVOICE</h1>
-          <div className={`rounded-md px-6 py-3 text-white font-bold ${PRIMARY_BLUE} flex flex-col gap-2 shadow`}>
+          <div className={`rounded-md px-6 py-3 text-blue-700 font-bold ${LITE_BLUE_BG} flex flex-col gap-2 shadow`}>
             <div className="flex flex-row justify-between gap-10">
               <div>
                 <div className="text-xs uppercase opacity-90">Date</div>
@@ -67,9 +68,9 @@ function InvoiceTemplateDefault({
       </div>
 
       {/* Items Table */}
-      <div className="rounded-lg overflow-hidden border border-blue-200 mb-8">
+      <div className={`rounded-lg overflow-hidden border ${LITE_BLUE_BORDER} mb-8`}>
         {/* Table header */}
-        <div className={`${PRIMARY_BLUE} text-white font-bold flex`}>
+        <div className={`${LITE_BLUE_BG} ${LITE_BLUE_TXT} font-bold flex`}>
           <div className="w-12 text-center py-3"></div>
           <div className="flex-1 py-3 px-2">Description</div>
           <div className="w-24 py-3 text-center">Price</div>
@@ -82,10 +83,9 @@ function InvoiceTemplateDefault({
             key={item.id}
             className="flex border-b last:border-b-0 border-blue-50 hover:bg-blue-50/60 transition"
           >
-            <div className="w-12 p-3 flex items-center justify-center text-blue-600 font-semibold">{idx + 1}</div>
+            <div className={`${LITE_BLUE_TXT} w-12 p-3 flex items-center justify-center font-semibold`}>{idx + 1}</div>
             <div className="flex-1 p-3">
               <div className="font-medium">{item.description}</div>
-              {/* Optionally, you can render extra item notes in light text here */}
             </div>
             <div className="w-24 p-3 text-center">{formatCurrency(item.rate, invoiceData.currency)}</div>
             <div className="w-20 p-3 text-center">{item.quantity}</div>
@@ -111,7 +111,7 @@ function InvoiceTemplateDefault({
               <span className="font-semibold">-{formatCurrency(invoiceData.discountAmount, invoiceData.currency)}</span>
             </div>
             <div className="h-2"></div>
-            <div className={`flex justify-between font-extrabold text-lg ${PRIMARY_TXT}`}>
+            <div className={`flex justify-between font-extrabold text-lg ${LITE_BLUE_TXT}`}>
               <span>TOTAL</span>
               <span>{formatCurrency(calculateTotal(), invoiceData.currency)}</span>
             </div>
@@ -122,11 +122,10 @@ function InvoiceTemplateDefault({
       {/* Payment Methods & Signature */}
       <div className="flex gap-4 mb-6">
         <div className="flex-1">
-          <div className={`${PRIMARY_BLUE} text-white text-xs font-bold px-4 py-2 rounded-t`}>
+          <div className={`${LITE_BLUE_BG} ${LITE_BLUE_TXT} text-xs font-bold px-4 py-2 rounded-t`}>
             PAYMENT METHOD
           </div>
-          <div className="border-x border-b border-blue-200 rounded-b px-4 py-3">
-            {/* Example fields, you can customize them */}
+          <div className={`border-x border-b ${LITE_BLUE_BORDER} rounded-b px-4 py-3`}>
             <div className="text-sm">PayPal: your@email.com</div>
             {invoiceData.accountNumber && (
               <div className="text-sm">Account Number: {invoiceData.accountNumber}</div>
@@ -137,7 +136,7 @@ function InvoiceTemplateDefault({
           </div>
         </div>
         <div className="flex-1 flex flex-col justify-between items-end pr-4">
-          <div className="text-sm mb-2 font-medium">Thank you for business with us!</div>
+          <div className="text-sm mb-2 font-medium">Thank you for your business!</div>
           {invoiceData.signatureImage && (
             <img src={invoiceData.signatureImage} alt="Signature" className="h-10 mb-1 object-contain" />
           )}
@@ -164,3 +163,4 @@ function InvoiceTemplateDefault({
 }
 
 export default InvoiceTemplateDefault;
+
