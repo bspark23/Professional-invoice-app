@@ -50,7 +50,7 @@ const AIInvoiceAssistant: React.FC<AIInvoiceAssistantProps> = ({ onInvoiceGenera
       const { data, error: functionError } = await supabase.functions.invoke('ai-invoice-generator', {
         body: {
           userInput,
-          provider: 'openai' // You can make this configurable or default to your preferred provider
+          provider: 'gemini' // Changed from 'openai' to 'gemini'
         }
       });
 
