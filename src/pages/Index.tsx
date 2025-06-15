@@ -1,8 +1,6 @@
-
 import React, { useState, useEffect } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import SectionCard from "@/components/SectionCard";
-import PinLock from "@/components/PinLock";
 import { useInvoiceForm } from "@/hooks/useInvoiceForm";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,8 +13,6 @@ import PrintPreviewModal from "@/components/PrintPreviewModal";
 import { currencies } from "@/types/invoice";
 
 const Index: React.FC = () => {
-  // PIN Gating
-  const [unlocked, setUnlocked] = useState(false);
   // Currency handling
   const defaultCurrency = localStorage.getItem("invoicer-pro-currency") || "USD";
   const [currency, setCurrency] = useState<string>(defaultCurrency);
@@ -38,7 +34,8 @@ const Index: React.FC = () => {
   } = useInvoiceForm();
 
   useEffect(() => {
-    if (!localStorage.getItem("invoicer-pro-pin")) setUnlocked(false);
+    // PIN checking removed
+    // if (!localStorage.getItem("invoicer-pro-pin")) setUnlocked(false);
   }, []);
 
   const formatCurrency = (amount: number) => {
@@ -52,10 +49,6 @@ const Index: React.FC = () => {
       return (selected?.symbol || "$") + amount.toFixed(2);
     }
   };
-
-  if (!unlocked) {
-    return <PinLock onUnlock={() => setUnlocked(true)} />;
-  }
 
   return (
     <DashboardLayout>
@@ -292,4 +285,5 @@ const Index: React.FC = () => {
     </DashboardLayout>
   );
 };
+
 export default Index;
