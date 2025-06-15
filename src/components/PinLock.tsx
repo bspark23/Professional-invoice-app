@@ -54,6 +54,8 @@ const PinLock: React.FC<PinLockProps> = ({ onUnlock }) => {
     e.preventDefault();
     setError(null);
     const storedPin = localStorage.getItem(STORAGE_KEY);
+    console.log("DEBUG: Input PIN:", pinEntry);
+    console.log("DEBUG: Stored PIN:", storedPin);
     if (pinEntry === storedPin) {
       onUnlock();
     } else {
