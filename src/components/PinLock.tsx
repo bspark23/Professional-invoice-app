@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 
 const STORAGE_KEY = "invoicer-pro-pin";
 
-type Mode = "setup" | "confirm" | "entry";
+type Mode = "setup" | "confirm" | "entry" | "changeEnterOld" | "changeNew" | "changeConfirm";
 
 interface PinLockProps {
   onUnlock: () => void;
@@ -20,6 +20,11 @@ const PinLock: React.FC<PinLockProps> = ({ onUnlock }) => {
   const [pinEntry, setPinEntry] = useState("");
   const [error, setError] = useState<string | null>(null);
 
+  // For change PIN flow
+  const [oldPin, setOldPin] = useState("");
+  const [newPin, setNewPin] = useState("");
+  const [newPinConfirm, setNewPinConfirm] = useState("");
+
   // Set up new PIN
   const handleSetup = (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,7 +37,7 @@ const PinLock: React.FC<PinLockProps> = ({ onUnlock }) => {
     setPinConfirm("");
   };
 
-  // Confirm PIN
+  // Confirm PIN during setup
   const handleConfirm = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -55,6 +60,58 @@ const PinLock: React.FC<PinLockProps> = ({ onUnlock }) => {
       setError("Incorrect PIN. Try again.");
       setPinEntry("");
     }
+  };
+
+  // Change PIN: verify current PIN
+  const handleChangeEnterOld = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    const storedPin = localStorage.getItem(STORAGE_KEY);
+    if (oldPin === storedPin) {
+      setStep("changeNew");
+      setNewPin("");
+      setNewPinConfirm("");
+    } else {
+      setError("Incorrect current PIN.");
+      setOldPin("");
+    }
+  };
+
+  // Set new PIN in change PIN flow
+  const handleChangeNew = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    if (!/^\d{4}$/.test(newPin)) {
+      setError("PIN must be exactly 4 digits.");
+      return;
+    }
+    setStep("changeConfirm");
+    setNewPinConfirm("");
+  };
+
+  // Confirm and save new PIN in change PIN flow
+  const handleChangeConfirm = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    if (newPin !== newPinConfirm) {
+      setError("PIN codes do not match.");
+      return;
+    }
+    localStorage.setItem(STORAGE_KEY, newPin);
+    setOldPin("");
+    setNewPin("");
+    setNewPinConfirm("");
+    setStep("entry");
+    setError("PIN changed successfully. Please use your new PIN to unlock.");
+  };
+
+  // Switch to change pin mode from PIN entry
+  const startChangePin = () => {
+    setStep("changeEnterOld");
+    setOldPin("");
+    setNewPin("");
+    setNewPinConfirm("");
+    setError(null);
   };
 
   return (
@@ -101,26 +158,115 @@ const PinLock: React.FC<PinLockProps> = ({ onUnlock }) => {
             <Button type="submit" className="w-full">Save PIN</Button>
           </form>
         )}
+
+        {/* PIN Entry with Change PIN option */}
         {step === "entry" && (
-          <form onSubmit={handleEntry} className="space-y-4">
+          <>
+            <form onSubmit={handleEntry} className="space-y-4">
+              <div>
+                <label className="block text-gray-700 dark:text-gray-200 mb-1 text-sm">Enter your 4-digit PIN</label>
+                <Input
+                  type="password"
+                  pattern="\d{4}"
+                  maxLength={4}
+                  inputMode="numeric"
+                  value={pinEntry}
+                  onChange={e => setPinEntry(e.target.value.replace(/\D/g, ""))}
+                  className="text-center text-lg tracking-widest"
+                  required
+                  autoFocus
+                />
+              </div>
+              {error && <div className="text-red-500 text-sm">{error}</div>}
+              <Button type="submit" className="w-full">Unlock</Button>
+            </form>
+            <div className="flex justify-center mt-4">
+              <Button variant="outline" type="button" size="sm" onClick={startChangePin}>
+                Change PIN
+              </Button>
+            </div>
+          </>
+        )}
+
+        {/* Change PIN - step 1: Enter old PIN */}
+        {step === "changeEnterOld" && (
+          <form onSubmit={handleChangeEnterOld} className="space-y-4">
             <div>
-              <label className="block text-gray-700 dark:text-gray-200 mb-1 text-sm">Enter your 4-digit PIN</label>
+              <label className="block text-gray-700 dark:text-gray-200 mb-1 text-sm">
+                Enter your current 4-digit PIN
+              </label>
               <Input
                 type="password"
                 pattern="\d{4}"
                 maxLength={4}
                 inputMode="numeric"
-                value={pinEntry}
-                onChange={e => setPinEntry(e.target.value.replace(/\D/g, ""))}
+                autoFocus
+                value={oldPin}
+                onChange={e => setOldPin(e.target.value.replace(/\D/g, ""))}
                 className="text-center text-lg tracking-widest"
                 required
-                autoFocus
-                />
+              />
             </div>
             {error && <div className="text-red-500 text-sm">{error}</div>}
-            <Button type="submit" className="w-full">Unlock</Button>
+            <div className="flex gap-2">
+              <Button type="submit" className="w-full">Next</Button>
+              <Button type="button" className="w-full" variant="secondary" onClick={() => setStep("entry")}>Cancel</Button>
+            </div>
           </form>
         )}
+        {/* Change PIN - step 2: Enter new PIN */}
+        {step === "changeNew" && (
+          <form onSubmit={handleChangeNew} className="space-y-4">
+            <div>
+              <label className="block text-gray-700 dark:text-gray-200 mb-1 text-sm">
+                Set your new 4-digit PIN
+              </label>
+              <Input
+                type="password"
+                pattern="\d{4}"
+                maxLength={4}
+                inputMode="numeric"
+                autoFocus
+                value={newPin}
+                onChange={e => setNewPin(e.target.value.replace(/\D/g, ""))}
+                className="text-center text-lg tracking-widest"
+                required
+              />
+            </div>
+            {error && <div className="text-red-500 text-sm">{error}</div>}
+            <div className="flex gap-2">
+              <Button type="submit" className="w-full">Next</Button>
+              <Button type="button" className="w-full" variant="secondary" onClick={() => setStep("entry")}>Cancel</Button>
+            </div>
+          </form>
+        )}
+        {/* Change PIN - step 3: Confirm new PIN */}
+        {step === "changeConfirm" && (
+          <form onSubmit={handleChangeConfirm} className="space-y-4">
+            <div>
+              <label className="block text-gray-700 dark:text-gray-200 mb-1 text-sm">
+                Confirm your new 4-digit PIN
+              </label>
+              <Input
+                type="password"
+                pattern="\d{4}"
+                maxLength={4}
+                inputMode="numeric"
+                autoFocus
+                value={newPinConfirm}
+                onChange={e => setNewPinConfirm(e.target.value.replace(/\D/g, ""))}
+                className="text-center text-lg tracking-widest"
+                required
+              />
+            </div>
+            {error && <div className="text-red-500 text-sm">{error}</div>}
+            <div className="flex gap-2">
+              <Button type="submit" className="w-full">Save New PIN</Button>
+              <Button type="button" className="w-full" variant="secondary" onClick={() => setStep("entry")}>Cancel</Button>
+            </div>
+          </form>
+        )}
+
         <div className="text-xs text-center mt-5 text-gray-400">
           Your PIN is stored only on this device, never sent online.
         </div>
