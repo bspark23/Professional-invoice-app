@@ -17,7 +17,6 @@ import DarkModeToggle from "@/components/DarkModeToggle";
 import SupportBubble from "@/components/SupportBubble";
 import HelpCenter from "@/components/HelpCenter";
 import LogoSignatureUpload from "@/components/LogoSignatureUpload";
-import InvoiceTemplateSelector from "@/components/InvoiceTemplateSelector";
 import SendInvoiceDialog from "@/components/SendInvoiceDialog";
 import InvoicePreviewModal from "@/components/InvoicePreviewModal";
 import { useInvoiceData } from "@/hooks/useInvoiceData";
@@ -416,6 +415,55 @@ const Invoices = () => {
                       </div>
                     </div>
 
+                    {/* Payment Information */}
+                    <div className="space-y-4">
+                      <h3 className="font-semibold text-lg">Payment Information</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="paymentTerms">Payment Terms</Label>
+                          <Input
+                            id="paymentTerms"
+                            name="paymentTerms"
+                            value={formData.paymentTerms || ''}
+                            onChange={handleInputChange}
+                            placeholder="Net 30 days"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="accountNumber">Account Number</Label>
+                          <Input
+                            id="accountNumber"
+                            name="accountNumber"
+                            value={formData.accountNumber || ''}
+                            onChange={handleInputChange}
+                            placeholder="Account Number"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <Label htmlFor="bankDetails">Bank Details</Label>
+                        <Textarea
+                          id="bankDetails"
+                          name="bankDetails"
+                          value={formData.bankDetails || ''}
+                          onChange={handleInputChange}
+                          placeholder="Bank name, routing number, etc."
+                          rows={2}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="paymentInstructions">Payment Instructions</Label>
+                        <Textarea
+                          id="paymentInstructions"
+                          name="paymentInstructions"
+                          value={formData.paymentInstructions || ''}
+                          onChange={handleInputChange}
+                          placeholder="Special payment instructions..."
+                          rows={2}
+                        />
+                      </div>
+                    </div>
+
                     {/* Notes */}
                     <div>
                       <Label htmlFor="notes">Notes</Label>
@@ -450,14 +498,6 @@ const Invoices = () => {
                       >
                         <Mail className="w-4 h-4" />
                         Send Invoice
-                      </Button>
-                      <Button 
-                        onClick={() => setIsTemplateDialogOpen(true)} 
-                        variant="outline" 
-                        className="flex items-center gap-2"
-                      >
-                        <Palette className="w-4 h-4" />
-                        Templates
                       </Button>
                       <Button 
                         onClick={() => setIsLogoDialogOpen(true)} 
@@ -523,18 +563,6 @@ const Invoices = () => {
           onSignatureUpload={(signature) => setFormData({ ...formData, signatureImage: signature })}
           currentLogo={formData.businessLogo}
           currentSignature={formData.signatureImage}
-        />
-
-        <InvoiceTemplateSelector
-          isOpen={isTemplateDialogOpen}
-          onClose={() => setIsTemplateDialogOpen(false)}
-          template={selectedTemplate}
-          onSelectTemplate={setSelectedTemplate}
-          colorTheme={selectedColorTheme}
-          onSelectColorTheme={setSelectedColorTheme}
-          customTemplate={selectedCustomTemplate}
-          onSelectCustomTemplate={setSelectedCustomTemplate}
-          onSaveCustomTemplate={handleSaveCustomTemplate}
         />
 
         <SendInvoiceDialog
