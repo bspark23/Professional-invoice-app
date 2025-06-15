@@ -51,6 +51,7 @@ export const useInvoiceData = (
   const { toast } = useToast();
   const [savedInvoices, setSavedInvoices] = useState<InvoiceData[]>([]);
   const [invoiceData, setInvoiceData] = useState<InvoiceData>({
+    id: Date.now().toString(),
     clientName: "",
     clientEmail: "",
     clientAddress: "",
@@ -201,6 +202,7 @@ export const useInvoiceData = (
     },
     createNewInvoice: () => {
       setInvoiceData({
+        id: Date.now().toString(),
         clientName: "",
         clientEmail: "",
         clientAddress: "",
