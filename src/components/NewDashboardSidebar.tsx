@@ -21,9 +21,12 @@ const NewDashboardSidebar: React.FC = () => {
   const menuItems = [
     { icon: Home, label: "Dashboard", path: "/dashboard" },
     { icon: FileText, label: "Invoices", path: "/invoices" },
+    { icon: FileText, label: "Estimates", path: "/estimates" },
     { icon: Users, label: "Clients", path: "/clients" },
     { icon: CreditCard, label: "Payments", path: "/payments" },
     { icon: BarChart3, label: "Expenses", path: "/expenses" },
+    { icon: Users, label: "Projects", path: "/projects" },
+    { icon: BarChart3, label: "Time Tracking", path: "/time-tracking" },
     { icon: Settings, label: "Settings", path: "/settings" },
     { icon: HelpCircle, label: "Help", path: "/help" },
   ];
