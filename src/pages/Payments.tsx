@@ -114,7 +114,7 @@ const Payments: React.FC = () => {
     setPaymentForm(prev => ({ ...prev, [field]: value }));
     
     // Auto-populate client name when invoice is selected
-    if (field === 'invoiceId' && value) {
+    if (field === 'invoiceId' && value && value !== 'none') {
       const selectedInvoice = savedInvoices.find(inv => inv.id === value);
       if (selectedInvoice) {
         setPaymentForm(prev => ({ 
@@ -123,6 +123,11 @@ const Payments: React.FC = () => {
           invoiceId: value
         }));
       }
+    } else if (field === 'invoiceId' && value === 'none') {
+      setPaymentForm(prev => ({ 
+        ...prev, 
+        invoiceId: ""
+      }));
     }
   };
 
