@@ -1,16 +1,16 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useAuthLocal } from "@/hooks/useAuthLocal";
+import { useAuth } from "@/hooks/useAuth";
 import { LogOut, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export default function Settings() {
-  const { user, signOut } = useAuthLocal();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    signOut();
+  const handleLogout = async () => {
+    await signOut();
     navigate("/signin");
   };
 

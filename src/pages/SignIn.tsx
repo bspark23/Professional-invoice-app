@@ -4,23 +4,35 @@ import { useNavigate, Link } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { useAuthLocal } from "@/hooks/useAuthLocal";
+import { useAuth } from "@/hooks/useAuth";
 import { Label } from "@/components/ui/label";
 import { useProfiles } from "@/hooks/useProfiles";
 
 const SignIn = () => {
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const { signIn } = useAuthLocal();
-  const { profiles, setActiveProfile } = useProfiles(); // Use setActiveProfile here
+  const [loading, setLoading] = useState(false);
+  const { signIn } = useAuth();
+  const { profiles, setActiveProfile } = useProfiles();
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    const res = signIn(email);
+    setLoading(true);
+
+    if (!email.trim() || !password.trim()) {
+      setError("Email and password are required");
+      setLoading(false);
+      return;
+    }
+
+    const res = await signIn(email, password);
+    
     if (!res.success) {
       setError(res.error!);
+      setLoading(false);
     } else {
       // After sign in, find and set the profile whose 'name' matches logged in profileName
       const stored = localStorage.getItem("invoicecraft-auth-user");
@@ -37,8 +49,9 @@ const SignIn = () => {
           setActiveProfile(profile.id);
         }
       }
-      // Now continue to dashboard
+      // Navigate to dashboard
       navigate("/dashboard");
+      setLoading(false);
     }
   };
 
@@ -52,10 +65,30 @@ const SignIn = () => {
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div>
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" required value={email} onChange={e => setEmail(e.target.value)} />
+              <Input 
+                id="email" 
+                type="email" 
+                required 
+                value={email} 
+                onChange={e => setEmail(e.target.value)}
+                disabled={loading}
+              />
+            </div>
+            <div>
+              <Label htmlFor="password">Password</Label>
+              <Input 
+                id="password" 
+                type="password" 
+                required 
+                value={password} 
+                onChange={e => setPassword(e.target.value)}
+                disabled={loading}
+              />
             </div>
             {error && <div className="text-red-600 text-sm">{error}</div>}
-            <Button type="submit" className="w-full">Sign In</Button>
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Signing In..." : "Sign In"}
+            </Button>
           </form>
           <div className="text-xs mt-2">
             No account? <Link className="underline" to="/signup">Sign Up</Link>
