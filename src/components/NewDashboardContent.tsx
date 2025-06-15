@@ -10,6 +10,7 @@ import AnalyticsDashboard from "@/components/AnalyticsDashboard";
 import RecentActivity from "@/components/RecentActivity";
 import QuickAccessPanel from "@/components/QuickAccessPanel";
 import GoalsTracker from "@/components/GoalsTracker";
+import DashboardExportButton from "@/components/DashboardExportButton";
 import { useNavigate } from "react-router-dom";
 
 const NewDashboardContent: React.FC = () => {
@@ -106,7 +107,7 @@ const NewDashboardContent: React.FC = () => {
   ];
 
   return (
-    <div className="p-4 sm:p-6 bg-gray-50 min-h-screen">
+    <div id="dashboard-content" className="p-4 sm:p-6 bg-gray-50 min-h-screen">
       {/* Personalized Header */}
       <div className="mb-6">
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 p-6 sm:p-8 text-white shadow-2xl">
@@ -123,14 +124,21 @@ const NewDashboardContent: React.FC = () => {
                 <p className="text-lg sm:text-xl opacity-90 mb-4 sm:mb-6">
                   Ready to create professional invoices and grow your business?
                 </p>
-                <Button 
-                  onClick={() => navigate('/invoices')}
-                  size="lg"
-                  className="bg-white text-blue-600 hover:bg-gray-100 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
-                >
-                  <Plus className="w-5 h-5 mr-2" />
-                  Create New Invoice
-                </Button>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Button 
+                    onClick={() => navigate('/invoices')}
+                    size="lg"
+                    className="bg-white text-blue-600 hover:bg-gray-100 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
+                  >
+                    <Plus className="w-5 h-5 mr-2" />
+                    Create New Invoice
+                  </Button>
+                  <DashboardExportButton 
+                    savedInvoices={savedInvoices}
+                    formatCurrency={formatCurrency}
+                    dashboardElementId="dashboard-content"
+                  />
+                </div>
               </div>
               <div className="hidden lg:block">
                 <div className="w-24 h-24 sm:w-32 sm:h-32 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm">
