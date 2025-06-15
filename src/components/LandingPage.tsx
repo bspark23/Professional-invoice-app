@@ -19,6 +19,7 @@ import {
   ChevronRight
 } from "lucide-react";
 import VoluntaryContribution from "./VoluntaryContribution";
+import { useNavigate } from "react-router-dom";
 
 interface LandingPageProps {
   businessName: string;
@@ -41,6 +42,7 @@ const LandingPage = ({
   currency,
   onGetStarted
 }: LandingPageProps) => {
+  const navigate = useNavigate();
   const features = [
     {
       icon: <Zap className="w-6 h-6 text-blue-600" />,
@@ -229,6 +231,18 @@ const LandingPage = ({
             </Card>
           </div>
         </div>
+      </div>
+
+      {/* Voluntary Contribution CTA */}
+      <div className="flex justify-center mt-8">
+        <Button 
+          variant="secondary" 
+          size="lg" 
+          className="bg-pink-500 text-white font-semibold px-8 py-4 rounded-full shadow-lg hover:bg-pink-600 transition"
+          onClick={() => navigate("/voluntary-contribution")}
+        >
+          Voluntary Contribution
+        </Button>
       </div>
 
       {/* Voluntary Contribution Section */}

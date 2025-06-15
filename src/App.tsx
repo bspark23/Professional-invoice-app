@@ -17,6 +17,7 @@ import SignUp from "./pages/SignUp";
 import SignIn from "./pages/SignIn";
 import { AuthProvider, useAuthLocal } from "@/hooks/useAuthLocal";
 import Settings from "./pages/Settings";
+import VoluntaryContributionPage from "./pages/VoluntaryContributionPage";
 
 const queryClient = new QueryClient();
 
@@ -62,6 +63,7 @@ const AppContent = () => {
         <Route path="/dashboard" element={user ? <Index /> : <SignIn />} />
         <Route path="/expenses" element={user ? <ExpenseTracker /> : <SignIn />} />
         <Route path="/calendar" element={user ? <CalendarView /> : <SignIn />} />
+        <Route path="/voluntary-contribution" element={<VoluntaryContributionPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </>
