@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { ActivityEvent } from "@/hooks/useInvoiceActivity";
 import { Clock, Activity } from "lucide-react";
 
@@ -33,6 +34,8 @@ function formatTimestamp(ts: string) {
 }
 
 export default function InvoiceActivityTimeline({ events }: Props) {
+  const [showAll, setShowAll] = useState(false);
+
   if (!events.length) {
     return (
       <div className="text-gray-400 flex items-center gap-2 text-sm pl-2 pb-2">
@@ -40,13 +43,17 @@ export default function InvoiceActivityTimeline({ events }: Props) {
       </div>
     );
   }
+
+  // Only show the most recent event unless expanded
+  const eventsToShow = showAll ? events : events.slice(0, 1);
+
   return (
     <div className="rounded-xl bg-white dark:bg-gray-800 p-4 mt-2 shadow-sm border border-gray-200 dark:border-gray-700">
       <h2 className="text-base font-semibold text-gray-700 dark:text-gray-200 mb-3 flex items-center gap-2">
         <Activity className="w-5 h-5" /> Invoice Activity Timeline
       </h2>
       <ol className="space-y-3">
-        {events.map((ev, idx) => (
+        {eventsToShow.map((ev, idx) => (
           <li key={idx} className="flex gap-3 items-center">
             <span>{iconByType[ev.type]}</span>
             <div>
@@ -57,6 +64,15 @@ export default function InvoiceActivityTimeline({ events }: Props) {
           </li>
         ))}
       </ol>
+      {/* Button to show/hide previous events, only show if there's more than one event */}
+      {events.length > 1 && (
+        <button
+          className="mt-3 text-sm px-3 py-1 rounded bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+          onClick={() => setShowAll(v => !v)}
+        >
+          {showAll ? "Hide Previous" : `See Previous (${events.length - 1})`}
+        </button>
+      )}
     </div>
   );
 }
