@@ -1,11 +1,24 @@
-
-import React from "react";
+import React, { useState, useEffect } from "react";
 import DashboardHeader from "@/components/DashboardHeader";
 import InvoiceForm from "@/components/InvoiceForm";
 import InvoiceTotals from "@/components/InvoiceTotals";
 import { useInvoiceForm } from "@/hooks/useInvoiceForm";
+import PinLock from "@/components/PinLock";
 
 const Index: React.FC = () => {
+  // PIN Gating
+  const [unlocked, setUnlocked] = useState(false);
+
+  useEffect(() => {
+    // If PIN not set, unlock by default to show setup flow
+    if (!localStorage.getItem("invoicer-pro-pin")) setUnlocked(false);
+    // Else, wait for unlock (handled in PinLock)
+  }, []);
+
+  if (!unlocked) {
+    return <PinLock onUnlock={() => setUnlocked(true)} />;
+  }
+
   // For InvoiceTotals pane, use the same hook as InvoiceForm
   // This ensures the layout always reflects live calculation
   const {
@@ -22,7 +35,9 @@ const Index: React.FC = () => {
         <InvoiceForm />
         <InvoiceTotals subtotal={subtotal} tax={tax} discount={form.discount} total={total} />
       </div>
-      <div className="text-center text-xs text-gray-500 mt-8">Invoicer Pro &copy; {new Date().getFullYear()}</div>
+      <div className="text-center text-xs text-gray-500 mt-8">
+        Invoicer Pro &copy; {new Date().getFullYear()}
+      </div>
     </div>
   );
 };
