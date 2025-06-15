@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Download, Save, Eye, FileText, Printer, Moon, Sun, ChevronDown } from "lucide-react";
+import { Download, Save, Eye, FileText, Printer, Moon, Sun, ChevronDown, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/context/LanguageContext";
 
@@ -251,7 +251,7 @@ const Index = () => {
             {/* Settings button (Navigate to Settings page) */}
             <Link to="/settings">
               <Button size="icon" variant="outline" className="hover:bg-gray-100 dark:hover:bg-gray-700" title="Settings">
-                <SettingsIcon className="w-5 h-5" />
+                <Settings className="w-5 h-5" />
               </Button>
             </Link>
             <Button onClick={toggleDarkMode} variant="outline" size="sm" className="hover:bg-gray-100 dark:hover:bg-gray-700">
