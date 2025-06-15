@@ -221,37 +221,6 @@ const Invoices = () => {
     return subtotal + tax - (formData.discountAmount || 0);
   };
 
-  // Check if API key is configured
-  const getApiConfig = () => {
-    const savedConfig = localStorage.getItem(`apiConfig_${user?.email || 'default'}`);
-    if (savedConfig) {
-      try {
-        return JSON.parse(savedConfig);
-      } catch (error) {
-        console.error('Error loading API config:', error);
-      }
-    }
-    return null;
-  };
-
-  const isApiKeyConfigured = () => {
-    const config = getApiConfig();
-    if (!config) return false;
-    
-    if (config.provider === 'openai') {
-      return config.openaiKey && config.openaiKey.trim().length > 0;
-    } else if (config.provider === 'gemini') {
-      return config.geminiKey && config.geminiKey.trim().length > 0;
-    }
-    
-    return false;
-  };
-
-  const getProviderName = () => {
-    const config = getApiConfig();
-    return config?.provider === 'gemini' ? 'Google Gemini' : 'OpenAI';
-  };
-
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full bg-gray-50">
@@ -272,16 +241,6 @@ const Invoices = () => {
                 <Bot className="w-4 h-4" />
                 AI Assistant
               </Button>
-              {!isApiKeyConfigured() && (
-                <Button
-                  onClick={() => navigate('/settings')}
-                  variant="outline"
-                  className="flex items-center gap-2 border-orange-300 text-orange-600 hover:bg-orange-50"
-                >
-                  <Settings className="w-4 h-4" />
-                  Setup API Key
-                </Button>
-              )}
               <ResponsiveNavButtons 
                 onHelpClick={() => setIsHelpCenterOpen(true)}
                 onChatClick={() => setIsHelpCenterOpen(true)}
@@ -295,26 +254,6 @@ const Invoices = () => {
             {/* AI Assistant Section */}
             {showAIAssistant && (
               <div className="mb-6">
-                {!isApiKeyConfigured() && (
-                  <Card className="mb-4 border-orange-200 bg-orange-50">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-orange-800 font-medium">API Key Required</p>
-                          <p className="text-orange-600 text-sm">Configure your {getProviderName()} API key to use the AI Invoice Assistant.</p>
-                        </div>
-                        <Button
-                          onClick={() => navigate('/settings')}
-                          variant="outline"
-                          className="border-orange-300 text-orange-600 hover:bg-orange-100"
-                        >
-                          <Settings className="w-4 h-4 mr-2" />
-                          Add API Key
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
                 <AIInvoiceAssistant onInvoiceGenerated={handleAIInvoiceGenerated} />
               </div>
             )}

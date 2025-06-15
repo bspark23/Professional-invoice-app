@@ -8,6 +8,7 @@ import { useInvoiceData } from '@/hooks/useInvoiceData';
 import { useAuthLocal } from '@/hooks/useAuthLocal';
 import { InvoiceData } from '@/types/invoice';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AIInvoiceAssistantProps {
   onInvoiceGenerated?: (invoice: InvoiceData) => void;
@@ -20,18 +21,6 @@ const AIInvoiceAssistant: React.FC<AIInvoiceAssistantProps> = ({ onInvoiceGenera
   const [isGenerating, setIsGenerating] = useState(false);
   const [lastGeneratedInvoice, setLastGeneratedInvoice] = useState<InvoiceData | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  const getApiConfig = () => {
-    const savedConfig = localStorage.getItem(`apiConfig_${user?.email || 'default'}`);
-    if (savedConfig) {
-      try {
-        return JSON.parse(savedConfig);
-      } catch (error) {
-        console.error('Error loading API config:', error);
-      }
-    }
-    return null;
-  };
 
   const cleanJsonResponse = (response: string): string => {
     // Remove markdown code blocks if present
@@ -51,135 +40,28 @@ const AIInvoiceAssistant: React.FC<AIInvoiceAssistantProps> = ({ onInvoiceGenera
     return cleanedResponse.trim();
   };
 
-  const generateWithOpenAI = async (apiConfig: any, userInput: string) => {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiConfig.openaiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: apiConfig.model || 'gpt-3.5-turbo',
-        messages: [
-          {
-            role: 'system',
-            content: apiConfig.prompt
-          },
-          {
-            role: 'user',
-            content: userInput
-          }
-        ],
-        temperature: 0.3,
-        max_tokens: 1000,
-      }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      let errorMessage = `OpenAI API request failed (${response.status})`;
-      
-      if (errorData.error) {
-        if (errorData.error.code === 'insufficient_quota') {
-          errorMessage = 'Your OpenAI API key has exceeded its quota. Please check your billing in your OpenAI account.';
-        } else if (errorData.error.code === 'invalid_api_key') {
-          errorMessage = 'Invalid OpenAI API key. Please check your API key in Settings.';
-        } else {
-          errorMessage = errorData.error.message || errorMessage;
-        }
-      }
-      
-      throw new Error(errorMessage);
-    }
-
-    const data = await response.json();
-    return data.choices[0].message.content.trim();
-  };
-
-  const generateWithGemini = async (apiConfig: any, userInput: string) => {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${apiConfig.model || 'gemini-1.5-flash'}:generateContent?key=${apiConfig.geminiKey}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        contents: [{
-          parts: [{
-            text: `${apiConfig.prompt}\n\nUser request: ${userInput}`
-          }]
-        }],
-        generationConfig: {
-          temperature: 0.3,
-          maxOutputTokens: 1000,
-        }
-      }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      let errorMessage = `Gemini API request failed (${response.status})`;
-      
-      if (errorData.error) {
-        if (errorData.error.code === 'API_KEY_INVALID') {
-          errorMessage = 'Invalid Gemini API key. Please check your API key in Settings.';
-        } else if (errorData.error.code === 'QUOTA_EXCEEDED') {
-          errorMessage = 'Your Gemini API quota has been exceeded. Please check your Google Cloud billing.';
-        } else if (errorData.error.message && errorData.error.message.includes('Generative Language API has not been used')) {
-          errorMessage = 'The Generative Language API is not enabled in your Google Cloud Console. Please enable it and wait a few minutes before trying again.';
-        } else {
-          errorMessage = errorData.error.message || errorMessage;
-        }
-      }
-      
-      throw new Error(errorMessage);
-    }
-
-    const data = await response.json();
-    return data.candidates[0].content.parts[0].text.trim();
-  };
-
   const generateInvoice = async () => {
     if (!userInput.trim()) return;
     
-    const apiConfig = getApiConfig();
-    if (!apiConfig) {
-      setError('Please configure your AI settings first.');
-      toast({
-        title: "API Configuration Required",
-        description: "Please configure your AI settings in Settings first.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const requiredKey = apiConfig.provider === 'openai' ? apiConfig.openaiKey : apiConfig.geminiKey;
-    if (!requiredKey) {
-      const providerName = apiConfig.provider === 'openai' ? 'OpenAI' : 'Google Gemini';
-      setError(`Please configure your ${providerName} API key in Settings > AI Assistant first.`);
-      toast({
-        title: "API Key Required",
-        description: `Please configure your ${providerName} API key in Settings first.`,
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsGenerating(true);
     setError(null);
 
     try {
-      let invoiceJson: string;
-      
-      if (apiConfig.provider === 'openai') {
-        invoiceJson = await generateWithOpenAI(apiConfig, userInput);
-      } else {
-        invoiceJson = await generateWithGemini(apiConfig, userInput);
+      const { data, error: functionError } = await supabase.functions.invoke('ai-invoice-generator', {
+        body: {
+          userInput,
+          provider: 'openai' // You can make this configurable or default to your preferred provider
+        }
+      });
+
+      if (functionError) {
+        throw new Error(functionError.message || 'Failed to generate invoice');
       }
-      
-      console.log('Raw AI response:', invoiceJson);
+
+      console.log('AI response:', data.generatedText);
       
       // Clean the JSON response to remove markdown formatting
-      const cleanedJson = cleanJsonResponse(invoiceJson);
+      const cleanedJson = cleanJsonResponse(data.generatedText);
       console.log('Cleaned JSON:', cleanedJson);
       
       // Parse the JSON response
@@ -225,7 +107,7 @@ const AIInvoiceAssistant: React.FC<AIInvoiceAssistantProps> = ({ onInvoiceGenera
       
     } catch (error) {
       console.error('Error generating invoice:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to generate invoice. Please check your API key and try again.';
+      const errorMessage = error instanceof Error ? error.message : 'Failed to generate invoice. Please try again.';
       setError(errorMessage);
       toast({
         title: "Generation Failed",
@@ -237,15 +119,12 @@ const AIInvoiceAssistant: React.FC<AIInvoiceAssistantProps> = ({ onInvoiceGenera
     }
   };
 
-  const apiConfig = getApiConfig();
-  const providerName = apiConfig?.provider === 'gemini' ? 'Google Gemini' : 'OpenAI';
-
   return (
     <Card className="w-full">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Bot className="w-5 h-5" />
-          AI Invoice Assistant {apiConfig?.provider && `(${providerName})`}
+          AI Invoice Assistant
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">

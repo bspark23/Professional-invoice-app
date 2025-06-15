@@ -109,99 +109,6 @@
     color-scheme: dark;
   }
 
-  .dark .bg-gray-50 {
-    @apply bg-gray-900;
-  }
-
-  .dark .bg-white {
-    @apply bg-gray-800;
-  }
-
-  .dark .text-gray-900 {
-    @apply text-gray-100;
-  }
-
-  .dark .text-gray-800 {
-    @apply text-gray-200;
-  }
-
-  .dark .text-gray-700 {
-    @apply text-gray-300;
-  }
-
-  .dark .text-gray-600 {
-    @apply text-gray-400;
-  }
-
-  .dark .text-gray-500 {
-    @apply text-gray-500;
-  }
-
-  .dark .border-gray-200 {
-    @apply border-gray-700;
-  }
-
-  .dark .border-gray-300 {
-    @apply border-gray-600;
-  }
-
-  .dark .hover\:bg-gray-50:hover {
-    @apply bg-gray-700;
-  }
-
-  .dark .hover\:bg-gray-100:hover {
-    @apply bg-gray-700;
-  }
-
-  /* Professional button styling in dark mode */
-  .dark .bg-green-50 {
-    @apply bg-green-900/20;
-  }
-
-  .dark .bg-red-50 {
-    @apply bg-red-900/20;
-  }
-
-  .dark .bg-orange-50 {
-    @apply bg-orange-900/20;
-  }
-
-  .dark .border-green-200 {
-    @apply border-green-800;
-  }
-
-  .dark .border-red-200 {
-    @apply border-red-800;
-  }
-
-  .dark .border-orange-200 {
-    @apply border-orange-800;
-  }
-
-  .dark .text-green-800 {
-    @apply text-green-200;
-  }
-
-  .dark .text-green-600 {
-    @apply text-green-300;
-  }
-
-  .dark .text-red-800 {
-    @apply text-red-200;
-  }
-
-  .dark .text-red-600 {
-    @apply text-red-300;
-  }
-
-  .dark .text-orange-800 {
-    @apply text-orange-200;
-  }
-
-  .dark .text-orange-600 {
-    @apply text-orange-300;
-  }
-
   /* Responsive typography */
   h1 {
     @apply text-xl sm:text-2xl lg:text-3xl xl:text-4xl;
@@ -219,6 +126,96 @@
   .container {
     @apply w-full max-w-full px-4 sm:px-6 lg:px-8;
   }
+}
+
+/* Dark mode color overrides for professional styling */
+.dark .bg-gray-50 {
+  background-color: rgb(17 24 39);
+}
+
+.dark .bg-white {
+  background-color: rgb(31 41 55);
+}
+
+.dark .text-gray-900 {
+  color: rgb(243 244 246);
+}
+
+.dark .text-gray-800 {
+  color: rgb(229 231 235);
+}
+
+.dark .text-gray-700 {
+  color: rgb(209 213 219);
+}
+
+.dark .text-gray-600 {
+  color: rgb(156 163 175);
+}
+
+.dark .border-gray-200 {
+  border-color: rgb(75 85 99);
+}
+
+.dark .border-gray-300 {
+  border-color: rgb(107 114 128);
+}
+
+.dark .hover\:bg-gray-50:hover {
+  background-color: rgb(55 65 81);
+}
+
+.dark .hover\:bg-gray-100:hover {
+  background-color: rgb(55 65 81);
+}
+
+/* Professional status colors in dark mode */
+.dark .bg-green-50 {
+  background-color: rgb(5 46 22 / 0.3);
+}
+
+.dark .bg-red-50 {
+  background-color: rgb(69 10 10 / 0.3);
+}
+
+.dark .bg-orange-50 {
+  background-color: rgb(67 20 7 / 0.3);
+}
+
+.dark .border-green-200 {
+  border-color: rgb(34 197 94 / 0.4);
+}
+
+.dark .border-red-200 {
+  border-color: rgb(239 68 68 / 0.4);
+}
+
+.dark .border-orange-200 {
+  border-color: rgb(251 146 60 / 0.4);
+}
+
+.dark .text-green-800 {
+  color: rgb(134 239 172);
+}
+
+.dark .text-green-600 {
+  color: rgb(74 222 128);
+}
+
+.dark .text-red-800 {
+  color: rgb(252 165 165);
+}
+
+.dark .text-red-600 {
+  color: rgb(248 113 113);
+}
+
+.dark .text-orange-800 {
+  color: rgb(253 186 116);
+}
+
+.dark .text-orange-600 {
+  color: rgb(251 146 60);
 }
 
 /* Responsive utilities */
