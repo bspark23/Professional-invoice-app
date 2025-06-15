@@ -2,7 +2,6 @@
 import React, { useState } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Settings as SettingsIcon, Bot, User, Bell, Shield } from "lucide-react";
 import NewDashboardSidebar from "@/components/NewDashboardSidebar";
 import DarkModeToggle from "@/components/DarkModeToggle";
@@ -11,6 +10,8 @@ import SupportBubble from "@/components/SupportBubble";
 import HelpCenter from "@/components/HelpCenter";
 import ApiKeySettings from "@/components/ApiKeySettings";
 import ProfileSettings from "@/components/ProfileSettings";
+import NotificationSettings from "@/components/NotificationSettings";
+import SecuritySettings from "@/components/SecuritySettings";
 
 const Settings = () => {
   const [isHelpCenterOpen, setIsHelpCenterOpen] = useState(false);
@@ -69,25 +70,11 @@ const Settings = () => {
               </TabsContent>
 
               <TabsContent value="notifications">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Notification Settings</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-gray-600">Notification settings will be available soon.</p>
-                  </CardContent>
-                </Card>
+                <NotificationSettings />
               </TabsContent>
 
               <TabsContent value="security">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Security Settings</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-gray-600">Security settings will be available soon.</p>
-                  </CardContent>
-                </Card>
+                <SecuritySettings />
               </TabsContent>
             </Tabs>
           </div>
