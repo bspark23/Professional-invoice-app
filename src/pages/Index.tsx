@@ -12,6 +12,7 @@ import { FileText, Printer, Tag } from "lucide-react";
 import PrintPreviewModal from "@/components/PrintPreviewModal";
 import { currencies } from "@/types/invoice";
 import BusinessBrandingCard, { Branding } from "@/components/BusinessBrandingCard";
+import { useNavigate } from "react-router-dom";
 
 const Index: React.FC = () => {
   // Branding
@@ -44,6 +45,8 @@ const Index: React.FC = () => {
     total
   } = useInvoiceForm();
 
+  const navigate = useNavigate();
+
   useEffect(() => {
     // PIN checking removed
     // if (!localStorage.getItem("invoicer-pro-pin")) setUnlocked(false);
@@ -59,6 +62,19 @@ const Index: React.FC = () => {
       const selected = currencies.find(c => c.code === currency);
       return (selected?.symbol || "$") + amount.toFixed(2);
     }
+  };
+
+  const handlePreview = () => {
+    // Pass form and calculations via router state
+    navigate("/dashboard/print-preview", {
+      state: {
+        form,
+        subtotal,
+        tax,
+        total,
+        formatCurrency: (amount: number) => formatCurrency(amount)
+      }
+    });
   };
 
   return (
@@ -92,7 +108,7 @@ const Index: React.FC = () => {
           >Mark as {status === "paid" ? "Unpaid" : "Paid"}</Button>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setPreviewOpen(true)}><Printer size={18}/>Preview</Button>
+          <Button variant="outline" onClick={handlePreview}><Printer size={18}/>Preview</Button>
           <Button variant="outline" onClick={() => window.print()}><FileText size={18}/>Print</Button>
           {/* TODO: PDF export */}
         </div>
@@ -279,18 +295,6 @@ const Index: React.FC = () => {
       </SectionCard>
 
       {/* TODO: Invoice History Cards, Export as PDF, etc */}
-
-      {/* Print preview modal */}
-      <PrintPreviewModal
-        open={previewOpen}
-        onClose={() => setPreviewOpen(false)}
-        form={form}
-        subtotal={subtotal}
-        tax={tax}
-        discount={form.discount}
-        total={total}
-        currency={currency}
-      />
 
       {/* Footer */}
       <div className="text-center text-xs text-gray-400 mt-8 mb-2 font-inter">

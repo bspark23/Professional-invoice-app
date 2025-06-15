@@ -19,6 +19,7 @@ import { AuthProvider, useAuthLocal } from "@/hooks/useAuthLocal";
 import Settings from "./pages/Settings";
 import VoluntaryContributionPage from "./pages/VoluntaryContributionPage";
 import Notes from "./pages/Notes";
+import PrintPreviewPage from "@/pages/PrintPreview";
 
 const queryClient = new QueryClient();
 
@@ -64,6 +65,7 @@ const AppContent = () => {
         <Route path="/settings" element={<Settings />} />
         {/* Protected dashboard/expenses/calendar */}
         <Route path="/dashboard" element={user ? <Index /> : <SignIn />} />
+        <Route path="/dashboard/print-preview" element={user ? <PrintPreviewPage /> : <SignIn />} />
         <Route path="/expenses" element={user ? <ExpenseTracker /> : <SignIn />} />
         <Route path="/calendar" element={user ? <CalendarView /> : <SignIn />} />
         <Route path="/voluntary-contribution" element={<VoluntaryContributionPage />} />
