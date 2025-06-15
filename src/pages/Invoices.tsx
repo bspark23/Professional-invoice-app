@@ -7,6 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 import { 
   Plus, Search, Edit, Trash2, Download, Mail, FileText, 
   DollarSign, Calendar, User, Building, Eye, Copy, Send, Palette
@@ -101,13 +105,15 @@ const Invoices: React.FC = () => {
     setShowPreviewModal(true);
   };
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = (invoice?: any) => {
     // This would implement PDF download
     toast({
       title: "Download Feature",
       description: "PDF download functionality would be implemented here.",
     });
-    setShowPreviewModal(false);
+    if (showPreviewModal) {
+      setShowPreviewModal(false);
+    }
   };
 
   const getStatusColor = (status: string) => {
