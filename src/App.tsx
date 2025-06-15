@@ -1,3 +1,4 @@
+
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import "./App.css";
@@ -14,10 +15,10 @@ import Notes from "./pages/Notes";
 import CalendarView from "./pages/CalendarView";
 import PrintPreview from "./pages/PrintPreview";
 import NotFound from "./pages/NotFound";
-import VoluntaryContributionPage from "./pages/Contribution";
-import { LanguageProvider } from "./contexts/LanguageContext";
+import VoluntaryContributionPage from "./pages/VoluntaryContributionPage";
+import { LanguageProvider } from "./context/LanguageContext";
 import { Toaster } from "@/components/ui/toaster";
-import { RequireLandingPage } from "./components/RequireLandingPage";
+import RequireLandingPage from "./components/RequireLandingPage";
 import Estimates from "./pages/Estimates";
 import TimeTracking from "./pages/TimeTracking";
 import Projects from "./pages/Projects";
