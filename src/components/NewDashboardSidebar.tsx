@@ -2,6 +2,7 @@
 import React from "react";
 import { Home, FileText, Users, CreditCard, BarChart3, Settings, HelpCircle, LogOut } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useAuthLocal } from "@/hooks/useAuthLocal";
 import {
   Sidebar,
   SidebarContent,
@@ -17,6 +18,7 @@ import {
 const NewDashboardSidebar: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user, signOut } = useAuthLocal();
 
   const menuItems = [
     { icon: Home, label: "Dashboard", path: "/dashboard" },
@@ -33,6 +35,21 @@ const NewDashboardSidebar: React.FC = () => {
 
   const handleMenuClick = (path: string) => {
     navigate(path);
+  };
+
+  const handleSignOut = () => {
+    signOut();
+    navigate('/');
+  };
+
+  const getUserInitials = () => {
+    if (!user?.profileName) return "U";
+    return user.profileName
+      .split(' ')
+      .map(name => name[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
   };
 
   return (
@@ -70,15 +87,24 @@ const NewDashboardSidebar: React.FC = () => {
       </SidebarContent>
 
       <SidebarFooter className="p-4 border-t border-gray-200">
-        <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 cursor-pointer">
+        <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 cursor-pointer group">
           <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-            <span className="text-white text-sm font-medium">JD</span>
+            <span className="text-white text-sm font-medium">
+              {getUserInitials()}
+            </span>
           </div>
-          <div className="flex-1">
-            <p className="text-sm font-medium text-gray-900">John Doe</p>
-            <p className="text-xs text-gray-500">john@example.com</p>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-gray-900 truncate">
+              {user?.profileName || "User"}
+            </p>
+            <p className="text-xs text-gray-500 truncate">
+              {user?.email || "user@example.com"}
+            </p>
           </div>
-          <LogOut className="w-4 h-4 text-gray-400" />
+          <LogOut 
+            className="w-4 h-4 text-gray-400 group-hover:text-red-500 transition-colors" 
+            onClick={handleSignOut}
+          />
         </div>
       </SidebarFooter>
     </Sidebar>

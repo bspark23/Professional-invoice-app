@@ -9,12 +9,25 @@ import { formatCurrency, calculateTotal } from "@/utils/invoiceUtils";
 import AnalyticsDashboard from "@/components/AnalyticsDashboard";
 import RecentActivity from "@/components/RecentActivity";
 import QuickAccessPanel from "@/components/QuickAccessPanel";
+import GoalsTracker from "@/components/GoalsTracker";
 import { useNavigate } from "react-router-dom";
 
 const NewDashboardContent: React.FC = () => {
   const { user } = useAuthLocal();
   const { savedInvoices } = useInvoiceData(null, user?.email || user?.profileName);
   const navigate = useNavigate();
+
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good morning";
+    if (hour < 17) return "Good afternoon";
+    return "Good evening";
+  };
+
+  const getUserFirstName = () => {
+    if (!user?.profileName) return "";
+    return user.profileName.split(' ')[0];
+  };
 
   // Calculate dynamic stats
   const totalInvoiced = savedInvoices.reduce((sum, invoice) => {
@@ -93,46 +106,71 @@ const NewDashboardContent: React.FC = () => {
   ];
 
   return (
-    <div className="p-6 bg-gray-50">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600">Welcome back! Here's what's happening with your business today.</p>
+    <div className="p-4 sm:p-6 bg-gray-50 min-h-screen">
+      {/* Personalized Header */}
+      <div className="mb-6">
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 p-6 sm:p-8 text-white shadow-2xl">
+          {/* Background decorative elements */}
+          <div className="absolute top-0 right-0 w-32 h-32 sm:w-64 sm:h-64 bg-white/10 rounded-full -mr-16 sm:-mr-32 -mt-16 sm:-mt-32 animate-pulse"></div>
+          <div className="absolute bottom-0 left-0 w-24 h-24 sm:w-48 sm:h-48 bg-white/5 rounded-full -ml-12 sm:-ml-24 -mb-12 sm:-mb-24"></div>
+          
+          <div className="relative z-10">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+              <div className="mb-4 sm:mb-0">
+                <h1 className="text-2xl sm:text-4xl font-bold mb-2">
+                  {getGreeting()}, {getUserFirstName()}!
+                </h1>
+                <p className="text-lg sm:text-xl opacity-90 mb-4 sm:mb-6">
+                  Ready to create professional invoices and grow your business?
+                </p>
+                <Button 
+                  onClick={() => navigate('/invoices')}
+                  size="lg"
+                  className="bg-white text-blue-600 hover:bg-gray-100 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
+                >
+                  <Plus className="w-5 h-5 mr-2" />
+                  Create New Invoice
+                </Button>
+              </div>
+              <div className="hidden lg:block">
+                <div className="w-24 h-24 sm:w-32 sm:h-32 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white/20 rounded-full flex items-center justify-center">
+                    <Plus className="w-8 h-8 sm:w-12 sm:h-12 text-white" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => navigate('/invoices')}>
-          <Plus className="w-4 h-4 mr-2" />
-          Create Invoice
-        </Button>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6">
         {stats.map((stat, index) => (
           <Card key={index} className="bg-white">
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">{stat.title}</p>
-                  <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-600 truncate">{stat.title}</p>
+                  <p className="text-xl sm:text-2xl font-bold text-gray-900 truncate">{stat.value}</p>
                 </div>
-                <div className={`p-3 rounded-full ${
+                <div className={`p-2 sm:p-3 rounded-full ${
                   stat.trend === 'up' ? 'bg-green-100' : 
                   stat.trend === 'down' ? 'bg-red-100' : 'bg-gray-100'
                 }`}>
-                  <stat.icon className={`w-6 h-6 ${
+                  <stat.icon className={`w-4 h-4 sm:w-6 sm:h-6 ${
                     stat.trend === 'up' ? 'text-green-600' : 
                     stat.trend === 'down' ? 'text-red-600' : 'text-gray-600'
                   }`} />
                 </div>
               </div>
               <div className="flex items-center mt-2">
-                {stat.trend === 'up' && <TrendingUp className="w-4 h-4 text-green-500 mr-1" />}
-                {stat.trend === 'down' && <TrendingDown className="w-4 h-4 text-red-500 mr-1" />}
-                <span className={`text-xs ${
+                {stat.trend === 'up' && <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-green-500 mr-1" />}
+                {stat.trend === 'down' && <TrendingDown className="w-3 h-3 sm:w-4 sm:h-4 text-red-500 mr-1" />}
+                <span className={`text-xs sm:text-sm ${
                   stat.trend === 'up' ? 'text-green-600' : 
                   stat.trend === 'down' ? 'text-red-600' : 'text-gray-600'
-                }`}>
+                } truncate`}>
                   {stat.change}
                 </span>
               </div>
@@ -141,10 +179,15 @@ const NewDashboardContent: React.FC = () => {
         ))}
       </div>
 
+      {/* Goals Tracker */}
+      <div className="mb-6">
+        <GoalsTracker savedInvoices={savedInvoices} />
+      </div>
+
       {/* Analytics Dashboard with Charts */}
       <AnalyticsDashboard savedInvoices={savedInvoices} formatCurrency={formatCurrency} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6 mb-6">
         {/* Quick Access Panel */}
         <div className="lg:col-span-1">
           <QuickAccessPanel />
@@ -153,27 +196,27 @@ const NewDashboardContent: React.FC = () => {
         {/* Top Paying Clients */}
         <Card className="bg-white lg:col-span-1">
           <CardHeader>
-            <CardTitle>Top Paying Clients</CardTitle>
+            <CardTitle className="text-base sm:text-lg">Top Paying Clients</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               {topPayingClients.length > 0 ? topPayingClients.map((client, index) => (
                 <div key={index} className="flex items-center justify-between p-3 border border-gray-100 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <Users className="w-5 h-5 text-blue-600" />
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <Users className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
                     </div>
-                    <div>
-                      <p className="font-medium text-gray-900">{client.name}</p>
-                      <p className="text-sm text-gray-500">Client</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-gray-900 text-sm sm:text-base truncate">{client.name}</p>
+                      <p className="text-xs sm:text-sm text-gray-500">Client</p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-medium text-gray-900">{formatCurrency(client.amount)}</p>
+                  <div className="text-right flex-shrink-0">
+                    <p className="font-medium text-gray-900 text-sm sm:text-base">{formatCurrency(client.amount)}</p>
                   </div>
                 </div>
               )) : (
-                <p className="text-gray-500 text-center py-4">No paid invoices yet</p>
+                <p className="text-gray-500 text-center py-4 text-sm">No paid invoices yet</p>
               )}
             </div>
           </CardContent>
@@ -182,27 +225,27 @@ const NewDashboardContent: React.FC = () => {
         {/* Top Selling Products/Services */}
         <Card className="bg-white lg:col-span-1">
           <CardHeader>
-            <CardTitle>Top Products/Services</CardTitle>
+            <CardTitle className="text-base sm:text-lg">Top Products/Services</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               {topProducts.length > 0 ? topProducts.map((product, index) => (
                 <div key={index} className="flex items-center justify-between p-3 border border-gray-100 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                      <FileText className="w-5 h-5 text-green-600" />
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
                     </div>
-                    <div>
-                      <p className="font-medium text-gray-900">{product.name}</p>
-                      <p className="text-sm text-gray-500">Product/Service</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-gray-900 text-sm sm:text-base truncate">{product.name}</p>
+                      <p className="text-xs sm:text-sm text-gray-500">Product/Service</p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-medium text-gray-900">{product.count} sold</p>
+                  <div className="text-right flex-shrink-0">
+                    <p className="font-medium text-gray-900 text-sm sm:text-base">{product.count} sold</p>
                   </div>
                 </div>
               )) : (
-                <p className="text-gray-500 text-center py-4">No products/services tracked yet</p>
+                <p className="text-gray-500 text-center py-4 text-sm">No products/services tracked yet</p>
               )}
             </div>
           </CardContent>

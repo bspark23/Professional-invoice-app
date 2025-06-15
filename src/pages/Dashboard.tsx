@@ -8,6 +8,7 @@ import NewDashboardContent from "@/components/NewDashboardContent";
 import DarkModeToggle from "@/components/DarkModeToggle";
 import SupportBubble from "@/components/SupportBubble";
 import HelpCenter from "@/components/HelpCenter";
+import ResponsiveNavButtons from "@/components/ResponsiveNavButtons";
 
 const Dashboard: React.FC = () => {
   const [isHelpCenterOpen, setIsHelpCenterOpen] = useState(false);
@@ -20,14 +21,10 @@ const Dashboard: React.FC = () => {
           <div className="flex justify-between items-center p-4 border-b bg-white">
             <SidebarTrigger />
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={() => setIsHelpCenterOpen(true)}>
-                <HelpCircle className="w-4 h-4 mr-2" />
-                FAQ
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => setIsHelpCenterOpen(true)}>
-                <MessageCircle className="w-4 h-4 mr-2" />
-                Chat
-              </Button>
+              <ResponsiveNavButtons 
+                onHelpClick={() => setIsHelpCenterOpen(true)}
+                onChatClick={() => setIsHelpCenterOpen(true)}
+              />
               <DarkModeToggle />
             </div>
           </div>
