@@ -47,26 +47,26 @@ const QuickAccessPanel: React.FC = () => {
   ];
 
   return (
-    <Card>
+    <Card className="w-full">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Plus className="w-5 h-5" />
+        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+          <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
           Quick Access
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {quickActions.map((action) => (
             <Button
               key={action.id}
               variant="outline"
-              className={`h-auto p-4 flex flex-col items-center gap-2 ${action.color} text-white border-0 transition-all hover:scale-105`}
+              className={`h-auto p-3 sm:p-4 flex flex-col items-center gap-2 ${action.color} text-white border-0 transition-all hover:scale-105 w-full min-h-[80px] sm:min-h-[100px]`}
               onClick={action.action}
             >
-              <action.icon className="w-6 h-6" />
+              <action.icon className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" />
               <div className="text-center">
-                <p className="font-medium text-sm">{action.title}</p>
-                <p className="text-xs opacity-90">{action.description}</p>
+                <p className="font-medium text-xs sm:text-sm leading-tight">{action.title}</p>
+                <p className="text-xs opacity-90 mt-1 leading-tight">{action.description}</p>
               </div>
             </Button>
           ))}
