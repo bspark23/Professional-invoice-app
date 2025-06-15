@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { InvoiceData, LineItem } from "@/types/invoice";
 import { useToast } from "@/hooks/use-toast";
@@ -127,22 +128,22 @@ export const useInvoiceData = (
         description: "Your current invoice data has been saved locally.",
       });
     },
-    saveInvoice: () => {
+    saveInvoice: (invoiceToSave: InvoiceData) => {
       if (!userId) return;
-      const invoiceToSave = {
-        ...invoiceData,
-        id: invoiceData.id || Date.now().toString(),
-        createdAt: new Date().toISOString(),
+      const invoice = {
+        ...invoiceToSave,
+        id: invoiceToSave.id || Date.now().toString(),
+        createdAt: invoiceToSave.createdAt || new Date().toISOString(),
       };
       const existingInvoices = [...savedInvoices];
       const existingIndex = existingInvoices.findIndex(
-        (inv) => inv.id === invoiceToSave.id
+        (inv) => inv.id === invoice.id
       );
 
       if (existingIndex >= 0) {
-        existingInvoices[existingIndex] = invoiceToSave;
+        existingInvoices[existingIndex] = invoice;
       } else {
-        existingInvoices.push(invoiceToSave);
+        existingInvoices.push(invoice);
       }
 
       setSavedInvoices(existingInvoices);
@@ -150,7 +151,6 @@ export const useInvoiceData = (
         `${STORAGE_PREFIX}invoicer-pro-invoices`,
         JSON.stringify(existingInvoices)
       );
-      setInvoiceData((prev) => ({ ...prev, id: invoiceToSave.id }));
 
       toast({
         title: "Invoice Saved",

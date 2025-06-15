@@ -204,6 +204,18 @@ const Invoices: React.FC = () => {
       });
   };
 
+  const calculateSubtotal = () => {
+    return formData.lineItems.reduce((sum, item) => sum + item.amount, 0);
+  };
+
+  const calculateTax = () => {
+    return calculateSubtotal() * (formData.taxRate / 100);
+  };
+
+  const calculateTotalAmount = () => {
+    return calculateSubtotal() + calculateTax() - formData.discountAmount;
+  };
+
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full bg-gray-50">
@@ -633,9 +645,9 @@ const Invoices: React.FC = () => {
                           </table>
 
                           <div className="text-right mt-4">
-                            <p>Subtotal: {formatCurrency(formData.lineItems.reduce((sum, item) => sum + item.amount, 0))}</p>
-                            <p>Tax ({formData.taxRate}%): {formatCurrency(formData.lineItems.reduce((sum, item) => sum + item.amount, 0) * (formData.taxRate / 100))}</p>
-                            <h2 className="text-2xl font-bold">Total: {formatCurrency(formData.lineItems.reduce((sum, item) => sum + item.amount, 0) * (1 + formData.taxRate / 100))}</h2>
+                            <p>Subtotal: {formatCurrency(calculateSubtotal())}</p>
+                            <p>Tax ({formData.taxRate}%): {formatCurrency(calculateTax())}</p>
+                            <h2 className="text-2xl font-bold">Total: {formatCurrency(calculateTotalAmount())}</h2>
                           </div>
 
                           <div className="mt-8">
@@ -767,9 +779,9 @@ const Invoices: React.FC = () => {
             if (customTemplateId) setSelectedCustomTemplate(customTemplateId);
             setIsTemplateDialogOpen(false);
           }}
-          selectedTemplate={selectedTemplate}
-          selectedColorTheme={selectedColorTheme}
-          onUploadCustomTemplate={(template) => console.log('Custom template:', template)}
+          currentTemplate={selectedTemplate}
+          currentColorTheme={selectedColorTheme}
+          onSaveCustomTemplate={(template) => console.log('Custom template:', template)}
           onDeleteCustomTemplate={(templateId) => console.log('Delete template:', templateId)}
         />
 
@@ -784,8 +796,10 @@ const Invoices: React.FC = () => {
           isOpen={isPreviewOpen}
           onClose={() => setIsPreviewOpen(false)}
           invoiceData={selectedInvoice || formData}
-          template={selectedTemplate}
-          colorTheme={selectedColorTheme}
+          formatCurrency={formatCurrency}
+          calculateSubtotal={calculateSubtotal}
+          calculateTax={calculateTax}
+          calculateTotal={calculateTotalAmount}
         />
 
         <HelpCenter 
