@@ -56,16 +56,6 @@ const Index = () => {
         isDarkMode={isDarkMode}
         toggleDarkMode={toggleDarkMode}
       />
-
-      {/* Button to view notes */}
-      <div className="mb-4 flex flex-row justify-end">
-        <button
-          className="bg-primary text-white rounded px-3 py-2 hover:bg-primary/90 transition-colors"
-          onClick={() => navigate("/notes")}
-        >
-          My Notes
-        </button>
-      </div>
     </div>
   );
 };
