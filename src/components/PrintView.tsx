@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -94,14 +95,12 @@ const PrintView = ({
   // Compute the invoice card background
   let invoiceCardStyles: React.CSSProperties = {};
   if (themeObj?.type === "gradient" && themeObj.gradient) {
-    // For gradients, use the gradient but overlay a semi-transparent white for readability
     invoiceCardStyles = {
       background: `linear-gradient(0deg, rgba(255,255,255,0.90), rgba(255,255,255,0.90)), ${themeObj.gradient}`
     };
   } else if (themeObj?.type === "plain" && themeObj.color) {
-    // For plain, use a much lighter version (background with alpha) or soft light color
     invoiceCardStyles = {
-      background: `linear-gradient(0deg, ${themeObj.color}1A 0%, #fff 100%)` // '1A' = 10% alpha in hex
+      background: `linear-gradient(0deg, ${themeObj.color}1A 0%, #fff 100%)`
     };
   }
 
@@ -146,8 +145,9 @@ const PrintView = ({
           </div>
         </div>
 
-        {/* INVOICE CONTENT AREA - Themed card background and dark text */}
+        {/* INVOICE CONTENT AREA */}
         <div
+          id="invoice-preview"
           className="rounded-2xl mx-auto shadow border print:shadow-none print:border print:border-gray-200 transition-all"
           style={invoiceCardStyles}
         >

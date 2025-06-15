@@ -6,15 +6,14 @@
 import { InvoiceData } from "@/types/invoice";
 
 export const exportToPDF = async (
-  invoiceData: InvoiceData,
-  formatCurrency: (amount: number, currencyCode?: string) => string,
-  calculateSubtotal: () => number,
-  calculateTax: () => number,
-  calculateTotal: () => number,
-  toast: any
+  invoiceData,
+  formatCurrency,
+  calculateSubtotal,
+  calculateTax,
+  calculateTotal,
+  toast
 ) => {
   try {
-    // Dynamically import jsPDF
     const { jsPDF } = await import('jspdf');
 
     // Subtle light background
@@ -133,14 +132,17 @@ export const exportToPDF = async (
 
     // Status watermark for paid invoices
     if (invoiceData.status === 'paid') {
-      if (doc.setGState) {
-        doc.setGState(new (jsPDF as any).GState({ opacity: 0.3 }));
-        doc.setTextColor(0, 128, 0);
-        doc.setFontSize(80);
-        doc.text("PAID", 250, 450, { angle: 45 });
-      }
+      // Remove usage of GState since it's not supported
+      // Instead, use a lighter text color for a watermark effect
+      doc.setTextColor(100, 200, 100, 0.1); // green, but low alpha if supported
+      doc.setFontSize(80);
+      // Adding a BIG "PAID" watermark (no opacity, since not supported in all jsPDF)
+      // Placing "PAID" diagonally (opacity best-effort with light color)
+      doc.saveGraphicsState && doc.saveGraphicsState();
+      doc.text("PAID", 250, 450, { angle: 45 });
+      doc.restoreGraphicsState && doc.restoreGraphicsState();
+      doc.setTextColor(40, 50, 85); // restore normal color
     }
-
     doc.save(`${invoiceData.invoiceNumber}.pdf`);
     if (toast) toast({ title: "Exported PDF", description: "Export successful" });
   } catch (error) {
