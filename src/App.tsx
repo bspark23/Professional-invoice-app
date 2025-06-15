@@ -20,6 +20,7 @@ import VoluntaryContributionPage from "./pages/VoluntaryContributionPage";
 import Notes from "./pages/Notes";
 import PrintPreviewPage from "@/pages/PrintPreview";
 import Dashboard from "@/pages/Dashboard";
+import Clients from "@/pages/Clients";
 
 const queryClient = new QueryClient();
 
@@ -63,9 +64,10 @@ const AppContent = () => {
         <Route path="/signup" element={<SignUp />} />
         <Route path="/signin" element={<SignIn />} />
         <Route path="/settings" element={<Settings />} />
-        {/* Protected dashboard/expenses/calendar */}
+        {/* Protected dashboard/expenses/calendar/clients */}
         <Route path="/dashboard" element={user ? <Dashboard /> : <SignIn />} />
         <Route path="/dashboard/print-preview" element={user ? <PrintPreviewPage /> : <SignIn />} />
+        <Route path="/clients" element={user ? <Clients /> : <SignIn />} />
         <Route path="/expenses" element={user ? <ExpenseTracker /> : <SignIn />} />
         <Route path="/calendar" element={user ? <CalendarView /> : <SignIn />} />
         <Route path="/voluntary-contribution" element={<VoluntaryContributionPage />} />

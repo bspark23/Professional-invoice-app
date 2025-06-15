@@ -1,6 +1,7 @@
 
 import React from "react";
 import { Home, FileText, Users, CreditCard, BarChart3, Settings, HelpCircle, LogOut } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   Sidebar,
   SidebarContent,
@@ -14,15 +15,22 @@ import {
 } from "@/components/ui/sidebar";
 
 const NewDashboardSidebar: React.FC = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+
   const menuItems = [
-    { icon: Home, label: "Dashboard", active: true },
-    { icon: FileText, label: "Invoices", active: false },
-    { icon: Users, label: "Clients", active: false },
-    { icon: CreditCard, label: "Payments", active: false },
-    { icon: BarChart3, label: "Reports", active: false },
-    { icon: Settings, label: "Settings", active: false },
-    { icon: HelpCircle, label: "Help", active: false },
+    { icon: Home, label: "Dashboard", path: "/dashboard" },
+    { icon: FileText, label: "Invoices", path: "/invoices" },
+    { icon: Users, label: "Clients", path: "/clients" },
+    { icon: CreditCard, label: "Payments", path: "/payments" },
+    { icon: BarChart3, label: "Reports", path: "/reports" },
+    { icon: Settings, label: "Settings", path: "/settings" },
+    { icon: HelpCircle, label: "Help", path: "/help" },
   ];
+
+  const handleMenuClick = (path: string) => {
+    navigate(path);
+  };
 
   return (
     <Sidebar className="border-r border-gray-200">
@@ -34,24 +42,25 @@ const NewDashboardSidebar: React.FC = () => {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map((item, index) => (
-                <SidebarMenuItem key={index}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={item.active}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
-                      item.active
-                        ? "bg-blue-50 text-blue-600 border-r-2 border-blue-600"
-                        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                    }`}
-                  >
-                    <a href="#">
+              {menuItems.map((item, index) => {
+                const isActive = location.pathname === item.path;
+                return (
+                  <SidebarMenuItem key={index}>
+                    <SidebarMenuButton
+                      onClick={() => handleMenuClick(item.path)}
+                      isActive={isActive}
+                      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors cursor-pointer ${
+                        isActive
+                          ? "bg-blue-50 text-blue-600 border-r-2 border-blue-600"
+                          : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                      }`}
+                    >
                       <item.icon className="w-5 h-5" />
                       <span className="font-medium">{item.label}</span>
-                    </a>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
