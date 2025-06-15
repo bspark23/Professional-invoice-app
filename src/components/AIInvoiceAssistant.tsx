@@ -33,6 +33,24 @@ const AIInvoiceAssistant: React.FC<AIInvoiceAssistantProps> = ({ onInvoiceGenera
     return null;
   };
 
+  const cleanJsonResponse = (response: string): string => {
+    // Remove markdown code blocks if present
+    let cleanedResponse = response.trim();
+    
+    // Remove ```json and ``` markers
+    if (cleanedResponse.startsWith('```json')) {
+      cleanedResponse = cleanedResponse.replace(/^```json\s*/, '');
+    }
+    if (cleanedResponse.startsWith('```')) {
+      cleanedResponse = cleanedResponse.replace(/^```\s*/, '');
+    }
+    if (cleanedResponse.endsWith('```')) {
+      cleanedResponse = cleanedResponse.replace(/\s*```$/, '');
+    }
+    
+    return cleanedResponse.trim();
+  };
+
   const generateWithOpenAI = async (apiConfig: any, userInput: string) => {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -106,6 +124,8 @@ const AIInvoiceAssistant: React.FC<AIInvoiceAssistantProps> = ({ onInvoiceGenera
           errorMessage = 'Invalid Gemini API key. Please check your API key in Settings.';
         } else if (errorData.error.code === 'QUOTA_EXCEEDED') {
           errorMessage = 'Your Gemini API quota has been exceeded. Please check your Google Cloud billing.';
+        } else if (errorData.error.message && errorData.error.message.includes('Generative Language API has not been used')) {
+          errorMessage = 'The Generative Language API is not enabled in your Google Cloud Console. Please enable it and wait a few minutes before trying again.';
         } else {
           errorMessage = errorData.error.message || errorMessage;
         }
@@ -156,8 +176,14 @@ const AIInvoiceAssistant: React.FC<AIInvoiceAssistantProps> = ({ onInvoiceGenera
         invoiceJson = await generateWithGemini(apiConfig, userInput);
       }
       
+      console.log('Raw AI response:', invoiceJson);
+      
+      // Clean the JSON response to remove markdown formatting
+      const cleanedJson = cleanJsonResponse(invoiceJson);
+      console.log('Cleaned JSON:', cleanedJson);
+      
       // Parse the JSON response
-      const parsedInvoice = JSON.parse(invoiceJson);
+      const parsedInvoice = JSON.parse(cleanedJson);
       
       // Convert to our InvoiceData format
       const invoiceData: InvoiceData = {
