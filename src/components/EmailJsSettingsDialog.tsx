@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -8,6 +7,12 @@ export type EmailJsConfig = {
   serviceId: string;
   templateId: string;
   userId: string;
+};
+
+const DEFAULT_CONFIG = {
+  serviceId: "service_ynqkkbg",
+  templateId: "template_7gj4flh",
+  userId: "atsHmWT3DU5BeCBQW",
 };
 
 const LOCAL_KEY = "invoiceease-emailjs-config";
@@ -35,6 +40,10 @@ const EmailJsSettingsDialog: React.FC<{
   const [userId, setUserId] = useState("");
 
   useEffect(() => {
+    // If not set in localStorage, set initial (your) credentials once
+    if (!getEmailJsConfig()) {
+      setEmailJsConfig(DEFAULT_CONFIG);
+    }
     if (open) {
       const cfg = getEmailJsConfig();
       setServiceId(cfg?.serviceId || "");
