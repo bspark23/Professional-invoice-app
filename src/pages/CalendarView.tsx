@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useInvoiceData } from "@/hooks/useInvoiceData";
 import { Calendar } from "@/components/ui/calendar";
+import clsx from "clsx";
 
 type CalendarEvent = {
   id: string;
@@ -13,6 +14,7 @@ type CalendarEvent = {
 
 export default function CalendarView() {
   const { savedInvoices } = useInvoiceData();
+
   // Map invoice due dates to events
   const [monthData, setMonthData] = useState<{ [date: string]: CalendarEvent[] }>({});
 
@@ -32,15 +34,29 @@ export default function CalendarView() {
     setMonthData(map);
   }, [savedInvoices]);
 
-  const modifiers = {
-    withInvoices: (date: Date) => {
-      const dstr = date.toISOString().split("T")[0];
-      return !!monthData[dstr];
-    }
-  };
+  // Generate a list of due dates for modifiers
+  const datesWithInvoices = Object.keys(monthData).map(ds => new Date(ds));
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:bg-gradient-to-br dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex flex-col items-center py-8">
+      {/* Inline style for the colored dot */}
+      <style>
+        {`
+          .invoice-dot {
+            position: absolute;
+            top: 3px;
+            right: 3px;
+            width: 0.45rem;
+            height: 0.45rem;
+            border-radius: 9999px;
+            box-shadow: 0 0 3px #4447;
+            z-index: 1;
+          }
+          .day-with-invoices {
+            position: relative;
+          }
+        `}
+      </style>
       <Card className="w-full max-w-3xl shadow-2xl border-0 bg-white/95 dark:bg-gray-800/95 backdrop-blur mb-8">
         <CardHeader>
           <CardTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Invoice Calendar</CardTitle>
@@ -50,27 +66,53 @@ export default function CalendarView() {
           <Calendar
             mode="single"
             selected={undefined}
-            modifiers={modifiers}
+            modifiers={{
+              withInvoices: datesWithInvoices
+            }}
             showOutsideDays
             className="pointer-events-auto"
-            onDayClick={() => {}}
-            // Highlight days with invoices, assume blue dot for due days
-            renderDay={(date) => {
-              const dstr = date.toISOString().split("T")[0];
-              const events = monthData[dstr];
-              return (
-                <div className="relative">
-                  <span>{date.getDate()}</span>
-                  {events && (
-                    <span className="absolute top-1 right-1 w-2 h-2 rounded-full" style={{
-                      background: events.some(e => !e.paid) ? '#f59e42' : '#22d3ee',
-                      boxShadow: "0 0 3px #4447"
-                    }} title={events.map(e=>e.name).join(", ")}></span>
-                  )}
-                </div>
-              );
+            // Highlight days with invoices by using modifiers and classNames
+            classNames={{
+              ...Calendar.defaultProps?.classNames,
+              day: clsx(
+                Calendar.defaultProps?.classNames?.day,
+                "day-with-invoices relative"
+              ),
+              day_withInvoices: "day-with-invoices", // just for scoping
             }}
+            components={{
+              // To add a dot: Add a pseudo-element, or in day modifier, use content in classNames.
+            }}
+            onDayClick={() => { }}
+            // As react-day-picker doesn't support direct children in day cell,
+            // instead, we add an absolutely positioned dot here after the render.
           />
+          {/* Decorate the dots inline */}
+          <div style={{ display: "none" }} aria-hidden="true">
+            {/*
+              .invoice-dot logic is in <style> above
+            */}
+          </div>
+          <script dangerouslySetInnerHTML={{
+            __html: `
+              setTimeout(() => {
+                document.querySelectorAll('.day-with-invoices').forEach(day => {
+                  if (day && !day.querySelector('.invoice-dot')) {
+                    const dot = document.createElement('span');
+                    dot.className = 'invoice-dot';
+                    // Let unpaid = orange, else blue
+                    const dstr = day?.getAttribute('aria-label')?.split('T')[0] || "";
+                    const events = ${JSON.stringify(monthData)};
+                    const dateKey = day?.getAttribute('aria-label')?.split('T')[0];
+                    let c = '#22d3ee';
+                    if(events[dateKey] && events[dateKey].some(e => !e.paid)) c = '#f59e42';
+                    dot.style.background = c;
+                    day.appendChild(dot);
+                  }
+                });
+              }, 1);
+            `
+          }} />
           {/* List of invoices/due dates below calendar */}
           <div className="mt-6 w-full">
             <h3 className="font-semibold text-blue-700 dark:text-blue-300 mb-2">Due Invoices</h3>
