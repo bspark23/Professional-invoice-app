@@ -20,6 +20,7 @@ const SignIn = () => {
     if (!res.success) {
       setError(res.error!);
     } else {
+      // After sign in, navigate to dashboard
       navigate("/dashboard");
     }
   };

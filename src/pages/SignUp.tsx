@@ -21,6 +21,7 @@ const SignUp = () => {
     if (!res.success) {
       setError(res.error!);
     } else {
+      // After sign up, navigate to dashboard
       navigate("/dashboard");
     }
   };

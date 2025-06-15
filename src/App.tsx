@@ -15,14 +15,13 @@ import { LanguageProvider } from "@/context/LanguageContext";
 import LanguageDropdown from "@/components/LanguageDropdown";
 import SignUp from "./pages/SignUp";
 import SignIn from "./pages/SignIn";
-import { useAuthLocal } from "@/hooks/useAuthLocal";
+import { AuthProvider, useAuthLocal } from "@/hooks/useAuthLocal";
 
 const queryClient = new QueryClient();
 
 const AppContent = () => {
   const [showLandingPage, setShowLandingPage] = useState(true);
   const navigate = useNavigate();
-  const { user } = useAuthLocal();
 
   const handleGetStarted = () => {
     setShowLandingPage(false);
@@ -43,6 +42,8 @@ const AppContent = () => {
       />
     );
   }
+
+  const { user } = useAuthLocal();
 
   return (
     <>
@@ -73,7 +74,9 @@ const App = () => {
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <AppContent />
+            <AuthProvider>
+              <AppContent />
+            </AuthProvider>
           </BrowserRouter>
         </TooltipProvider>
       </QueryClientProvider>

@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 
 // Each user: {email, profileName}
 export interface LocalUser {
@@ -10,7 +10,6 @@ export interface LocalUser {
 const USERS_KEY = "invoicecraft-local-users";
 const AUTH_USER_KEY = "invoicecraft-auth-user";
 
-// Helper to get users from storage
 function getUsers(): LocalUser[] {
   try {
     return JSON.parse(localStorage.getItem(USERS_KEY) || "[]");
@@ -19,7 +18,16 @@ function getUsers(): LocalUser[] {
   }
 }
 
-export function useAuthLocal() {
+interface AuthContextType {
+  user: LocalUser | null;
+  signUp: (email: string, profileName: string) => { success: boolean; error?: string };
+  signIn: (email: string) => { success: boolean; error?: string };
+  signOut: () => void;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<LocalUser | null>(null);
 
   useEffect(() => {
@@ -32,7 +40,6 @@ export function useAuthLocal() {
   const signUp = (email: string, profileName: string) => {
     const users = getUsers();
     if (users.find(u => u.email.trim().toLowerCase() === email.trim().toLowerCase())) {
-      // Duplicate email
       return { success: false, error: "Email already registered. Please sign in." };
     }
     const newUser = { email: email.trim(), profileName: profileName.trim() };
@@ -59,5 +66,15 @@ export function useAuthLocal() {
     setUser(null);
   };
 
-  return { user, signUp, signIn, signOut };
+  return (
+    <AuthContext.Provider value={{ user, signUp, signIn, signOut }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export function useAuthLocal() {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuthLocal must be used within AuthProvider");
+  return ctx;
 }
