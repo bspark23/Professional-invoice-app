@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Download, Save, Eye, FileText, Printer, Moon, Sun, ChevronDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/context/LanguageContext";
 
 import InvoiceForm from "@/components/InvoiceForm";
 import InvoicePreview from "@/components/InvoicePreview";
@@ -24,6 +25,7 @@ import { useInvoiceActivity } from "@/hooks/useInvoiceActivity";
 
 const Index = () => {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [viewMode, setViewMode] = useState<'create' | 'list' | 'print'>('create');
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -117,15 +119,17 @@ const Index = () => {
             <div className="mx-auto w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mb-4 shadow-lg">
               <FileText className="w-8 h-8 text-white" />
             </div>
-            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">InvoiceCraft Pro</CardTitle>
-            <p className="text-gray-600 dark:text-gray-300 mt-2">Professional invoicing for freelancers</p>
+            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              {t("appName")}
+            </CardTitle>
+            <p className="text-gray-600 dark:text-gray-300 mt-2">{t("loginSubtitle") || "Professional invoicing for freelancers"}</p>
           </CardHeader>
           <CardContent className="space-y-6 pt-4">
             <div className="space-y-2">
-              <Label htmlFor="business-name" className="text-sm font-medium">Business Name</Label>
+              <Label htmlFor="business-name" className="text-sm font-medium">{t("name")}</Label>
               <Input
                 id="business-name"
-                placeholder="Enter your business name"
+                placeholder={t("name")}
                 value={invoiceData.businessName}
                 onChange={(e) => setInvoiceData(prev => ({ ...prev, businessName: e.target.value }))}
                 className="border-2 focus:border-blue-500 transition-colors"
@@ -135,7 +139,7 @@ const Index = () => {
               onClick={() => setIsLoggedIn(true)}
               className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
             >
-              Get Started
+              {t("getStarted") || "Get Started"}
             </Button>
           </CardContent>
         </Card>
@@ -200,8 +204,8 @@ const Index = () => {
               />
             </div>
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">InvoiceCraft Pro</h1>
-              <p className="text-gray-600 dark:text-gray-300">Create professional invoices</p>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">{t("appName")}</h1>
+              <p className="text-gray-600 dark:text-gray-300">{t("dashboardSubtitle") || "Create professional invoices"}</p>
             </div>
           </div>
           <div className="flex gap-2">
@@ -210,50 +214,50 @@ const Index = () => {
             </Button>
             <Link to="/calendar">
               <Button variant="outline" className="hover:bg-yellow-50 dark:hover:bg-yellow-900/30">
-                Calendar View
+                {t("calendar")}
               </Button>
             </Link>
             <Link to="/expenses">
               <Button variant="outline" className="hover:bg-green-50 dark:hover:bg-green-900/30">
-                Track Expenses
+                {t("expenses")}
               </Button>
             </Link>
             <Button onClick={() => setViewMode('list')} variant="outline" className="hover:bg-blue-50 dark:hover:bg-blue-900/30">
               <Eye className="w-4 h-4 mr-2" />
-              View Saved ({savedInvoices.length})
+              {t("viewSaved", { count: savedInvoices.length }) || `View Saved (${savedInvoices.length})`}
             </Button>
             <Button onClick={handleSaveInvoiceData} variant="outline" className="hover:bg-yellow-50 dark:hover:bg-yellow-900/30">
               <Save className="w-4 h-4 mr-2" />
-              Save Draft
+              {t("saveDraft")}
             </Button>
             <Button onClick={handleSaveInvoice} variant="outline" className="bg-green-50 hover:bg-green-100 dark:bg-green-900/30 dark:hover:bg-green-800/50">
               <FileText className="w-4 h-4 mr-2" />
-              Save Invoice
+              {t("saveInvoice")}
             </Button>
             <Button onClick={printInvoice} variant="outline" className="hover:bg-purple-50 dark:hover:bg-purple-900/30">
               <Printer className="w-4 h-4 mr-2" />
-              Print Preview
+              {t("printPreview")}
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg">
                   <Download className="w-4 h-4 mr-2" />
-                  Export
+                  {t("export")}
                   <ChevronDown className="w-4 h-4 ml-2" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
                 <DropdownMenuItem onClick={handleExportToPDF}>
                   <FileText className="w-4 h-4 mr-2" />
-                  Export as PDF
+                  {t("exportAsPDF")}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleExportToImage('png')}>
                   <Download className="w-4 h-4 mr-2" />
-                  Export as PNG
+                  {t("exportAsPNG")}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleExportToImage('jpeg')}>
                   <Download className="w-4 h-4 mr-2" />
-                  Export as JPEG
+                  {t("exportAsJPEG")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface Language {
   code: string;
@@ -17,6 +18,7 @@ const languages: Language[] = [
   { code: 'fr', name: 'French', flag: '🇫🇷', nativeName: 'Français' },
   { code: 'yo', name: 'Yoruba', flag: '🇳🇬', nativeName: 'Yorùbá' },
   { code: 'ha', name: 'Hausa', flag: '🇳🇬', nativeName: 'Hausa' },
+  { code: 'ig', name: 'Igbo', flag: '🇳🇬', nativeName: 'Igbo' },
   { code: 'es', name: 'Spanish', flag: '🇪🇸', nativeName: 'Español' },
   { code: 'de', name: 'German', flag: '🇩🇪', nativeName: 'Deutsch' },
 ];
@@ -24,6 +26,7 @@ const languages: Language[] = [
 const LanguageSelector = () => {
   const [selectedLanguage, setSelectedLanguage] = useState<string>('en');
   const navigate = useNavigate();
+  const { setLang, t } = useLanguage();
 
   useEffect(() => {
     const savedLanguage = localStorage.getItem('invoiceease-language') || 'en';
@@ -32,10 +35,13 @@ const LanguageSelector = () => {
 
   const handleLanguageSelect = (languageCode: string) => {
     setSelectedLanguage(languageCode);
+    setLang(languageCode);
     localStorage.setItem('invoiceease-language', languageCode);
   };
 
   const handleContinue = () => {
+    setLang(selectedLanguage);
+    localStorage.setItem('invoiceease-language', selectedLanguage);
     navigate('/welcome');
   };
 
@@ -44,10 +50,10 @@ const LanguageSelector = () => {
       <Card className="w-full max-w-2xl animate-fade-in">
         <CardHeader className="text-center">
           <CardTitle className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-2">
-            Choose Your Language
+            {t("chooseLanguage")}
           </CardTitle>
           <p className="text-gray-600 dark:text-gray-300">
-            Select your preferred language to continue
+            {t("selectYourLanguage")}
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -87,7 +93,7 @@ const LanguageSelector = () => {
               onClick={handleContinue}
               className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3"
             >
-              Continue
+              {t("continue")}
             </Button>
           </div>
         </CardContent>

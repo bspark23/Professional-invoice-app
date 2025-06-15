@@ -15,8 +15,12 @@ interface LanguageContextType {
 
 const availableLangs = [
   { code: "en", name: "English" },
-  { code: "fr", name: "Français" }
-  // Add more as needed.
+  { code: "fr", name: "Français" },
+  { code: "yo", name: "Yorùbá" },
+  { code: "ha", name: "Hausa" },
+  { code: "ig", name: "Igbo" },
+  { code: "es", name: "Español" },
+  { code: "de", name: "Deutsch" }
 ];
 
 const LanguageContext = createContext<LanguageContextType>({
