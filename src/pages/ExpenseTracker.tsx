@@ -1,5 +1,5 @@
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,11 +20,30 @@ const categories = [
   "Rent", "Salary", "Tools", "Utilities", "Marketing", "Travel", "Supplies", "Other"
 ];
 
+const LOCAL_STORAGE_KEY = "invoicecraft-expenses-v1";
+
 export default function ExpenseTracker() {
   const { savedInvoices } = useInvoiceData();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [form, setForm] = useState({ name: "", amount: "", date: "", category: "" });
   const [error, setError] = useState<string | null>(null);
+
+  // Load expenses on mount
+  useEffect(() => {
+    const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (saved) {
+      try {
+        setExpenses(JSON.parse(saved));
+      } catch {
+        setExpenses([]);
+      }
+    }
+  }, []);
+
+  // Persist expenses to localStorage on change
+  useEffect(() => {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(expenses));
+  }, [expenses]);
 
   // Calculate totals
   const totalExpenses = useMemo(
@@ -66,6 +85,10 @@ export default function ExpenseTracker() {
     setError(null);
   };
 
+  const handleDeleteExpense = (id: string) => {
+    setExpenses(expenses.filter(e => e.id !== id));
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-100 via-blue-50/50 to-purple-50/50 dark:bg-gradient-to-br dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex flex-col items-center py-8">
       <Card className="w-full max-w-2xl shadow-2xl border-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur mb-8">
@@ -77,15 +100,15 @@ export default function ExpenseTracker() {
           <form className="flex flex-wrap gap-4 mb-4" onSubmit={e => { e.preventDefault(); handleAddExpense(); }}>
             <div className="flex-1 min-w-[140px]">
               <Label htmlFor="name">Name</Label>
-              <Input id="name" name="name" value={form.name} onChange={handleInput} placeholder="Expense name" />
+              <Input id="name" name="name" value={form.name} onChange={handleInput} placeholder="Expense name" autoComplete="off"/>
             </div>
             <div className="w-32">
               <Label htmlFor="amount">Amount</Label>
-              <Input id="amount" name="amount" value={form.amount} onChange={handleInput} type="number" placeholder="0" min="0" />
+              <Input id="amount" name="amount" value={form.amount} onChange={handleInput} type="number" placeholder="0" min="0"/>
             </div>
             <div className="w-40">
               <Label htmlFor="date">Date</Label>
-              <Input id="date" name="date" value={form.date} onChange={handleInput} type="date" />
+              <Input id="date" name="date" value={form.date} onChange={handleInput} type="date"/>
             </div>
             <div className="w-40">
               <Label htmlFor="category">Category</Label>
@@ -97,16 +120,24 @@ export default function ExpenseTracker() {
             <Button type="submit" className="self-end bg-blue-600 text-white">Add</Button>
           </form>
           {error && <div className="text-red-500 mb-2">{error}</div>}
-          <Separator className="my-4" />
+          <Separator className="my-4"/>
           <div>
             <h3 className="font-semibold mb-2">Expenses</h3>
-            <div className="space-y-2 max-h-64 overflow-y-auto">
+            <div className="space-y-1 max-h-64 overflow-y-auto">
               {expenses.length === 0 && <p className="text-gray-500">No expenses recorded.</p>}
               {expenses.map(e => (
-                <div key={e.id} className="flex items-center justify-between p-2 rounded bg-gray-50 dark:bg-gray-700">
+                <div key={e.id} className="flex items-center justify-between p-1 rounded bg-gray-50 dark:bg-gray-700 group">
                   <span>{e.name} <span className="text-xs text-gray-400 ml-2">({e.category})</span></span>
                   <span>{formatCurrency(e.amount)}</span>
                   <span className="text-xs text-gray-400">{e.date}</span>
+                  <button
+                    className="ml-2 text-xs text-red-500 opacity-0 group-hover:opacity-100 underline"
+                    title="Delete"
+                    type="button"
+                    onClick={() => handleDeleteExpense(e.id)}
+                  >
+                    Delete
+                  </button>
                 </div>
               ))}
             </div>
@@ -115,7 +146,7 @@ export default function ExpenseTracker() {
               <span>{formatCurrency(totalExpenses)}</span>
             </div>
           </div>
-          <Separator className="my-4" />
+          <Separator className="my-4"/>
           <div className="flex justify-between items-center font-medium">
             <span>Invoice Income</span>
             <span>{formatCurrency(invoiceIncome)}</span>

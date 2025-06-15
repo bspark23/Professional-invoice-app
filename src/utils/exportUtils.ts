@@ -32,25 +32,18 @@ export const exportToPDF = (
     const cardW = 186;  // 210mm - (12*2) margin
     const cardH = 273;  // 297mm - (12*2) margin
 
-    if (themeObj.type === 'gradient' && themeObj.gradient) {
-      // Lighten the gradient for PDF background - use pale colors instead of deep ones
-      // We approximate "gradient" with a solid light color for PDF for better readability
-      let gradLightColor: [number, number, number];
-      if (themeObj.value === "gradient-blue") {
-        gradLightColor = [230, 238, 255]; // very light blue
-      } else if (themeObj.value === "gradient-purple") {
-        gradLightColor = [242, 235, 255]; // very light purple
-      } else {
-        gradLightColor = [245, 247, 255]; // fallback very light
-      }
-      pdf.setFillColor(gradLightColor[0], gradLightColor[1], gradLightColor[2]);
-      pdf.roundedRect(cardX, cardY, cardW, cardH, 6, 6, 'F');
-      // Card border subtle
-      pdf.setDrawColor(200, 200, 230);
-      pdf.roundedRect(cardX, cardY, cardW, cardH, 6, 6, 'S');
-    } else if (themeObj.type === 'plain' && themeObj.color) {
-      // Use a very light version of the color (blend with white 90%/10%)
-      function hexToRgb(hex: string): [number, number, number] {
+    // --- COLOR: use subtle, light backgrounds ---
+
+    // Use much lighter, subtle card color for background and table
+    const themeObj2 = colorThemes.find(ct => ct.value === invoiceData.colorTheme) || colorThemes[0];
+    let cardBgColor: [number, number, number] = [255, 255, 255];
+    if (themeObj2.type === 'gradient' && themeObj2.gradient) {
+      if (themeObj2.value === "gradient-blue") cardBgColor = [238, 243, 250];
+      else if (themeObj2.value === "gradient-purple") cardBgColor = [248, 243, 253];
+      else cardBgColor = [250, 248, 255];
+    } else if (themeObj2.type === 'plain' && themeObj2.color) {
+      // even lighter blend for PDF
+      function hexToRgb2(hex: string): [number, number, number] {
         const n = hex.replace("#", "");
         return [
           parseInt(n.slice(0, 2), 16),
@@ -58,23 +51,18 @@ export const exportToPDF = (
           parseInt(n.slice(4, 6), 16),
         ];
       }
-      const baseRgb = hexToRgb(themeObj.color);
-      const lightRgb: [number, number, number] = [
-        Math.round(baseRgb[0] * 0.1 + 255 * 0.9),
-        Math.round(baseRgb[1] * 0.1 + 255 * 0.9),
-        Math.round(baseRgb[2] * 0.1 + 255 * 0.9),
+      const baseRgb = hexToRgb2(themeObj.color);
+      cardBgColor = [
+        Math.round(baseRgb[0] * 0.04 + 255 * 0.96),
+        Math.round(baseRgb[1] * 0.04 + 255 * 0.96),
+        Math.round(baseRgb[2] * 0.04 + 255 * 0.96),
       ];
-      pdf.setFillColor(lightRgb[0], lightRgb[1], lightRgb[2]);
-      pdf.roundedRect(cardX, cardY, cardW, cardH, 6, 6, 'F');
-      pdf.setDrawColor(baseRgb[0], baseRgb[1], baseRgb[2]);
-      pdf.roundedRect(cardX, cardY, cardW, cardH, 6, 6, 'S');
-    } else {
-      // Default: white card area with a light gray border
-      pdf.setFillColor(255, 255, 255);
-      pdf.roundedRect(cardX, cardY, cardW, cardH, 6, 6, 'F');
-      pdf.setDrawColor(210, 210, 210);
-      pdf.roundedRect(cardX, cardY, cardW, cardH, 6, 6, 'S');
     }
+    pdf.setFillColor(...cardBgColor);
+    pdf.roundedRect(cardX, cardY, cardW, cardH, 6, 6, 'F');
+    // Card border subtle
+    pdf.setDrawColor(220, 220, 235);
+    pdf.roundedRect(cardX, cardY, cardW, cardH, 6, 6, 'S');
 
     let yPosition = cardY + 8;
     
@@ -171,41 +159,45 @@ export const exportToPDF = (
     
     yPosition += 20;
     
-    // Line items table with borders
-    pdf.setFillColor(249, 250, 251);
-    pdf.rect(cardX + 8, yPosition - 5, 170, 12, 'F');
-    
-    // Table borders
-    pdf.setDrawColor(100, 100, 100);
-    pdf.setLineWidth(0.5);
-    pdf.rect(cardX + 8, yPosition - 5, 170, 12); // Header border
-    
+    // -- Table header --
+    // Table much tighter/cropped: reduced row height & padding
+    // Strong lines
+    // ... Previous code removed: now making table tighter and with strong lines ...
+    yPosition = cardY + 8 + 50 + 15 + ((invoiceData.clientAddress.split('\n').length + 2) * 8 - 10) + 15 + 10;
+
+    // Draw header
+    pdf.setFillColor(...cardBgColor);
+    pdf.roundedRect(cardX + 8, yPosition - 8, 170, 10, 2, 2, 'F');
+    pdf.setDrawColor(130, 130, 180);
+    pdf.setLineWidth(0.8);
+    pdf.rect(cardX + 8, yPosition - 8, 170, 10); // Header border
+
     pdf.setFont('helvetica', 'bold');
     pdf.setFontSize(9);
-    pdf.setTextColor(100, 100, 100);
-    pdf.text('Description', cardX + 13, yPosition + 3);
-    pdf.text('Qty', cardX + 108, yPosition + 3);
-    pdf.text('Rate', cardX + 128, yPosition + 3);
-    pdf.text('Amount', cardX + 158, yPosition + 3);
-    
-    yPosition += 15;
-    
-    // Line items with borders
+    pdf.setTextColor(70, 70, 90);
+    pdf.text('Description', cardX + 13, yPosition - 2);
+    pdf.text('Qty', cardX + 108, yPosition - 2);
+    pdf.text('Rate', cardX + 128, yPosition - 2);
+    pdf.text('Amount', cardX + 158, yPosition - 2);
+
+    yPosition += 2;
+
+    // Draw rows (tighten vertical gaps, strong lines)
     pdf.setFont('helvetica', 'normal');
     pdf.setFontSize(9);
-    pdf.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-    
+    pdf.setTextColor(45, 45, 45);
+
     invoiceData.lineItems.forEach((item, index) => {
-      // Draw row borders
-      pdf.setDrawColor(150, 150, 150);
-      pdf.setLineWidth(0.3);
-      pdf.rect(cardX + 8, yPosition - 5, 170, 12); // Row border
-      
-      pdf.text(item.description || 'No description', cardX + 13, yPosition + 3);
-      pdf.text(item.quantity.toString(), cardX + 113, yPosition + 3);
-      pdf.text(formatCurrency(item.rate), cardX + 128, yPosition + 3);
-      pdf.text(formatCurrency(item.amount), cardX + 158, yPosition + 3);
-      yPosition += 12;
+      // Border
+      pdf.setDrawColor(185, 185, 200);
+      pdf.setLineWidth(0.5);
+      pdf.rect(cardX + 8, yPosition - 7, 170, 8);
+
+      pdf.text(item.description || 'No description', cardX + 13, yPosition - 2);
+      pdf.text(item.quantity.toString(), cardX + 113, yPosition - 2);
+      pdf.text(formatCurrency(item.rate), cardX + 128, yPosition - 2);
+      pdf.text(formatCurrency(item.amount), cardX + 158, yPosition - 2);
+      yPosition += 8;
     });
     
     yPosition += 15;
@@ -287,6 +279,7 @@ export const exportToPDF = (
   }
 };
 
+// --- Image export: similar light bg, tighter/cropped and strong line table ---
 export const exportToImage = (
   format: 'png' | 'jpeg',
   invoiceData: InvoiceData,
@@ -319,31 +312,22 @@ export const exportToImage = (
     const cardH = canvas.height - 72;
 
     // Use light backgrounds for the card area (matching dashboard/print)
+    // Table header (even less height)
+    let tableY = 476;
+    // Use even lighter colors for background/card
+    let cardBg = '#fff';
+    let headerBg = "#f8f9fc";
+    let borderColor = '#bfc5d6';
+    // ... blend as above (copying logic) ...
     const themeObj2 = colorThemes.find(ct => ct.value === invoiceData.colorTheme) || colorThemes[0];
-
     if (themeObj2.type === "gradient" && themeObj2.gradient) {
-      // Very light color for gradients
-      ctx.save();
-      let grad;
-      if (themeObj2.value === "gradient-blue") {
-        grad = ctx.createLinearGradient(cardX, cardY, cardX + cardW, cardY + cardH);
-        grad.addColorStop(0, "#e6eeff"); // very light blue
-        grad.addColorStop(1, "#f5f7ff");
-      } else {
-        grad = ctx.createLinearGradient(cardX, cardY, cardX + cardW, cardY + cardH);
-        grad.addColorStop(0, "#f2ebff"); // very light purple
-        grad.addColorStop(1, "#f7faff");
-      }
-      ctx.fillStyle = grad;
-      ctx.fillRect(cardX, cardY, cardW, cardH);
-      ctx.restore();
-      // border
-      ctx.strokeStyle = "#c7d5fc";
-      ctx.lineWidth = 2;
-      ctx.strokeRect(cardX, cardY, cardW, cardH);
+      if (themeObj2.value === "gradient-blue") cardBg = "#eef3fa";
+      else if (themeObj2.value === "gradient-purple") cardBg = "#f8f3fd";
+      else cardBg = "#faf8ff";
     } else if (themeObj2.type === "plain" && themeObj2.color) {
-      // Blend with white (lighter version)
-      function hexToRgb(hex: string): [number, number, number] {
+      borderColor = themeObj2.color;
+      // lighter
+      function hexToRgb(hex: any) {
         const n = hex.replace("#", "");
         return [
           parseInt(n.slice(0, 2), 16),
@@ -351,25 +335,15 @@ export const exportToImage = (
           parseInt(n.slice(4, 6), 16),
         ];
       }
-      const baseRgb = hexToRgb(themeObj2.color);
-      const lightRgb = [
-        Math.round(baseRgb[0] * 0.1 + 255 * 0.9),
-        Math.round(baseRgb[1] * 0.1 + 255 * 0.9),
-        Math.round(baseRgb[2] * 0.1 + 255 * 0.9),
-      ];
-      ctx.fillStyle = `rgb(${lightRgb[0]},${lightRgb[1]},${lightRgb[2]})`;
-      ctx.fillRect(cardX, cardY, cardW, cardH);
-      ctx.strokeStyle = `rgb(${baseRgb[0]},${baseRgb[1]},${baseRgb[2]})`;
-      ctx.lineWidth = 2;
-      ctx.strokeRect(cardX, cardY, cardW, cardH);
-    } else {
-      // fallback (white card)
-      ctx.fillStyle = "#fff";
-      ctx.fillRect(cardX, cardY, cardW, cardH);
-      ctx.strokeStyle = "#e5e7eb";
-      ctx.lineWidth = 2;
-      ctx.strokeRect(cardX, cardY, cardW, cardH);
+      const [r, g, b] = hexToRgb(themeObj2.color);
+      cardBg = `rgba(${Math.round(r * 0.04 + 255 * 0.96)},${Math.round(g * 0.04 + 255 * 0.96)},${Math.round(b * 0.04 + 255 * 0.96)},1)`;
+      headerBg = `rgba(${Math.round(r * 0.12 + 255 * 0.88)},${Math.round(g * 0.12 + 255 * 0.88)},${Math.round(b * 0.12 + 255 * 0.88)},1)`;
     }
+    ctx.fillStyle = cardBg;
+    ctx.fillRect(cardX, cardY, cardW, cardH);
+    ctx.strokeStyle = borderColor;
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(cardX, cardY, cardW, cardH);
     
     let yPosition = cardY + 30;
     
@@ -430,45 +404,39 @@ export const exportToImage = (
       ctx.fillText(`Currency: ${currencies.find(c => c.code === invoiceData.currency)?.name}`, cardX + 464, dateY + 40);
       
       // Line items table
-      let tableY = yPosition + 120;
+      tableY = yPosition + 120;
       
       // Table header with background and borders
-      ctx.fillStyle = '#f9fafb';
-      ctx.fillRect(cardX + 14, tableY - 10, 700, 30);
-      
-      // Draw table borders
-      ctx.strokeStyle = '#6b7280';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(cardX + 14, tableY - 10, 700, 30);
-      
-      ctx.fillStyle = 'black';
+      ctx.fillStyle = headerBg;
+      ctx.fillRect(cardX + 14, tableY - 12, 700, 8);
+      ctx.strokeStyle = "#7c82a6";
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(cardX + 14, tableY - 12, 700, 8);
+
+      ctx.fillStyle = '#444';
       ctx.font = 'bold 12px Arial';
-      ctx.fillText('Description', cardX + 24, tableY + 10);
-      ctx.fillText('Qty', cardX + 414, tableY + 10);
-      ctx.fillText('Rate', cardX + 514, tableY + 10);
-      ctx.fillText('Amount', cardX + 614, tableY + 10);
-      
-      // Line items with borders
+      ctx.fillText('Description', cardX + 24, tableY - 5);
+      ctx.fillText('Qty', cardX + 414, tableY - 5);
+      ctx.fillText('Rate', cardX + 514, tableY - 5);
+      ctx.fillText('Amount', cardX + 614, tableY - 5);
+
+      // Table rows, each row height = 9px now
       ctx.font = '11px Arial';
-      tableY += 40;
-      
-      invoiceData.lineItems.forEach((item, index) => {
-        const y = tableY + (index * 25);
-        
-        // Draw row borders
-        ctx.strokeStyle = '#d1d5db';
-        ctx.lineWidth = 0.5;
-        ctx.strokeRect(cardX + 14, y - 10, 700, 25);
-        
-        ctx.fillStyle = 'black';
-        ctx.fillText(item.description || 'No description', cardX + 24, y);
-        ctx.fillText(item.quantity.toString(), cardX + 429, y);
-        ctx.fillText(formatCurrency(item.rate), cardX + 514, y);
-        ctx.fillText(formatCurrency(item.amount), cardX + 614, y);
+      invoiceData.lineItems.forEach((item, idx) => {
+        const y = tableY + (idx * 9);
+        ctx.strokeStyle = '#bbc3dc';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(cardX + 14, y - 8, 700, 9);
+
+        ctx.fillStyle = '#202020';
+        ctx.fillText(item.description || 'No description', cardX + 24, y - 2);
+        ctx.fillText(item.quantity.toString(), cardX + 429, y - 2);
+        ctx.fillText(formatCurrency(item.rate), cardX + 514, y - 2);
+        ctx.fillText(formatCurrency(item.amount), cardX + 614, y - 2);
       });
       
       // Totals section
-      const totalsY = tableY + (invoiceData.lineItems.length * 25) + 40;
+      const totalsY = tableY + (invoiceData.lineItems.length * 9) + 40;
       ctx.font = '12px Arial';
       
       let currentY = totalsY;

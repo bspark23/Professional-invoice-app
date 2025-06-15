@@ -1,4 +1,3 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +25,25 @@ const InvoiceList = ({
   isDarkMode,
   toggleDarkMode,
 }: InvoiceListProps) => {
+  // Clone an invoice
+  const handleDuplicate = (invoice: InvoiceData) => {
+    // Create new object w/ new id and new invoice number
+    const newId = Date.now().toString();
+    const year = new Date().getFullYear();
+    const month = String(new Date().getMonth() + 1).padStart(2, '0');
+    const nextNumber = Math.floor(((Math.random() * 900) + 100)); // random 3-digit for illustration
+    const newInvoiceNumber = `INV-${year}-${month}-${nextNumber}`;
+    const newInvoice = {
+      ...invoice,
+      id: newId,
+      invoiceNumber: newInvoiceNumber,
+      createdAt: new Date().toISOString(),
+      status: 'unpaid'
+    };
+    loadInvoice(newInvoice); // load into form
+    setViewMode('create');
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4">
       <div className="max-w-6xl mx-auto space-y-6">
@@ -81,6 +99,7 @@ const InvoiceList = ({
                         onClick={() => toggleInvoiceStatus(invoice.id!)}
                         variant="outline"
                         size="sm"
+                        title={invoice.status === 'paid' ? "Mark as Unpaid" : "Mark as Paid"}
                       >
                         {invoice.status === 'paid' ? <X className="w-4 h-4" /> : <Check className="w-4 h-4" />}
                       </Button>
@@ -88,14 +107,25 @@ const InvoiceList = ({
                         onClick={() => loadInvoice(invoice)}
                         variant="outline"
                         size="sm"
+                        title="Edit"
                       >
                         <Eye className="w-4 h-4 mr-2" />
                         Edit
                       </Button>
                       <Button
+                        onClick={() => handleDuplicate(invoice)}
+                        variant="outline"
+                        size="sm"
+                        title="Duplicate Invoice"
+                      >
+                        <FileText className="w-4 h-4" />
+                        Duplicate
+                      </Button>
+                      <Button
                         onClick={() => deleteInvoice(invoice.id!)}
                         variant="outline"
                         size="sm"
+                        title="Delete"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
