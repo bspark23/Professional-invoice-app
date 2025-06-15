@@ -98,7 +98,7 @@ const PinLock: React.FC<PinLockProps> = ({ onUnlock }) => {
     setNewPinConfirm("");
   };
 
-  // Confirm and save new PIN in change PIN flow
+  // Confirm and save new PIN in change PIN flow (FIXED: unlock after change)
   const handleChangeConfirm = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -113,7 +113,8 @@ const PinLock: React.FC<PinLockProps> = ({ onUnlock }) => {
     setNewPinConfirm("");
     setStep("entry");
     setPinEntry("");
-    setSuccess("PIN changed successfully. Please use your new PIN to unlock.");
+    setSuccess(null); // Hide success msg, unlock immediately!
+    onUnlock();
   };
 
   // Switch to change pin mode from PIN entry
