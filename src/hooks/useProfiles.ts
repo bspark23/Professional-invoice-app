@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 
 export type BusinessProfile = {
@@ -6,7 +7,7 @@ export type BusinessProfile = {
   logo?: string;
   email?: string;
   address?: string;
-  // Add more profile-specific settings as needed
+  // More fields if needed
 };
 
 const PROFILES_KEY = "invoiceease-business-profiles";
@@ -21,7 +22,7 @@ export function useProfiles() {
   const [profiles, setProfiles] = useState<BusinessProfile[]>([]);
   const [activeProfileId, setActiveProfileId] = useState<string | null>(null);
 
-  // Load profiles and active profile from localStorage
+  // Load profiles and active profile from localStorage ONCE
   useEffect(() => {
     const saved = localStorage.getItem(PROFILES_KEY);
     setProfiles(saved ? JSON.parse(saved) : []);
@@ -34,13 +35,14 @@ export function useProfiles() {
     localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
   }, [profiles]);
 
+  // Save activeProfileId change
   useEffect(() => {
     if (activeProfileId) {
       localStorage.setItem(ACTIVE_PROFILE_KEY, activeProfileId);
     }
   }, [activeProfileId]);
 
-  // Make sure business name is unique for user clarity, but save by profileId
+  // Only create a new profile if explicitly requested
   const createProfile = (profile: Omit<BusinessProfile, "id">) => {
     // Check uniqueness of businessName
     const nameExists = profiles.some((p) => p.name === profile.name);
@@ -57,16 +59,18 @@ export function useProfiles() {
     return newProfile;
   };
 
+  // Robustly delete
   const deleteProfile = (id: string) => {
     setProfiles((prev) => prev.filter((p) => p.id !== id));
     if (activeProfileId === id) {
+      // Set another profile as active or null
       const others = profiles.filter((p) => p.id !== id);
       setActiveProfileId(others.length > 0 ? others[0].id : null);
     }
-    // Optionally, clean up localStorage data for old profileId on delete
-    // Not doing here for data recovery use-case
+    // No additional storage changes
   };
 
+  // Update existing profile info (but never the id)
   const updateProfile = (id: string, data: Partial<BusinessProfile>) => {
     setProfiles((prev) => prev.map((p) => p.id === id ? { ...p, ...data } : p));
   };
@@ -75,7 +79,11 @@ export function useProfiles() {
     setActiveProfileId(id);
   };
 
+  // Always get the current active profile object or null
   const getActiveProfile = () => profiles.find((p) => p.id === activeProfileId) || null;
+
+  // SAFE: Do NOT create new profiles automatically if a profile exists already.
+  // Initial load always uses saved data in localStorage.
 
   return {
     profiles,
@@ -87,3 +95,4 @@ export function useProfiles() {
     setActiveProfile,
   };
 }
+
