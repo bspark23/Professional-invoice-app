@@ -41,7 +41,7 @@ const LandingPage = ({
   status,
   currency,
   onGetStarted
-}: LandingPageProps) => {
+}: any) => {
   const navigate = useNavigate();
   const features = [
     {
@@ -233,7 +233,7 @@ const LandingPage = ({
         </div>
       </div>
 
-      {/* Voluntary Contribution CTA - keep only ONE button that navigates to the page */}
+      {/* Voluntary Contribution CTA - ONE button that navigates to the page */}
       <div className="flex justify-center mt-8">
         <Button 
           variant="secondary" 

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -24,6 +25,7 @@ const queryClient = new QueryClient();
 const AppContent = () => {
   const [showLandingPage, setShowLandingPage] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleGetStarted = () => {
     setShowLandingPage(false);
@@ -31,7 +33,8 @@ const AppContent = () => {
     navigate('/');
   };
 
-  if (showLandingPage) {
+  // Only show the landing page if the user is on the root path AND showLandingPage is true
+  if (showLandingPage && location.pathname === "/") {
     return (
       <LandingPage
         businessName="InvoiceCraft Pro"
