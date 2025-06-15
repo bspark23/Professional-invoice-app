@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 
 export interface LineItem {
@@ -19,6 +18,7 @@ export interface InvoiceFormState {
   items: LineItem[];
   taxRate: number;
   discount: number;
+  notes: string;
 }
 
 function generateInvoiceNumber() {
@@ -40,6 +40,7 @@ export function useInvoiceForm() {
     ],
     taxRate: 0,
     discount: 0,
+    notes: "",
   });
 
   // Line Items
