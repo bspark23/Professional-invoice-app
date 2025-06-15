@@ -1,14 +1,22 @@
 
 import React from "react";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import NewDashboardSidebar from "@/components/NewDashboardSidebar";
 import NewDashboardContent from "@/components/NewDashboardContent";
 
 const Dashboard: React.FC = () => {
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <NewDashboardSidebar />
-      <NewDashboardContent />
-    </div>
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full bg-gray-50">
+        <NewDashboardSidebar />
+        <div className="flex-1">
+          <div className="p-4 border-b bg-white">
+            <SidebarTrigger />
+          </div>
+          <NewDashboardContent />
+        </div>
+      </div>
+    </SidebarProvider>
   );
 };
 
