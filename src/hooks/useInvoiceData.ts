@@ -1,25 +1,24 @@
-
 import { useState, useEffect } from "react";
 import { InvoiceData, LineItem } from "@/types/invoice";
 import { useToast } from "@/hooks/use-toast";
 import { useAuthLocal } from "@/hooks/useAuthLocal";
 
-// Always use profileId AND user for persistence
+// Helper to always get a unique user key (email preferred, fallback to profileName)
+function getUserKey(userId?: string | null) {
+  if (!userId) return "anon";
+  return userId.toLowerCase().replace(/[^a-z0-9]/gi, "_");
+}
+
+// Use both user and profile for namespacing
 export const useInvoiceData = (
   profileId?: string | null,
   userId?: string | null
 ) => {
-  // Helper: build namespace using both user and profile
-  function getNamespace() {
-    if (userId) {
-      return profileId
-        ? `user-${userId}-profile-${profileId}-`
-        : `user-${userId}-`;
-    }
-    // fallback (should never happen)
-    return profileId ? `anon-profile-${profileId}-` : "anon-";
-  }
-  const STORAGE_PREFIX = getNamespace();
+  // Always namespace by user (by email or profileName). If profileId given, include too.
+  const USER_KEY = getUserKey(userId);
+  const STORAGE_PREFIX = profileId
+    ? `user-${USER_KEY}-profile-${profileId}-`
+    : `user-${USER_KEY}-`;
 
   const generateInvoiceNumber = () => {
     const savedInvoicesData = localStorage.getItem(
@@ -77,7 +76,8 @@ export const useInvoiceData = (
 
   // If profileId/userId is not set, do not run any side-effects
   useEffect(() => {
-    if (!profileId || !userId) return;
+    // Only load or save for valid userId!
+    if (!userId) return;
     const savedData = localStorage.getItem(`${STORAGE_PREFIX}invoicer-pro-data`);
     if (savedData) {
       try {
@@ -117,7 +117,7 @@ export const useInvoiceData = (
     savedInvoices,
     setSavedInvoices,
     saveInvoiceData: () => {
-      if (!profileId || !userId) return;
+      if (!userId) return;
       localStorage.setItem(
         `${STORAGE_PREFIX}invoicer-pro-data`,
         JSON.stringify(invoiceData)
@@ -128,7 +128,7 @@ export const useInvoiceData = (
       });
     },
     saveInvoice: () => {
-      if (!profileId || !userId) return;
+      if (!userId) return;
       const invoiceToSave = {
         ...invoiceData,
         id: invoiceData.id || Date.now().toString(),
@@ -165,7 +165,7 @@ export const useInvoiceData = (
       });
     },
     deleteInvoice: (invoiceId: string) => {
-      if (!profileId || !userId) return;
+      if (!userId) return;
       const updatedInvoices = savedInvoices.filter(
         (inv) => inv.id !== invoiceId
       );
@@ -180,7 +180,7 @@ export const useInvoiceData = (
       });
     },
     toggleInvoiceStatus: (invoiceId: string) => {
-      if (!profileId || !userId) return;
+      if (!userId) return;
       const updatedInvoices = savedInvoices.map((inv) =>
         inv.id === invoiceId
           ? {

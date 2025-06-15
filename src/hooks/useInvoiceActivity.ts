@@ -1,4 +1,3 @@
-
 import { useCallback, useEffect, useState } from "react";
 import { useAuthLocal } from "@/hooks/useAuthLocal";
 
@@ -8,17 +7,21 @@ export type ActivityEvent = {
   description: string;
 };
 
+function getUserKey(userId?: string | null) {
+  if (!userId) return "anon";
+  return userId.toLowerCase().replace(/[^a-z0-9]/gi, "_");
+}
+
 function getLocalStorageKey(userId: string | undefined | null) {
-  // Use email or profileName for namespacing. If both exist, prefer email as it's unique.
-  return userId
-    ? `invoiceease-activity-events-${userId}`
-    : "invoiceease-activity-events";
+  // Always prefer email, fallback to profileName, fallback to "anon"
+  const userKey = getUserKey(userId);
+  return `invoiceease-activity-events-${userKey}`;
 }
 
 export function useInvoiceActivity() {
   // Get current user from auth hook
   const { user } = useAuthLocal();
-  // Use email; fallback to profileName (should always have at least one)
+  // Always use email (preferred), else profileName, else "anon"
   const userId = user?.email || user?.profileName;
 
   const [events, setEvents] = useState<ActivityEvent[]>([]);

@@ -43,9 +43,10 @@ const Index = () => {
 
   // NEW: Use Auth for userId (email/profile)
   const { user } = useAuthLocal();
+  // Pass **exact user values** to all hooks (email preferred, fallback profileName, else null)
   const userId = user?.email || user?.profileName || null;
 
-  // Pass profileId AND userId to hooks to segregate their data
+  // Pass new userId logic into useInvoiceActivity and useClients hooks
   const activity = useInvoiceActivity();
   const {
     invoiceData,
@@ -60,7 +61,7 @@ const Index = () => {
     removeLineItem,
     updateLineItem,
     generateInvoiceNumber
-  } = useInvoiceData(activeProfileId, userId);
+  } = useInvoiceData(activeProfileId, userId); // userId is always email or profileName
 
   // Toggle dark mode
   const toggleDarkMode = () => {
