@@ -350,7 +350,12 @@ const Index = () => {
                     reader.onload = ev => {
                       setCustomTemplateContent(ev.target?.result as string);
                     };
-                    reader.readAsDataURL(file);
+                    // Support images and HTML files
+                    if (/\.html?$/i.test(file.name)) {
+                      reader.readAsText(file);
+                    } else {
+                      reader.readAsDataURL(file);
+                    }
                   }}
                 />
                 <p className="text-xs text-gray-500 mt-1">Upload a custom invoice template as an image (png, jpg) or HTML file.</p>
@@ -402,7 +407,7 @@ const Index = () => {
               calculateSubtotal={getCalculateSubtotal}
               calculateTax={getCalculateTax}
               calculateTotal={getCalculateTotal}
-              customTemplateContent={customTemplateContent}
+              customTemplateContent={customTemplateContent || ""}
             />
             <InvoiceActivityTimeline events={activity.events} />
           </div>
