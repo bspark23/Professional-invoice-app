@@ -187,8 +187,8 @@ const Index = () => {
         exportToPDF={handleExportToPDF}
         exportToImage={handleExportToImage}
         setViewMode={setViewMode}
-        // Pass the active profile for user email purposes
         userProfile={activeProfile}
+        customTemplateContent={customTemplateContent || ""}
       />
     );
   }
