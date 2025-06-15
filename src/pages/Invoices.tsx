@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,21 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import {
-  Download,
-  Eye,
-  Mail,
-  Palette,
-  Save,
-  Image,
-  Edit,
-  FileText
-} from "lucide-react";
+import { Download, Eye, Mail, Palette, Save, Image, Edit, FileText } from "lucide-react";
 import { v4 as uuidv4 } from 'uuid';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import { useLocation, useNavigate } from "react-router-dom";
-import { Sidebar } from "@/components/ui/sidebar";
 import NewDashboardSidebar from "@/components/NewDashboardSidebar";
 import DarkModeToggle from "@/components/DarkModeToggle";
 import SupportBubble from "@/components/SupportBubble";
@@ -34,151 +24,76 @@ import { useInvoiceData } from "@/hooks/useInvoiceData";
 import { useAuthLocal } from "@/hooks/useAuthLocal";
 import { formatCurrency, calculateTotal } from "@/utils/invoiceUtils";
 import ResponsiveNavButtons from "@/components/ResponsiveNavButtons";
-import { InvoiceData as ImportedInvoiceData, LineItem as ImportedLineItem } from "@/types/invoice";
+import { CustomTemplate, InvoiceData } from "@/types/invoice";
 
-// Use imported types directly
-interface LineItem extends ImportedLineItem {}
-
-interface InvoiceData extends ImportedInvoiceData {}
-
-const Invoices: React.FC = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
+const Invoices = () => {
   const { user } = useAuthLocal();
-  const { savedInvoices, saveInvoice } = useInvoiceData(null, user?.email || user?.profileName);
-  const [isHelpCenterOpen, setIsHelpCenterOpen] = useState(false);
+  const {
+    invoiceData,
+    setInvoiceData,
+    savedInvoices,
+    setSavedInvoices,
+    saveInvoiceData,
+    saveInvoice,
+    loadInvoice,
+    deleteInvoice,
+    toggleInvoiceStatus,
+    createNewInvoice,
+    addLineItem,
+    removeLineItem,
+    updateLineItem,
+    generateInvoiceNumber,
+  } = useInvoiceData(null, user?.email || user?.profileName);
+  const [formData, setFormData] = useState<InvoiceData>(invoiceData);
   const [isLogoDialogOpen, setIsLogoDialogOpen] = useState(false);
   const [isTemplateDialogOpen, setIsTemplateDialogOpen] = useState(false);
   const [isSendDialogOpen, setIsSendDialogOpen] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<InvoiceData | null>(null);
-  const [selectedTemplate, setSelectedTemplate] = useState('minimalist');
-  const [selectedColorTheme, setSelectedColorTheme] = useState('blue');
-  const [selectedCustomTemplate, setSelectedCustomTemplate] = useState<string | null>(null);
-
-  const [formData, setFormData] = useState<InvoiceData>({
-    invoiceNumber: "INV-" + Math.floor(Math.random() * 1000),
-    invoiceDate: new Date().toLocaleDateString(),
-    dueDate: new Date(new Date().setDate(new Date().getDate() + 30)).toLocaleDateString(),
-    clientName: "",
-    clientEmail: "",
-    clientAddress: "",
-    businessName: "InvoiceCraft Pro",
-    businessEmail: user?.email || "",
-    businessAddress: "",
-    businessPhone: "",
-    businessWebsite: "",
-    businessSlogan: "",
-    lineItems: [{ 
-      id: uuidv4(), 
-      description: "", 
-      quantity: 1, 
-      rate: 0,
-      amount: 0
-    }],
-    taxRate: 7.5,
-    discountAmount: 0,
-    notes: "",
-    currency: "USD",
-    status: 'unpaid',
-    businessLogo: '',
-    signatureImage: '',
-    accountNumber: '',
-    bankDetails: '',
-    paymentTerms: '',
-  });
+  const [selectedTemplate, setSelectedTemplate] = useState<string>('minimalist');
+  const [selectedColorTheme, setSelectedColorTheme] = useState<string>('blue');
+  const [selectedCustomTemplate, setSelectedCustomTemplate] = useState<CustomTemplate | null>(null);
+  const [isHelpCenterOpen, setIsHelpCenterOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
-    calculateInvoice();
-  }, [formData.lineItems, formData.taxRate]);
+    setFormData(invoiceData);
+  }, [invoiceData]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+    setInvoiceData({ ...formData, [name]: value });
   };
 
-  const handleLineItemChange = (id: string, field: string, value: any) => {
-    setFormData(prevFormData => ({
-      ...prevFormData,
-      lineItems: prevFormData.lineItems.map(item => {
-        if (item.id === id) {
-          const updatedItem = { ...item, [field]: value };
-          // Calculate amount when quantity or rate changes
-          if (field === 'quantity' || field === 'rate') {
-            updatedItem.amount = Number(updatedItem.quantity) * Number(updatedItem.rate);
-          }
-          return updatedItem;
-        }
-        return item;
-      }),
-    }));
-  };
-
-  const addLineItem = () => {
-    setFormData(prevFormData => ({
-      ...prevFormData,
-      lineItems: [...prevFormData.lineItems, { 
-        id: uuidv4(), 
-        description: "", 
-        quantity: 1, 
-        rate: 0,
-        amount: 0
-      }],
-    }));
-  };
-
-  const removeLineItem = (id: string) => {
-    setFormData(prevFormData => ({
-      ...prevFormData,
-      lineItems: prevFormData.lineItems.filter(item => item.id !== id),
-    }));
-  };
-
-  const calculateInvoice = () => {
-    const updatedLineItems = formData.lineItems.map(item => ({
-      ...item,
-      amount: item.quantity * item.rate
-    }));
-    
-    setFormData(prevFormData => ({
-      ...prevFormData,
-      lineItems: updatedLineItems,
-    }));
+  const handleLineItemChange = (id: string, field: string, value: string | number) => {
+    const updatedLineItems = formData.lineItems.map(item =>
+      item.id === id ? { ...item, [field]: value } : item
+    );
+    setFormData({ ...formData, lineItems: updatedLineItems });
+    updateLineItem(id, field as keyof typeof item, value);
   };
 
   const handleTaxRateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const taxRate = parseFloat(e.target.value) || 0;
-    setFormData({ ...formData, taxRate });
+    const { value } = e.target;
+    const parsedValue = parseFloat(value);
+    setFormData({ ...formData, taxRate: parsedValue });
+    setInvoiceData({ ...formData, taxRate: parsedValue });
   };
 
   const handleCurrencyChange = (value: string) => {
     setFormData({ ...formData, currency: value });
+    setInvoiceData({ ...formData, currency: value });
   };
 
-  const handleStatusChange = (value: 'paid' | 'unpaid') => {
-    setFormData({ ...formData, status: value });
+  const handleStatusChange = (value: string) => {
+    setFormData({ ...formData, status: value as 'paid' | 'unpaid' });
+    setInvoiceData({ ...formData, status: value as 'paid' | 'unpaid' });
   };
 
   const handleSaveInvoice = () => {
-    // Convert local InvoiceData to ImportedInvoiceData format
-    const invoiceToSave: ImportedInvoiceData = {
-      ...formData,
-      id: uuidv4(),
-      createdAt: new Date().toISOString(),
-    };
-    saveInvoice(invoiceToSave);
-    alert("Invoice saved!");
-  };
-
-  const loadInvoice = (invoice: ImportedInvoiceData) => {
-    const loadedInvoice: InvoiceData = {
-      ...invoice,
-      lineItems: invoice.lineItems.map(item => ({
-        ...item,
-        amount: item.amount || (item.quantity * item.rate)
-      }))
-    };
-    setFormData(loadedInvoice);
+    saveInvoice(formData);
   };
 
   const handlePreview = () => {
@@ -186,34 +101,62 @@ const Invoices: React.FC = () => {
     setIsPreviewOpen(true);
   };
 
-  const handleDownload = () => {
-    const input = document.getElementById('invoice-preview');
-    if (!input) return;
+  const handleDownload = async () => {
+    const filename = `invoice-${formData.invoiceNumber}.pdf`;
+    const element = document.getElementById('invoice-preview');
 
-    const canvasOptions = { scale: 2, useCORS: true };
+    if (!element) {
+      console.error('Invoice preview element not found');
+      return;
+    }
 
-    html2canvas(input, canvasOptions)
-      .then((canvas) => {
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const imgProps = pdf.getImageProperties(imgData);
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-        pdf.save(`invoice-${formData.invoiceNumber}.pdf`);
+    try {
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff'
       });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      const imgWidth = 210;
+      const pageHeight = 295;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+
+      let position = 0;
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      pdf.save(filename);
+    } catch (error) {
+      console.error('Error exporting PDF:', error);
+    }
   };
 
-  const calculateSubtotal = () => {
-    return formData.lineItems.reduce((sum, item) => sum + item.amount, 0);
-  };
-
-  const calculateTax = () => {
-    return calculateSubtotal() * (formData.taxRate / 100);
-  };
-
-  const calculateTotalAmount = () => {
-    return calculateSubtotal() + calculateTax() - formData.discountAmount;
+  const handleSaveCustomTemplate = (template: Omit<CustomTemplate, "id" | "createdAt" | "userId">): CustomTemplate => {
+    const savedTemplate: CustomTemplate = {
+      ...template,
+      id: uuidv4(),
+      createdAt: new Date().toISOString(),
+      userId: user?.email || "anonymous"
+    };
+    
+    console.log("Custom template saved:", savedTemplate);
+    return savedTemplate;
   };
 
   return (
@@ -236,58 +179,115 @@ const Invoices: React.FC = () => {
             </div>
           </div>
 
-          {/* Main Content */}
+          {/* Main content */}
           <div className="p-4 sm:p-6">
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-              {/* Left Side - Invoice Form */}
-              <div className="space-y-6">
-                <Card className="bg-white shadow-lg">
-                  <CardHeader className="pb-4">
-                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-                      <CardTitle className="text-lg sm:text-xl font-semibold text-gray-900">
-                        Create New Invoice
-                      </CardTitle>
-                      <div className="flex flex-wrap gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setIsTemplateDialogOpen(true)}
-                          className="text-xs sm:text-sm"
-                        >
-                          <Palette className="w-4 h-4 mr-2" />
-                          Choose Template
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setIsLogoDialogOpen(true)}
-                          className="text-xs sm:text-sm"
-                        >
-                          <Image className="w-4 h-4 mr-2" />
-                          Logo & Signature
-                        </Button>
-                      </div>
-                    </div>
+            {/* Invoice form and other content */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Invoice Form */}
+              <div className="lg:col-span-2">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <FileText className="w-5 h-5" />
+                      Create Invoice
+                    </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    <div>
-                      <Label htmlFor="invoiceNumber">Invoice Number</Label>
-                      <Input
-                        type="text"
-                        id="invoiceNumber"
-                        name="invoiceNumber"
-                        value={formData.invoiceNumber}
-                        onChange={handleInputChange}
-                      />
+                    {/* Invoice details form */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Business Information */}
+                      <div className="space-y-4">
+                        <h3 className="font-semibold text-lg">Business Information</h3>
+                        <div>
+                          <Label htmlFor="businessName">Business Name</Label>
+                          <Input
+                            id="businessName"
+                            name="businessName"
+                            value={formData.businessName}
+                            onChange={handleInputChange}
+                            placeholder="Your Business Name"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="businessEmail">Business Email</Label>
+                          <Input
+                            id="businessEmail"
+                            name="businessEmail"
+                            type="email"
+                            value={formData.businessEmail}
+                            onChange={handleInputChange}
+                            placeholder="business@example.com"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="businessAddress">Business Address</Label>
+                          <Textarea
+                            id="businessAddress"
+                            name="businessAddress"
+                            value={formData.businessAddress}
+                            onChange={handleInputChange}
+                            placeholder="123 Business Street, City, State, ZIP"
+                            rows={3}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Client Information */}
+                      <div className="space-y-4">
+                        <h3 className="font-semibold text-lg">Client Information</h3>
+                        <div>
+                          <Label htmlFor="clientName">Client Name</Label>
+                          <Input
+                            id="clientName"
+                            name="clientName"
+                            value={formData.clientName}
+                            onChange={handleInputChange}
+                            placeholder="Client Name"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="clientEmail">Client Email</Label>
+                          <Input
+                            id="clientEmail"
+                            name="clientEmail"
+                            type="email"
+                            value={formData.clientEmail}
+                            onChange={handleInputChange}
+                            placeholder="client@example.com"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="clientAddress">Client Address</Label>
+                          <Textarea
+                            id="clientAddress"
+                            name="clientAddress"
+                            value={formData.clientAddress}
+                            onChange={handleInputChange}
+                            placeholder="123 Client Street, City, State, ZIP"
+                            rows={3}
+                          />
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Invoice Details */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
-                        <Label htmlFor="invoiceDate">Date</Label>
+                        <Label htmlFor="invoiceNumber">Invoice Number</Label>
                         <Input
-                          type="text"
+                          id="invoiceNumber"
+                          name="invoiceNumber"
+                          value={formData.invoiceNumber}
+                          onChange={handleInputChange}
+                          placeholder="INV-001"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="invoiceDate">Invoice Date</Label>
+                        <Input
                           id="invoiceDate"
                           name="invoiceDate"
+                          type="date"
                           value={formData.invoiceDate}
                           onChange={handleInputChange}
                         />
@@ -295,170 +295,81 @@ const Invoices: React.FC = () => {
                       <div>
                         <Label htmlFor="dueDate">Due Date</Label>
                         <Input
-                          type="text"
                           id="dueDate"
                           name="dueDate"
+                          type="date"
                           value={formData.dueDate}
                           onChange={handleInputChange}
                         />
                       </div>
                     </div>
 
-                    <div>
-                      <Label htmlFor="clientName">Client Name</Label>
-                      <Input
-                        type="text"
-                        id="clientName"
-                        name="clientName"
-                        value={formData.clientName}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="clientEmail">Client Email</Label>
-                      <Input
-                        type="email"
-                        id="clientEmail"
-                        name="clientEmail"
-                        value={formData.clientEmail}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="clientAddress">Client Address</Label>
-                      <Textarea
-                        id="clientAddress"
-                        name="clientAddress"
-                        value={formData.clientAddress}
-                        onChange={handleInputChange}
-                        rows={3}
-                      />
-                    </div>
-
-                    <h3 className="text-lg font-semibold text-gray-900">Business Information</h3>
-
-                    <div>
-                      <Label htmlFor="businessName">Business Name</Label>
-                      <Input
-                        type="text"
-                        id="businessName"
-                        name="businessName"
-                        value={formData.businessName}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="businessEmail">Business Email</Label>
-                      <Input
-                        type="email"
-                        id="businessEmail"
-                        name="businessEmail"
-                        value={formData.businessEmail}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="businessAddress">Business Address</Label>
-                      <Textarea
-                        id="businessAddress"
-                        name="businessAddress"
-                        value={formData.businessAddress}
-                        onChange={handleInputChange}
-                        rows={3}
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="businessPhone">Business Phone</Label>
-                        <Input
-                          type="tel"
-                          id="businessPhone"
-                          name="businessPhone"
-                          value={formData.businessPhone}
-                          onChange={handleInputChange}
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="businessWebsite">Business Website</Label>
-                        <Input
-                          type="url"
-                          id="businessWebsite"
-                          name="businessWebsite"
-                          value={formData.businessWebsite}
-                          onChange={handleInputChange}
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="businessSlogan">Business Slogan</Label>
-                      <Input
-                        type="text"
-                        id="businessSlogan"
-                        name="businessSlogan"
-                        value={formData.businessSlogan}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-
-                    <h3 className="text-lg font-semibold text-gray-900">Line Items</h3>
-
-                    {formData.lineItems.map((item) => (
-                      <div key={item.id} className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-center">
-                        <div>
-                          <Label htmlFor={`description-${item.id}`}>Description</Label>
-                          <Input
-                            type="text"
-                            id={`description-${item.id}`}
-                            value={item.description}
-                            onChange={(e) => handleLineItemChange(item.id, 'description', e.target.value)}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor={`quantity-${item.id}`}>Quantity</Label>
-                          <Input
-                            type="number"
-                            id={`quantity-${item.id}`}
-                            value={item.quantity}
-                            onChange={(e) => handleLineItemChange(item.id, 'quantity', Number(e.target.value))}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor={`rate-${item.id}`}>Rate</Label>
-                          <Input
-                            type="number"
-                            id={`rate-${item.id}`}
-                            value={item.rate}
-                            onChange={(e) => handleLineItemChange(item.id, 'rate', Number(e.target.value))}
-                          />
-                        </div>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => removeLineItem(item.id)}
-                          disabled={formData.lineItems.length === 1}
-                        >
-                          Remove
+                    {/* Line Items */}
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-semibold text-lg">Line Items</h3>
+                        <Button type="button" onClick={addLineItem} variant="outline" size="sm">
+                          Add Item
                         </Button>
                       </div>
-                    ))}
+                      <div className="space-y-2">
+                        {formData.lineItems.map((item, index) => (
+                          <div key={item.id} className="grid grid-cols-1 md:grid-cols-5 gap-2 p-4 border rounded-lg">
+                            <div className="md:col-span-2">
+                              <Input
+                                placeholder="Description"
+                                value={item.description}
+                                onChange={(e) => handleLineItemChange(item.id, 'description', e.target.value)}
+                              />
+                            </div>
+                            <div>
+                              <Input
+                                type="number"
+                                placeholder="Qty"
+                                value={item.quantity}
+                                onChange={(e) => handleLineItemChange(item.id, 'quantity', Number(e.target.value))}
+                              />
+                            </div>
+                            <div>
+                              <Input
+                                type="number"
+                                step="0.01"
+                                placeholder="Rate"
+                                value={item.rate}
+                                onChange={(e) => handleLineItemChange(item.id, 'rate', Number(e.target.value))}
+                              />
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="font-medium">${item.amount.toFixed(2)}</span>
+                              {formData.lineItems.length > 1 && (
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => removeLineItem(item.id)}
+                                  className="text-red-500 hover:text-red-700"
+                                >
+                                  Remove
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
 
-                    <Button onClick={addLineItem}>Add Line Item</Button>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Invoice Settings */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
                         <Label htmlFor="taxRate">Tax Rate (%)</Label>
                         <Input
-                          type="number"
                           id="taxRate"
                           name="taxRate"
+                          type="number"
+                          step="0.01"
                           value={formData.taxRate}
                           onChange={handleTaxRateChange}
+                          placeholder="7.5"
                         />
                       </div>
                       <div>
@@ -472,13 +383,24 @@ const Invoices: React.FC = () => {
                             <SelectItem value="EUR">EUR (€)</SelectItem>
                             <SelectItem value="GBP">GBP (£)</SelectItem>
                             <SelectItem value="NGN">NGN (₦)</SelectItem>
-                            <SelectItem value="CAD">CAD (C$)</SelectItem>
-                            <SelectItem value="AUD">AUD (A$)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label htmlFor="status">Status</Label>
+                        <Select value={formData.status} onValueChange={handleStatusChange}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="unpaid">Unpaid</SelectItem>
+                            <SelectItem value="paid">Paid</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                     </div>
 
+                    {/* Notes */}
                     <div>
                       <Label htmlFor="notes">Notes</Label>
                       <Textarea
@@ -486,286 +408,103 @@ const Invoices: React.FC = () => {
                         name="notes"
                         value={formData.notes}
                         onChange={handleInputChange}
+                        placeholder="Additional notes or payment instructions..."
                         rows={3}
                       />
                     </div>
 
-                    <div>
-                      <Label htmlFor="paymentTerms">Terms & Conditions</Label>
-                      <Textarea
-                        id="paymentTerms"
-                        name="paymentTerms"
-                        value={formData.paymentTerms}
-                        onChange={handleInputChange}
-                        rows={3}
-                      />
-                    </div>
-
-                    <h3 className="text-lg font-semibold text-gray-900">Payment Information</h3>
-
-                    <div>
-                      <Label htmlFor="accountNumber">Account Number</Label>
-                      <Input
-                        type="text"
-                        id="accountNumber"
-                        name="accountNumber"
-                        value={formData.accountNumber}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="bankDetails">Bank Details</Label>
-                      <Input
-                        type="text"
-                        id="bankDetails"
-                        name="bankDetails"
-                        value={formData.bankDetails}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="status">Status</Label>
-                      <Select value={formData.status} onValueChange={handleStatusChange}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="paid">Paid</SelectItem>
-                          <SelectItem value="unpaid">Unpaid</SelectItem>
-                        </SelectContent>
-                      </Select>
+                    {/* Action Buttons */}
+                    <div className="flex flex-wrap gap-2">
+                      <Button onClick={handleSaveInvoice} className="flex items-center gap-2">
+                        <Save className="w-4 h-4" />
+                        Save Invoice
+                      </Button>
+                      <Button onClick={handlePreview} variant="outline" className="flex items-center gap-2">
+                        <Eye className="w-4 h-4" />
+                        Preview
+                      </Button>
+                      <Button onClick={handleDownload} variant="outline" className="flex items-center gap-2">
+                        <Download className="w-4 h-4" />
+                        Download PDF
+                      </Button>
+                      <Button 
+                        onClick={() => setIsSendDialogOpen(true)} 
+                        variant="outline" 
+                        className="flex items-center gap-2"
+                      >
+                        <Mail className="w-4 h-4" />
+                        Send Invoice
+                      </Button>
+                      <Button 
+                        onClick={() => setIsTemplateDialogOpen(true)} 
+                        variant="outline" 
+                        className="flex items-center gap-2"
+                      >
+                        <Palette className="w-4 h-4" />
+                        Templates
+                      </Button>
+                      <Button 
+                        onClick={() => setIsLogoDialogOpen(true)} 
+                        variant="outline" 
+                        className="flex items-center gap-2"
+                      >
+                        <Image className="w-4 h-4" />
+                        Logo & Signature
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
               </div>
 
-              {/* Right Side - Live Preview */}
-              <div className="space-y-6">
-                <Card className="bg-white shadow-lg">
-                  <CardHeader className="pb-4">
-                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-                      <CardTitle className="text-lg sm:text-xl font-semibold text-gray-900">
-                        Live Preview
-                      </CardTitle>
-                      <div className="flex flex-wrap gap-2">
-                        <Button
-                          onClick={handlePreview}
-                          variant="outline"
-                          size="sm"
-                          className="text-xs sm:text-sm"
-                        >
-                          <Eye className="w-4 h-4 mr-2" />
-                          Preview
-                        </Button>
-                        <Button
-                          onClick={handleDownload}
-                          variant="outline"
-                          size="sm"
-                          className="text-xs sm:text-sm"
-                        >
-                          <Download className="w-4 h-4 mr-2" />
-                          Download
-                        </Button>
-                        <Button
-                          onClick={() => setIsSendDialogOpen(true)}
-                          variant="outline"
-                          size="sm"
-                          className="text-xs sm:text-sm"
-                        >
-                          <Mail className="w-4 h-4 mr-2" />
-                          Email
-                        </Button>
-                        <Button
-                          onClick={handleSaveInvoice}
-                          size="sm"
-                          className="bg-blue-600 hover:bg-blue-700 text-xs sm:text-sm"
-                        >
-                          <Save className="w-4 h-4 mr-2" />
-                          Save Invoice
-                        </Button>
-                      </div>
-                    </div>
+              {/* Saved Invoices */}
+              <div>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Saved Invoices</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="bg-gray-50 rounded-lg p-4 min-h-[600px]">
-                      <div className="bg-white rounded shadow-sm p-4 sm:p-6 overflow-auto">
-                        <div id="invoice-preview">
-                          <div className="flex justify-between items-start mb-4">
-                            <div>
-                              {formData.businessLogo && (
-                                <img
-                                  src={formData.businessLogo}
-                                  alt="Business Logo"
-                                  className="max-w-40 max-h-20 mb-4"
-                                />
-                              )}
-                              <h2 className="text-2xl font-bold">{formData.businessName}</h2>
-                              <p>{formData.businessAddress}</p>
-                              <p>{formData.businessEmail}</p>
-                              <p>{formData.businessPhone}</p>
-                              <p>{formData.businessWebsite}</p>
-                              <p>{formData.businessSlogan}</p>
+                    <div className="space-y-3">
+                      {savedInvoices.length === 0 ? (
+                        <p className="text-gray-500 text-center py-4">No saved invoices yet</p>
+                      ) : (
+                        savedInvoices.map((invoice) => (
+                          <div key={invoice.id} className="p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="font-medium">{invoice.invoiceNumber}</p>
+                                <p className="text-sm text-gray-600">{invoice.clientName}</p>
+                                <p className="text-sm font-medium">{formatCurrency(calculateTotal(invoice))}</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Badge variant={invoice.status === 'paid' ? 'default' : 'secondary'}>
+                                  {invoice.status}
+                                </Badge>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => loadInvoice(invoice)}
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                              </div>
                             </div>
-                            <div className="text-right">
-                              <h1 className="text-4xl font-bold">INVOICE</h1>
-                              <p>Invoice Number: {formData.invoiceNumber}</p>
-                              <p>Date: {formData.invoiceDate}</p>
-                              <p>Due Date: {formData.dueDate}</p>
-                            </div>
                           </div>
-
-                          <div className="mb-4">
-                            <h3>Bill to:</h3>
-                            <p>{formData.clientName}</p>
-                            <p>{formData.clientAddress}</p>
-                            <p>{formData.clientEmail}</p>
-                          </div>
-
-                          <table className="w-full border-collapse">
-                            <thead>
-                              <tr>
-                                <th className="text-left py-2">Description</th>
-                                <th className="text-right py-2">Quantity</th>
-                                <th className="text-right py-2">Rate</th>
-                                <th className="text-right py-2">Total</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {formData.lineItems.map((item) => (
-                                <tr key={item.id}>
-                                  <td className="py-2">{item.description}</td>
-                                  <td className="text-right py-2">{item.quantity}</td>
-                                  <td className="text-right py-2">{formatCurrency(item.rate)}</td>
-                                  <td className="text-right py-2">{formatCurrency(item.amount)}</td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-
-                          <div className="text-right mt-4">
-                            <p>Subtotal: {formatCurrency(calculateSubtotal())}</p>
-                            <p>Tax ({formData.taxRate}%): {formatCurrency(calculateTax())}</p>
-                            <h2 className="text-2xl font-bold">Total: {formatCurrency(calculateTotalAmount())}</h2>
-                          </div>
-
-                          <div className="mt-8">
-                            <h3>Notes:</h3>
-                            <p>{formData.notes}</p>
-                          </div>
-
-                          <div className="mt-8">
-                            <h3>Terms & Conditions:</h3>
-                            <p>{formData.paymentTerms}</p>
-                          </div>
-
-                          <div className="mt-8">
-                            <h3>Payment Information:</h3>
-                            <p>Account Number: {formData.accountNumber}</p>
-                            <p>Bank Details: {formData.bankDetails}</p>
-                          </div>
-
-                          {formData.signatureImage && (
-                            <div className="mt-8">
-                              <h3>Signature:</h3>
-                              <img
-                                src={formData.signatureImage}
-                                alt="Signature"
-                                className="max-w-40 max-h-20"
-                              />
-                            </div>
-                          )}
-                        </div>
-                      </div>
+                        ))
+                      )}
                     </div>
                   </CardContent>
                 </Card>
               </div>
-            </div>
-
-            {/* Saved Invoices Section */}
-            <div className="mt-8">
-              <Card className="bg-white shadow-lg">
-                <CardHeader>
-                  <CardTitle className="text-lg sm:text-xl font-semibold text-gray-900">
-                    Saved Invoices ({savedInvoices.length})
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {savedInvoices.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">
-                      <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                      <p className="text-sm sm:text-base">No saved invoices yet. Create your first invoice above!</p>
-                    </div>
-                  ) : (
-                    <div className="overflow-x-auto">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {savedInvoices.map((invoice, index) => (
-                          <div key={index} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                            <div className="flex justify-between items-start mb-3">
-                              <div className="flex-1 min-w-0">
-                                <h3 className="font-medium text-gray-900 truncate">
-                                  Invoice #{invoice.invoiceNumber}
-                                </h3>
-                                <p className="text-sm text-gray-500 truncate">
-                                  {invoice.clientName}
-                                </p>
-                              </div>
-                              <Badge 
-                                variant={invoice.status === 'paid' ? 'default' : 'destructive'}
-                                className="flex-shrink-0 ml-2"
-                              >
-                                {invoice.status}
-                              </Badge>
-                            </div>
-                            <div className="space-y-2 text-sm text-gray-600">
-                              <p>Date: {invoice.invoiceDate}</p>
-                              <p>Total: {formatCurrency(calculateTotal(invoice))}</p>
-                            </div>
-                            <div className="flex gap-2 mt-3">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => loadInvoice(invoice)}
-                                className="flex-1 text-xs"
-                              >
-                                <Edit className="w-3 h-3 mr-1" />
-                                Edit
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                  setSelectedInvoice(invoice);
-                                  setIsPreviewOpen(true);
-                                }}
-                                className="flex-1 text-xs"
-                              >
-                                <Eye className="w-3 h-3 mr-1" />
-                                View
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
             </div>
           </div>
         </div>
 
-        {/* Support Bubble */}
-        <SupportBubble onHelpClick={() => setIsHelpCenterOpen(true)} />
-
-        {/* Modals */}
+        {/* Dialogs */}
         <LogoSignatureUpload
           isOpen={isLogoDialogOpen}
           onClose={() => setIsLogoDialogOpen(false)}
-          onLogoUpload={(logoUrl) => setFormData({...formData, businessLogo: logoUrl})}
-          onSignatureUpload={(signatureUrl) => setFormData({...formData, signatureImage: signatureUrl})}
+          onLogoUpload={(logo) => setFormData({ ...formData, businessLogo: logo })}
+          onSignatureUpload={(signature) => setFormData({ ...formData, signatureImage: signature })}
           currentLogo={formData.businessLogo}
           currentSignature={formData.signatureImage}
         />
@@ -773,38 +512,32 @@ const Invoices: React.FC = () => {
         <InvoiceTemplateSelector
           isOpen={isTemplateDialogOpen}
           onClose={() => setIsTemplateDialogOpen(false)}
-          onSelectTemplate={(template, colorTheme, customTemplateId) => {
-            setSelectedTemplate(template);
-            setSelectedColorTheme(colorTheme);
-            if (customTemplateId) setSelectedCustomTemplate(customTemplateId);
-            setIsTemplateDialogOpen(false);
-          }}
-          currentTemplate={selectedTemplate}
-          currentColorTheme={selectedColorTheme}
-          onSaveCustomTemplate={(template) => {
-            console.log('Custom template:', template);
-            return template; // Return the template to fix the TypeScript error
-          }}
-          onDeleteCustomTemplate={(templateId) => console.log('Delete template:', templateId)}
+          selectedTemplate={selectedTemplate}
+          onSelectTemplate={setSelectedTemplate}
+          selectedColorTheme={selectedColorTheme}
+          onSelectColorTheme={setSelectedColorTheme}
+          selectedCustomTemplate={selectedCustomTemplate}
+          onSelectCustomTemplate={setSelectedCustomTemplate}
+          onSaveCustomTemplate={handleSaveCustomTemplate}
         />
 
         <SendInvoiceDialog
           isOpen={isSendDialogOpen}
           onClose={() => setIsSendDialogOpen(false)}
-          onSend={() => console.log('Invoice sent!')}
-          invoiceData={formData}
+          invoice={formData}
         />
 
         <InvoicePreviewModal
           isOpen={isPreviewOpen}
           onClose={() => setIsPreviewOpen(false)}
-          invoiceData={selectedInvoice || formData}
-          formatCurrency={formatCurrency}
-          calculateSubtotal={calculateSubtotal}
-          calculateTax={calculateTax}
-          calculateTotal={calculateTotalAmount}
+          invoice={selectedInvoice}
+          template={selectedTemplate}
+          colorTheme={selectedColorTheme}
+          customTemplate={selectedCustomTemplate}
         />
 
+        <SupportBubble onHelpClick={() => setIsHelpCenterOpen(true)} />
+        
         <HelpCenter 
           isOpen={isHelpCenterOpen} 
           onClose={() => setIsHelpCenterOpen(false)} 

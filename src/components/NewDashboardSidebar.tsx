@@ -1,112 +1,130 @@
 
 import React from "react";
-import { Home, FileText, Users, CreditCard, BarChart3, Settings, HelpCircle, LogOut } from "lucide-react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { useAuthLocal } from "@/hooks/useAuthLocal";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarHeader,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
+import { 
+  Sidebar, 
+  SidebarContent, 
+  SidebarGroup, 
+  SidebarGroupContent, 
+  SidebarGroupLabel, 
+  SidebarHeader, 
+  SidebarMenu, 
+  SidebarMenuButton, 
+  SidebarMenuItem 
 } from "@/components/ui/sidebar";
+import { 
+  Home, 
+  FileText, 
+  Users, 
+  DollarSign, 
+  BarChart3, 
+  Settings, 
+  FolderOpen, 
+  Clock,
+  Calendar,
+  StickyNote,
+  Calculator
+} from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
+import GlobalSearchBar from "@/components/GlobalSearchBar";
+
+const menuItems = [
+  {
+    title: "Dashboard",
+    url: "/dashboard",
+    icon: Home,
+  },
+  {
+    title: "Invoices",
+    url: "/invoices",
+    icon: FileText,
+  },
+  {
+    title: "Estimates",
+    url: "/estimates", 
+    icon: Calculator,
+  },
+  {
+    title: "Clients",
+    url: "/clients",
+    icon: Users,
+  },
+  {
+    title: "Projects",
+    url: "/projects",
+    icon: FolderOpen,
+  },
+  {
+    title: "Time Tracking",
+    url: "/time-tracking",
+    icon: Clock,
+  },
+  {
+    title: "Payments",
+    url: "/payments",
+    icon: DollarSign,
+  },
+  {
+    title: "Expenses",
+    url: "/expenses",
+    icon: BarChart3,
+  },
+  {
+    title: "Calendar",
+    url: "/calendar",
+    icon: Calendar,
+  },
+  {
+    title: "Notes",
+    url: "/notes",
+    icon: StickyNote,
+  },
+  {
+    title: "Settings",
+    url: "/settings",
+    icon: Settings,
+  },
+];
 
 const NewDashboardSidebar: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, signOut } = useAuthLocal();
-
-  const menuItems = [
-    { icon: Home, label: "Dashboard", path: "/dashboard" },
-    { icon: FileText, label: "Invoices", path: "/invoices" },
-    { icon: FileText, label: "Estimates", path: "/estimates" },
-    { icon: Users, label: "Clients", path: "/clients" },
-    { icon: CreditCard, label: "Payments", path: "/payments" },
-    { icon: BarChart3, label: "Expenses", path: "/expenses" },
-    { icon: Users, label: "Projects", path: "/projects" },
-    { icon: BarChart3, label: "Time Tracking", path: "/time-tracking" },
-    { icon: Settings, label: "Settings", path: "/settings" },
-    { icon: HelpCircle, label: "Help", path: "/help" },
-  ];
-
-  const handleMenuClick = (path: string) => {
-    navigate(path);
-  };
-
-  const handleSignOut = () => {
-    signOut();
-    navigate('/');
-  };
-
-  const getUserInitials = () => {
-    if (!user?.profileName) return "U";
-    return user.profileName
-      .split(' ')
-      .map(name => name[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  };
 
   return (
-    <Sidebar className="border-r border-gray-200">
-      <SidebarHeader className="p-6 border-b border-gray-200">
-        <h1 className="text-xl font-bold text-gray-800">InvoiceApp</h1>
+    <Sidebar>
+      <SidebarHeader className="border-b border-sidebar-border">
+        <div className="flex flex-col gap-2 px-2 py-2">
+          <div className="flex items-center gap-2">
+            <FileText className="h-6 w-6 text-blue-600" />
+            <span className="font-bold text-lg">InvoiceCraft Pro</span>
+          </div>
+          <GlobalSearchBar />
+        </div>
       </SidebarHeader>
-
       <SidebarContent>
         <SidebarGroup>
+          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map((item, index) => {
-                const isActive = location.pathname === item.path;
-                return (
-                  <SidebarMenuItem key={index}>
-                    <SidebarMenuButton
-                      onClick={() => handleMenuClick(item.path)}
-                      isActive={isActive}
-                      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors cursor-pointer ${
-                        isActive
-                          ? "bg-blue-50 text-blue-600 border-r-2 border-blue-600"
-                          : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                      }`}
+              {menuItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton 
+                    asChild
+                    isActive={location.pathname === item.url}
+                  >
+                    <button
+                      onClick={() => navigate(item.url)}
+                      className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-accent hover:text-accent-foreground"
                     >
-                      <item.icon className="w-5 h-5" />
-                      <span className="font-medium">{item.label}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.title}</span>
+                    </button>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-
-      <SidebarFooter className="p-4 border-t border-gray-200">
-        <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 cursor-pointer group">
-          <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-            <span className="text-white text-sm font-medium">
-              {getUserInitials()}
-            </span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 truncate">
-              {user?.profileName || "User"}
-            </p>
-            <p className="text-xs text-gray-500 truncate">
-              {user?.email || "user@example.com"}
-            </p>
-          </div>
-          <LogOut 
-            className="w-4 h-4 text-gray-400 group-hover:text-red-500 transition-colors" 
-            onClick={handleSignOut}
-          />
-        </div>
-      </SidebarFooter>
     </Sidebar>
   );
 };
