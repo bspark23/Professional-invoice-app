@@ -6,11 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useAuthLocal } from "@/hooks/useAuthLocal";
 import { Label } from "@/components/ui/label";
+import { useProfiles } from "@/hooks/useProfiles";
 
 const SignIn = () => {
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const { signIn } = useAuthLocal();
+  const { profiles, setActiveProfile } = useProfiles(); // Use setActiveProfile here
   const navigate = useNavigate();
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -20,7 +22,22 @@ const SignIn = () => {
     if (!res.success) {
       setError(res.error!);
     } else {
-      // After sign in, navigate to dashboard
+      // After sign in, find and set the profile whose 'name' matches logged in profileName
+      const stored = localStorage.getItem("invoicecraft-auth-user");
+      let profileName: string | null = null;
+      if (stored) {
+        try {
+          profileName = JSON.parse(stored).profileName;
+        } catch { /* ignore */ }
+      }
+      if (profileName) {
+        // Find the business profile with the matching name
+        const profile = profiles.find((p) => p.name === profileName);
+        if (profile) {
+          setActiveProfile(profile.id);
+        }
+      }
+      // Now continue to dashboard
       navigate("/dashboard");
     }
   };

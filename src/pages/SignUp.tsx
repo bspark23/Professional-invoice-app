@@ -6,12 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useAuthLocal } from "@/hooks/useAuthLocal";
 import { Label } from "@/components/ui/label";
+import { useProfiles } from "@/hooks/useProfiles";
 
 const SignUp = () => {
   const [profileName, setProfileName] = useState("");
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const { signUp } = useAuthLocal();
+  const { profiles, createProfile, setActiveProfile } = useProfiles(); // Use createProfile
   const navigate = useNavigate();
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -21,7 +23,20 @@ const SignUp = () => {
     if (!res.success) {
       setError(res.error!);
     } else {
-      // After sign up, navigate to dashboard
+      // After sign up, create and activate business profile if it doesn't exist
+      let profile = profiles.find((p) => p.name === profileName);
+      if (!profile) {
+        profile = createProfile({
+          name: profileName,
+          logo: "",
+          email: email,
+          address: "",
+        });
+      }
+      if (profile) {
+        setActiveProfile(profile.id);
+      }
+      // Navigate to dashboard
       navigate("/dashboard");
     }
   };
