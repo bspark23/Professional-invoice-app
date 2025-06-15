@@ -25,6 +25,7 @@ import SignUp from "@/pages/SignUp";
 import LanguageSelector from "@/pages/LanguageSelector";
 import NotFound from "@/pages/NotFound";
 import VoluntaryContributionPage from "@/pages/VoluntaryContributionPage";
+import HomePage from "@/pages/HomePage";
 
 const queryClient = new QueryClient();
 
@@ -36,7 +37,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Navigate to="/welcome" replace />} />
+            <Route path="/" element={<HomePage />} />
             <Route path="/welcome" element={<Welcome />} />
             <Route path="/signin" element={<SignIn />} />
             <Route path="/signup" element={<SignUp />} />

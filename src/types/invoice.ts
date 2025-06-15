@@ -59,10 +59,10 @@ export const currencies = [
 ];
 
 export const colorThemes = [
-  { id: 'blue', name: 'Blue', primary: '#3B82F6', secondary: '#EFF6FF' },
-  { id: 'green', name: 'Green', primary: '#10B981', secondary: '#ECFDF5' },
-  { id: 'purple', name: 'Purple', primary: '#8B5CF6', secondary: '#F3E8FF' },
-  { id: 'red', name: 'Red', primary: '#EF4444', secondary: '#FEF2F2' },
-  { id: 'orange', name: 'Orange', primary: '#F97316', secondary: '#FFF7ED' },
-  { id: 'gray', name: 'Gray', primary: '#6B7280', secondary: '#F9FAFB' },
+  { id: 'blue', name: 'Blue', primary: '#3B82F6', secondary: '#EFF6FF', value: 'blue', type: 'solid', gradient: 'from-blue-500 to-blue-600', color: '#3B82F6' },
+  { id: 'green', name: 'Green', primary: '#10B981', secondary: '#ECFDF5', value: 'green', type: 'solid', gradient: 'from-green-500 to-green-600', color: '#10B981' },
+  { id: 'purple', name: 'Purple', primary: '#8B5CF6', secondary: '#F3E8FF', value: 'purple', type: 'solid', gradient: 'from-purple-500 to-purple-600', color: '#8B5CF6' },
+  { id: 'red', name: 'Red', primary: '#EF4444', secondary: '#FEF2F2', value: 'red', type: 'solid', gradient: 'from-red-500 to-red-600', color: '#EF4444' },
+  { id: 'orange', name: 'Orange', primary: '#F97316', secondary: '#FFF7ED', value: 'orange', type: 'solid', gradient: 'from-orange-500 to-orange-600', color: '#F97316' },
+  { id: 'gray', name: 'Gray', primary: '#6B7280', secondary: '#F9FAFB', value: 'gray', type: 'solid', gradient: 'from-gray-500 to-gray-600', color: '#6B7280' },
 ];
