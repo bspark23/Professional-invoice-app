@@ -27,18 +27,17 @@ const InvoiceList = ({
 }: InvoiceListProps) => {
   // Clone an invoice
   const handleDuplicate = (invoice: InvoiceData) => {
-    // Create new object w/ new id and new invoice number
     const newId = Date.now().toString();
     const year = new Date().getFullYear();
     const month = String(new Date().getMonth() + 1).padStart(2, '0');
-    const nextNumber = Math.floor(((Math.random() * 900) + 100)); // random 3-digit for illustration
+    const nextNumber = Math.floor(((Math.random() * 900) + 100));
     const newInvoiceNumber = `INV-${year}-${month}-${nextNumber}`;
-    const newInvoice = {
+    const newInvoice: InvoiceData = {
       ...invoice,
       id: newId,
       invoiceNumber: newInvoiceNumber,
       createdAt: new Date().toISOString(),
-      status: 'unpaid'
+      status: 'unpaid',
     };
     loadInvoice(newInvoice); // load into form
     setViewMode('create');

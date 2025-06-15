@@ -155,7 +155,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/30 dark:bg-gradient-to-br dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-4">
       <div className="max-w-6xl mx-auto space-y-6">
-        {/* Enhanced Header */}
+        {/* Header with Calendar View button */}
         <div className="flex items-center justify-between bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl p-6 shadow-xl border-0">
           <div className="flex items-center space-x-4">
             <div className="flex-shrink-0 w-14 h-14 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg flex items-center justify-center overflow-hidden">
@@ -175,6 +175,11 @@ const Index = () => {
             <Button onClick={toggleDarkMode} variant="outline" size="sm" className="hover:bg-gray-100 dark:hover:bg-gray-700">
               {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </Button>
+            <a href="/calendar">
+              <Button variant="outline" className="hover:bg-yellow-50 dark:hover:bg-yellow-900/30">
+                Calendar View
+              </Button>
+            </a>
             <a href="/expenses">
               <Button variant="outline" className="hover:bg-green-50 dark:hover:bg-green-900/30">
                 Track Expenses

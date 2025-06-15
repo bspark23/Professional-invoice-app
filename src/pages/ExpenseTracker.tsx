@@ -1,4 +1,5 @@
 
+// Repair persistent loading, ensure correct income from savedInvoices, and render properly
 import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,9 +28,10 @@ export default function ExpenseTracker() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [form, setForm] = useState({ name: "", amount: "", date: "", category: "" });
   const [error, setError] = useState<string | null>(null);
+  const [currency, setCurrency] = useState("USD");
 
-  // Load expenses on mount
   useEffect(() => {
+    // Load expenses
     const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (saved) {
       try {
@@ -38,20 +40,26 @@ export default function ExpenseTracker() {
         setExpenses([]);
       }
     }
-  }, []);
+    // Get currency from invoices if any
+    if (savedInvoices.length > 0) {
+      setCurrency(savedInvoices[0].currency || "USD");
+    }
+  }, [savedInvoices.length]);
 
-  // Persist expenses to localStorage on change
   useEffect(() => {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(expenses));
   }, [expenses]);
 
-  // Calculate totals
   const totalExpenses = useMemo(
     () => expenses.reduce((sum, e) => sum + e.amount, 0),
     [expenses]
   );
   const invoiceIncome = useMemo(
-    () => savedInvoices.reduce((sum, inv) => sum + inv.lineItems.reduce((n, item) => n + item.amount, 0), 0),
+    () =>
+      savedInvoices.reduce((sum, inv) => sum +
+        (inv.lineItems.reduce((n, item) => n + item.amount, 0) +
+        (inv.lineItems.reduce((n, item) => n + item.amount, 0) * inv.taxRate / 100) -
+        inv.discountAmount), 0),
     [savedInvoices]
   );
 
@@ -61,7 +69,6 @@ export default function ExpenseTracker() {
   };
 
   const handleAddExpense = () => {
-    // validation
     if (!form.name || !form.amount || !form.date || !form.category) {
       setError("All fields required");
       return;
@@ -94,7 +101,7 @@ export default function ExpenseTracker() {
       <Card className="w-full max-w-2xl shadow-2xl border-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur mb-8">
         <CardHeader>
           <CardTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Expense Tracker</CardTitle>
-          <p className="text-gray-600 dark:text-gray-300">Track business expenses &amp; compare with invoice income</p>
+          <p className="text-gray-600 dark:text-gray-300">Track business expenses & compare with invoice income</p>
         </CardHeader>
         <CardContent>
           <form className="flex flex-wrap gap-4 mb-4" onSubmit={e => { e.preventDefault(); handleAddExpense(); }}>
@@ -128,7 +135,7 @@ export default function ExpenseTracker() {
               {expenses.map(e => (
                 <div key={e.id} className="flex items-center justify-between p-1 rounded bg-gray-50 dark:bg-gray-700 group">
                   <span>{e.name} <span className="text-xs text-gray-400 ml-2">({e.category})</span></span>
-                  <span>{formatCurrency(e.amount)}</span>
+                  <span>{formatCurrency(e.amount, currency)}</span>
                   <span className="text-xs text-gray-400">{e.date}</span>
                   <button
                     className="ml-2 text-xs text-red-500 opacity-0 group-hover:opacity-100 underline"
@@ -143,18 +150,18 @@ export default function ExpenseTracker() {
             </div>
             <div className="flex justify-between font-bold text-lg mt-4">
               <span>Total Expenses</span>
-              <span>{formatCurrency(totalExpenses)}</span>
+              <span>{formatCurrency(totalExpenses, currency)}</span>
             </div>
           </div>
           <Separator className="my-4"/>
           <div className="flex justify-between items-center font-medium">
             <span>Invoice Income</span>
-            <span>{formatCurrency(invoiceIncome)}</span>
+            <span>{formatCurrency(invoiceIncome, currency)}</span>
           </div>
           <div className="flex justify-between items-center font-bold mt-2">
             <span>Net Profit (Income - Expenses)</span>
             <span className={invoiceIncome - totalExpenses >= 0 ? "text-green-600" : "text-red-600"}>
-              {formatCurrency(invoiceIncome - totalExpenses)}
+              {formatCurrency(invoiceIncome - totalExpenses, currency)}
             </span>
           </div>
         </CardContent>

@@ -10,6 +10,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import LandingPage from "@/components/LandingPage";
 import ExpenseTracker from "./pages/ExpenseTracker";
+import CalendarView from "./pages/CalendarView";
 
 const queryClient = new QueryClient();
 
@@ -44,6 +45,7 @@ const AppContent = () => {
       <Route path="/welcome" element={<Welcome />} />
       <Route path="/dashboard" element={<Index />} />
       <Route path="/expenses" element={<ExpenseTracker />} />
+      <Route path="/calendar" element={<CalendarView />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
