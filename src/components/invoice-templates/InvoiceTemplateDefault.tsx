@@ -1,3 +1,4 @@
+
 import React from "react";
 import { InvoiceData } from "@/types/invoice";
 
@@ -110,9 +111,13 @@ const InvoiceTemplateDefault: React.FC<InvoiceTemplateProps> = ({
         <div className="flex flex-col md:flex-row items-end justify-between mt-8 pt-3 border-t border-gray-200">
           <div>
             <div className="text-xs mb-2">Bank details:</div>
-            <div className="text-xs text-gray-500">Bank: Example Bank</div>
-            <div className="text-xs text-gray-500">Account: 123456789</div>
-            <div className="text-xs text-gray-500">Routing: 987654321</div>
+            {invoiceData.bankDetails ? (
+              <div className="text-xs text-gray-500 whitespace-pre-line">
+                {invoiceData.bankDetails}
+              </div>
+            ) : (
+              <div className="text-xs text-gray-400 italic">Not provided.</div>
+            )}
           </div>
           <div className="flex flex-col items-end mt-4 md:mt-0">
             {invoiceData.signatureImage && (
@@ -122,9 +127,15 @@ const InvoiceTemplateDefault: React.FC<InvoiceTemplateProps> = ({
                 className="w-48 h-16 object-contain border rounded bg-white mb-1"
               />
             )}
-            <div className="text-sm font-signature">Jane Smith</div>
-            <div className="text-xs text-gray-700 font-semibold mt-[-2px]">Founder & CEO</div>
-            <div className="text-xs text-gray-500">For {invoiceData.businessName}</div>
+            <div className="text-sm font-signature">{invoiceData.signatureName || "Jane Smith"}</div>
+            <div className="text-xs text-gray-700 font-semibold mt-[-2px]">
+              {invoiceData.signaturePosition || "Founder & CEO"}
+            </div>
+            {(invoiceData.signatureNote || invoiceData.businessName) && (
+              <div className="text-xs text-gray-500">
+                {invoiceData.signatureNote || `For ${invoiceData.businessName}`}
+              </div>
+            )}
           </div>
         </div>
       </div>

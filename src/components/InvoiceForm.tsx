@@ -75,6 +75,17 @@ const InvoiceForm = ({
                 onChange={(e) => setInvoiceData(prev => ({ ...prev, accountNumber: e.target.value }))}
               />
             </div>
+            {/* --- BANK DETAILS FIELD --- */}
+            <div>
+              <Label htmlFor="bank-details">Bank Details</Label>
+              <Textarea
+                id="bank-details"
+                placeholder={"e.g.\nBank: Example Bank\nAccount: 123456789\nRouting: 987654321"}
+                rows={3}
+                value={invoiceData.bankDetails || ""}
+                onChange={(e) => setInvoiceData(prev => ({ ...prev, bankDetails: e.target.value }))}
+              />
+            </div>
             <div>
               <Label htmlFor="business-logo">Company Logo</Label>
               <div className="flex items-center gap-4">
@@ -342,6 +353,51 @@ const InvoiceForm = ({
         </CardContent>
       </Card>
 
+      {/* Signature & Footer Details */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Signature & Footer Info</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="signature-name">Signer Name (Footer)</Label>
+              <Input
+                id="signature-name"
+                placeholder="e.g. Jane Smith"
+                value={invoiceData.signatureName || ""}
+                onChange={e =>
+                  setInvoiceData(prev => ({ ...prev, signatureName: e.target.value }))
+                }
+              />
+            </div>
+            <div>
+              <Label htmlFor="signature-position">Signer Position (Footer)</Label>
+              <Input
+                id="signature-position"
+                placeholder="e.g. Founder & CEO"
+                value={invoiceData.signaturePosition || ""}
+                onChange={e =>
+                  setInvoiceData(prev => ({ ...prev, signaturePosition: e.target.value }))
+                }
+              />
+            </div>
+            <div>
+              <Label htmlFor="signature-note">Footer Note (optional)</Label>
+              <Input
+                id="signature-note"
+                placeholder="e.g. For Acme Ventures Ltd."
+                value={invoiceData.signatureNote || ""}
+                onChange={e =>
+                  setInvoiceData(prev => ({ ...prev, signatureNote: e.target.value }))
+                }
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Notes dialog and end */}
       <ClientDialog
         open={clientDialogOpen}
         onOpenChange={setClientDialogOpen}

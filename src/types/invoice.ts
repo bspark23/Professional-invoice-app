@@ -1,3 +1,4 @@
+
 export interface LineItem {
   id: string;
   description: string;
@@ -29,6 +30,10 @@ export interface InvoiceData {
   colorTheme?: 'blue' | 'green' | 'gray' | 'purple' | 'red' | 'orange' | 'teal' | 'gradient-blue' | 'gradient-purple';
   signatureImage?: string;
   accountNumber?: string;
+  bankDetails?: string; // editable multi-line string, shows as bank account/info in invoice
+  signatureName?: string; // e.g. Jane Smith
+  signaturePosition?: string; // e.g. Founder & CEO
+  signatureNote?: string; // Extra note, optional
 }
 
 export const colorThemes = [
@@ -52,3 +57,4 @@ export const currencies = [
   { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar' },
   { code: 'AUD', symbol: 'A$', name: 'Australian Dollar' },
 ];
+
