@@ -10,6 +10,7 @@ import ResponsiveNavButtons from "@/components/ResponsiveNavButtons";
 import SupportBubble from "@/components/SupportBubble";
 import HelpCenter from "@/components/HelpCenter";
 import ApiKeySettings from "@/components/ApiKeySettings";
+import ProfileSettings from "@/components/ProfileSettings";
 
 const Settings = () => {
   const [isHelpCenterOpen, setIsHelpCenterOpen] = useState(false);
@@ -25,7 +26,7 @@ const Settings = () => {
               <SidebarTrigger />
               <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
                 <SettingsIcon className="w-6 h-6" />
-                Settings
+                Settings - Comprehensive Invoice Procedure
               </h1>
             </div>
             <div className="flex items-center gap-2">
@@ -39,15 +40,15 @@ const Settings = () => {
 
           {/* Main content */}
           <div className="p-4 sm:p-6">
-            <Tabs defaultValue="ai" className="space-y-6">
+            <Tabs defaultValue="profile" className="space-y-6">
               <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="ai" className="flex items-center gap-2">
-                  <Bot className="w-4 h-4" />
-                  AI Assistant
-                </TabsTrigger>
                 <TabsTrigger value="profile" className="flex items-center gap-2">
                   <User className="w-4 h-4" />
                   Profile
+                </TabsTrigger>
+                <TabsTrigger value="ai" className="flex items-center gap-2">
+                  <Bot className="w-4 h-4" />
+                  AI Assistant
                 </TabsTrigger>
                 <TabsTrigger value="notifications" className="flex items-center gap-2">
                   <Bell className="w-4 h-4" />
@@ -59,19 +60,12 @@ const Settings = () => {
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="ai">
-                <ApiKeySettings />
+              <TabsContent value="profile">
+                <ProfileSettings />
               </TabsContent>
 
-              <TabsContent value="profile">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Profile Settings</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-gray-600">Profile settings will be available soon.</p>
-                  </CardContent>
-                </Card>
+              <TabsContent value="ai">
+                <ApiKeySettings />
               </TabsContent>
 
               <TabsContent value="notifications">
