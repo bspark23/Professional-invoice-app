@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -19,6 +18,7 @@ const PinLock: React.FC<PinLockProps> = ({ onUnlock }) => {
   const [pinConfirm, setPinConfirm] = useState("");
   const [pinEntry, setPinEntry] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   // For change PIN flow
   const [oldPin, setOldPin] = useState("");
@@ -29,6 +29,7 @@ const PinLock: React.FC<PinLockProps> = ({ onUnlock }) => {
   const handleSetup = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setSuccess(null);
     if (!/^\d{4}$/.test(pin)) {
       setError("PIN must be exactly 4 digits.");
       return;
@@ -41,6 +42,7 @@ const PinLock: React.FC<PinLockProps> = ({ onUnlock }) => {
   const handleConfirm = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setSuccess(null);
     if (pin !== pinConfirm) {
       setError("PIN codes do not match.");
       return;
@@ -53,10 +55,13 @@ const PinLock: React.FC<PinLockProps> = ({ onUnlock }) => {
   const handleEntry = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setSuccess(null);
     const storedPin = localStorage.getItem(STORAGE_KEY);
-    console.log("DEBUG: Input PIN:", pinEntry);
-    console.log("DEBUG: Stored PIN:", storedPin);
+    // console.log("DEBUG: Input PIN:", pinEntry);
+    // console.log("DEBUG: Stored PIN:", storedPin);
     if (pinEntry === storedPin) {
+      setError(null);
+      setSuccess(null);
       onUnlock();
     } else {
       setError("Incorrect PIN. Try again.");
@@ -68,6 +73,7 @@ const PinLock: React.FC<PinLockProps> = ({ onUnlock }) => {
   const handleChangeEnterOld = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setSuccess(null);
     const storedPin = localStorage.getItem(STORAGE_KEY);
     if (oldPin === storedPin) {
       setStep("changeNew");
@@ -83,6 +89,7 @@ const PinLock: React.FC<PinLockProps> = ({ onUnlock }) => {
   const handleChangeNew = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setSuccess(null);
     if (!/^\d{4}$/.test(newPin)) {
       setError("PIN must be exactly 4 digits.");
       return;
@@ -95,6 +102,7 @@ const PinLock: React.FC<PinLockProps> = ({ onUnlock }) => {
   const handleChangeConfirm = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setSuccess(null);
     if (newPin !== newPinConfirm) {
       setError("PIN codes do not match.");
       return;
@@ -104,7 +112,8 @@ const PinLock: React.FC<PinLockProps> = ({ onUnlock }) => {
     setNewPin("");
     setNewPinConfirm("");
     setStep("entry");
-    setError("PIN changed successfully. Please use your new PIN to unlock.");
+    setPinEntry("");
+    setSuccess("PIN changed successfully. Please use your new PIN to unlock.");
   };
 
   // Switch to change pin mode from PIN entry
@@ -114,6 +123,14 @@ const PinLock: React.FC<PinLockProps> = ({ onUnlock }) => {
     setNewPin("");
     setNewPinConfirm("");
     setError(null);
+    setSuccess(null);
+  };
+
+  // Clear error/success when step changes via cancel
+  const handleCancel = () => {
+    setStep("entry");
+    setError(null);
+    setSuccess(null);
   };
 
   return (
@@ -137,6 +154,7 @@ const PinLock: React.FC<PinLockProps> = ({ onUnlock }) => {
               />
             </div>
             {error && <div className="text-red-500 text-sm">{error}</div>}
+            {success && <div className="text-green-500 text-sm">{success}</div>}
             <Button type="submit" className="w-full">Next</Button>
           </form>
         )}
@@ -157,6 +175,7 @@ const PinLock: React.FC<PinLockProps> = ({ onUnlock }) => {
               />
             </div>
             {error && <div className="text-red-500 text-sm">{error}</div>}
+            {success && <div className="text-green-500 text-sm">{success}</div>}
             <Button type="submit" className="w-full">Save PIN</Button>
           </form>
         )}
@@ -180,6 +199,7 @@ const PinLock: React.FC<PinLockProps> = ({ onUnlock }) => {
                 />
               </div>
               {error && <div className="text-red-500 text-sm">{error}</div>}
+              {success && <div className="text-green-500 text-sm">{success}</div>}
               <Button type="submit" className="w-full">Unlock</Button>
             </form>
             <div className="flex justify-center mt-4">
@@ -210,9 +230,10 @@ const PinLock: React.FC<PinLockProps> = ({ onUnlock }) => {
               />
             </div>
             {error && <div className="text-red-500 text-sm">{error}</div>}
+            {success && <div className="text-green-500 text-sm">{success}</div>}
             <div className="flex gap-2">
               <Button type="submit" className="w-full">Next</Button>
-              <Button type="button" className="w-full" variant="secondary" onClick={() => setStep("entry")}>Cancel</Button>
+              <Button type="button" className="w-full" variant="secondary" onClick={handleCancel}>Cancel</Button>
             </div>
           </form>
         )}
@@ -236,9 +257,10 @@ const PinLock: React.FC<PinLockProps> = ({ onUnlock }) => {
               />
             </div>
             {error && <div className="text-red-500 text-sm">{error}</div>}
+            {success && <div className="text-green-500 text-sm">{success}</div>}
             <div className="flex gap-2">
               <Button type="submit" className="w-full">Next</Button>
-              <Button type="button" className="w-full" variant="secondary" onClick={() => setStep("entry")}>Cancel</Button>
+              <Button type="button" className="w-full" variant="secondary" onClick={handleCancel}>Cancel</Button>
             </div>
           </form>
         )}
@@ -262,9 +284,10 @@ const PinLock: React.FC<PinLockProps> = ({ onUnlock }) => {
               />
             </div>
             {error && <div className="text-red-500 text-sm">{error}</div>}
+            {success && <div className="text-green-500 text-sm">{success}</div>}
             <div className="flex gap-2">
               <Button type="submit" className="w-full">Save New PIN</Button>
-              <Button type="button" className="w-full" variant="secondary" onClick={() => setStep("entry")}>Cancel</Button>
+              <Button type="button" className="w-full" variant="secondary" onClick={handleCancel}>Cancel</Button>
             </div>
           </form>
         )}
