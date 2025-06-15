@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,16 +16,10 @@ import LogoSignatureUpload from "@/components/LogoSignatureUpload";
 import InvoiceTemplateSelector from "@/components/InvoiceTemplateSelector";
 import SendInvoiceDialog from "@/components/SendInvoiceDialog";
 import { InvoiceData, LineItem, colorThemes } from "@/types/invoice";
+import { Client } from "@/types/client";
 import { useCustomTemplates } from "@/hooks/useCustomTemplates";
 import SupportBubble from "@/components/SupportBubble";
 import HelpCenter from "@/components/HelpCenter";
-
-interface Client {
-  id: string;
-  name: string;
-  email: string;
-  address: string;
-}
 
 const initialInvoiceData: InvoiceData = {
   businessName: "Your Business Name",
@@ -54,6 +49,9 @@ const initialInvoiceData: InvoiceData = {
   signatureNote: "Electronically Signed",
   template: "minimalist",
   colorTheme: "blue",
+  status: "unpaid",
+  paymentInstructions: "Please pay within 30 days",
+  footerText: "Thank you for your business!"
 };
 
 const Invoices = () => {
@@ -65,11 +63,25 @@ const Invoices = () => {
   const [isSendDialogOpen, setIsSendDialogOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<InvoiceData | null>(null);
   const [clients, setClients] = useState<Client[]>([
-    { id: "1", name: "Acme Corp", email: "acme@example.com", address: "123 Main St" },
-    { id: "2", name: "Beta Co", email: "beta@example.com", address: "456 Elm St" },
+    { 
+      id: "1", 
+      name: "Acme Corp", 
+      email: "acme@example.com", 
+      phone: "123-456-7890",
+      address: "123 Main St",
+      createdAt: new Date().toISOString()
+    },
+    { 
+      id: "2", 
+      name: "Beta Co", 
+      email: "beta@example.com", 
+      phone: "098-765-4321",
+      address: "456 Elm St",
+      createdAt: new Date().toISOString()
+    },
   ]);
   const { toast } = useToast();
-  const userId = "testUser"; // Replace with actual user ID
+  const userId = "testUser";
   const { customTemplates, saveCustomTemplate, deleteCustomTemplate, loadCustomTemplates } = useCustomTemplates(userId);
   const [isHelpCenterOpen, setIsHelpCenterOpen] = useState(false);
 
@@ -187,7 +199,7 @@ const Invoices = () => {
     setIsLogoDialogOpen(false);
   };
 
-  const handleTemplateSelect = (template: string, colorTheme: string, customTemplateId?: string) => {
+  const handleTemplateSelect = (template: InvoiceData['template'], colorTheme: InvoiceData['colorTheme'], customTemplateId?: string) => {
     setInvoiceData({ ...invoiceData, template: template, colorTheme: colorTheme });
     setIsTemplateDialogOpen(false);
   };
@@ -248,7 +260,7 @@ const Invoices = () => {
                 type="text"
                 id="businessSlogan"
                 name="businessSlogan"
-                value={invoiceData.businessSlogan}
+                value={invoiceData.businessSlogan || ""}
                 onChange={handleInputChange}
               />
             </div>
@@ -277,7 +289,7 @@ const Invoices = () => {
                 type="tel"
                 id="businessPhone"
                 name="businessPhone"
-                value={invoiceData.businessPhone}
+                value={invoiceData.businessPhone || ""}
                 onChange={handleInputChange}
               />
             </div>
@@ -287,7 +299,7 @@ const Invoices = () => {
                 type="url"
                 id="businessWebsite"
                 name="businessWebsite"
-                value={invoiceData.businessWebsite}
+                value={invoiceData.businessWebsite || ""}
                 onChange={handleInputChange}
               />
             </div>
@@ -350,7 +362,7 @@ const Invoices = () => {
             </div>
             <div>
               <Label htmlFor="currency">Currency</Label>
-              <CurrencySelector currency={invoiceData.currency} onCurrencyChange={handleCurrencyChange} />
+              <CurrencySelector value={invoiceData.currency} onChange={handleCurrencyChange} />
             </div>
           </div>
         </CardContent>
@@ -428,7 +440,7 @@ const Invoices = () => {
         </CardContent>
       </Card>
 
-      {/* Notes and Payment Terms */}
+      {/* Additional Information */}
       <Card className="bg-white shadow-md rounded-md">
         <CardHeader>
           <CardTitle>Additional Information</CardTitle>
@@ -448,7 +460,25 @@ const Invoices = () => {
             <Textarea
               id="paymentTerms"
               name="paymentTerms"
-              value={invoiceData.paymentTerms}
+              value={invoiceData.paymentTerms || ""}
+              onChange={handleInputChange}
+            />
+          </div>
+          <div>
+            <Label htmlFor="paymentInstructions">Payment Instructions</Label>
+            <Textarea
+              id="paymentInstructions"
+              name="paymentInstructions"
+              value={invoiceData.paymentInstructions || ""}
+              onChange={handleInputChange}
+            />
+          </div>
+          <div>
+            <Label htmlFor="footerText">Footer Text</Label>
+            <Textarea
+              id="footerText"
+              name="footerText"
+              value={invoiceData.footerText || ""}
               onChange={handleInputChange}
             />
           </div>
@@ -467,7 +497,7 @@ const Invoices = () => {
               type="text"
               id="accountNumber"
               name="accountNumber"
-              value={invoiceData.accountNumber}
+              value={invoiceData.accountNumber || ""}
               onChange={handleInputChange}
             />
           </div>
@@ -476,7 +506,7 @@ const Invoices = () => {
             <Textarea
               id="bankDetails"
               name="bankDetails"
-              value={invoiceData.bankDetails}
+              value={invoiceData.bankDetails || ""}
               onChange={handleInputChange}
             />
           </div>

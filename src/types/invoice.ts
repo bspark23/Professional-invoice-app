@@ -39,6 +39,8 @@ export interface InvoiceData {
   businessPhone?: string;
   businessWebsite?: string;
   paymentTerms?: string;
+  paymentInstructions?: string;
+  footerText?: string;
   customFields?: { [key: string]: string };
   customTemplate?: string; // For uploaded templates
 }
