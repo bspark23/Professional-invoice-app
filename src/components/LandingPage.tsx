@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,6 +18,7 @@ import {
   Sparkles,
   ChevronRight
 } from "lucide-react";
+import VoluntaryContribution from "./VoluntaryContribution";
 
 interface LandingPageProps {
   businessName: string;
@@ -103,7 +103,7 @@ const LandingPage = ({
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+    <div>
       {/* Hero Section */}
       <div className="relative overflow-hidden">
         {/* Background decorative elements */}
@@ -230,6 +230,9 @@ const LandingPage = ({
           </div>
         </div>
       </div>
+
+      {/* Voluntary Contribution Section */}
+      <VoluntaryContribution />
 
       {/* Stats Section */}
       <div className="bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm py-20">
