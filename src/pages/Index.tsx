@@ -184,10 +184,6 @@ const Index = () => {
         calculateSubtotal={getCalculateSubtotal}
         calculateTax={getCalculateTax}
         calculateTotal={getCalculateTotal}
-        exportToPDF={handleExportToPDF}
-        exportToImage={handleExportToImage}
-        setViewMode={setViewMode}
-        userProfile={activeProfile}
         customTemplateContent={customTemplateContent || ""}
       />
     );
