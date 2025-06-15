@@ -1,3 +1,4 @@
+
 import { useMemo } from "react";
 import {
   ChartContainer,
@@ -9,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartBar, ChartPie } from "lucide-react";
 import { InvoiceData } from "@/types/invoice";
 import { format } from "date-fns";
+import { calculateTotal } from "@/utils/invoiceUtils";
 
 interface AnalyticsDashboardProps {
   savedInvoices: InvoiceData[];
@@ -23,146 +25,86 @@ function getMonthYear(dateString: string) {
 }
 
 const AnalyticsDashboard = ({ savedInvoices, formatCurrency }: AnalyticsDashboardProps) => {
-  // Group invoices by month for count and revenue
-  const monthMap: { [month: string]: { count: number; revenue: number } } = {};
-  let paid = 0, unpaid = 0;
+  // Group invoices by month for invoices, payments, and expenses
+  const monthlyData = useMemo(() => {
+    const monthMap: { [month: string]: { invoices: number; payments: number; expenses: number } } = {};
 
-  savedInvoices.forEach(inv => {
-    const month = getMonthYear(inv.invoiceDate);
-    if (!monthMap[month]) monthMap[month] = { count: 0, revenue: 0 };
-    monthMap[month].count += 1;
-    // revenue is subtotal + tax - discount
-    const subtotal = inv.lineItems?.reduce((sum, item) => sum + (item.quantity * item.rate), 0) || 0;
-    const tax = subtotal * (inv.taxRate / 100);
-    let total = subtotal + tax;
-    if (inv.discountAmount) total -= inv.discountAmount;
-    monthMap[month].revenue += total;
+    savedInvoices.forEach(inv => {
+      const month = getMonthYear(inv.invoiceDate);
+      if (!monthMap[month]) monthMap[month] = { invoices: 0, payments: 0, expenses: 0 };
+      
+      const total = calculateTotal(inv);
+      monthMap[month].invoices += total;
+      
+      if (inv.status === "paid") {
+        monthMap[month].payments += total;
+      }
+      
+      // Expenses are 0 for now - can be extended later
+      monthMap[month].expenses = 0;
+    });
 
-    // payment status breakdown
-    if (inv.status === "paid") paid++;
-    else unpaid++;
-  });
+    return Object.entries(monthMap)
+      .map(([month, data]) => ({
+        month,
+        invoices: data.invoices,
+        payments: data.payments,
+        expenses: data.expenses,
+      }))
+      .sort((a, b) => new Date(a.month).getTime() - new Date(b.month).getTime());
+  }, [savedInvoices]);
 
-  // Bar chart data: invoices per month
-  const invoicesPerMonth = useMemo(() =>
-    Object.entries(monthMap).map(([month, val]) => ({
-      month,
-      count: val.count,
-    })).sort((a, b) => new Date(a.month).getTime() - new Date(b.month).getTime())
-  , [savedInvoices]);
+  // Invoice status data for pie chart
+  const invoiceStatusData = useMemo(() => {
+    const paid = savedInvoices.filter(inv => inv.status === "paid").length;
+    const outstanding = savedInvoices.filter(inv => inv.status === "unpaid").length;
 
-  // Bar chart data: revenue per month
-  const revenuePerMonth = useMemo(() =>
-    Object.entries(monthMap).map(([month, val]) => ({
-      month,
-      revenue: val.revenue,
-    })).sort((a, b) => new Date(a.month).getTime() - new Date(b.month).getTime())
-  , [savedInvoices]);
-
-  // Pie chart data: payment status (only paid and unpaid)
-  const paymentStatusData = [
-    { name: "Paid", value: paid },
-    { name: "Unpaid", value: unpaid },
-  ].filter(d => d.value > 0);
+    return [
+      { name: "Paid", value: paid, color: "#22c55e" },
+      { name: "Outstanding", value: outstanding, color: "#ef4444" },
+    ].filter(d => d.value > 0);
+  }, [savedInvoices]);
 
   return (
-    <div className="mb-10">
-      <Card className="mb-6 shadow border-0 bg-white/80 dark:bg-gray-800/80">
-        <CardHeader className="pb-3 flex flex-row items-center gap-3">
-          <ChartBar className="w-5 h-5 text-blue-500" />
-          <CardTitle>Invoice Analytics</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Invoices per month */}
-            <div>
-              <h3 className="font-semibold mb-1 flex items-center gap-2 text-blue-700 dark:text-blue-300">
-                <ChartBar className="w-4 h-4" /> Invoices Per Month
-              </h3>
-              {invoicesPerMonth.length === 0 ? (
-                <div className="text-muted-foreground py-8">No data yet</div>
-              ) : (
-                <ChartContainer
-                  config={{
-                    invoices: {
-                      label: "Invoices",
-                      color: "#2563eb"
-                    }
-                  }}
-                >
-                  <BarChart data={invoicesPerMonth} height={180}>
-                    <XAxis dataKey="month" />
-                    <YAxis allowDecimals={false} />
-                    <Bar dataKey="count" fill="#2563eb" name="Invoices" />
-                    <ChartTooltipContent />
-                  </BarChart>
-                </ChartContainer>
-              )}
-            </div>
-            {/* Revenue per month */}
-            <div>
-              <h3 className="font-semibold mb-1 flex items-center gap-2 text-green-700 dark:text-green-300">
-                <ChartBar className="w-4 h-4" /> Revenue Per Month
-              </h3>
-              {revenuePerMonth.length === 0 ? (
-                <div className="text-muted-foreground py-8">No data yet</div>
-              ) : (
-                <ChartContainer
-                  config={{
-                    revenue: {
-                      label: "Revenue",
-                      color: "#16a34a"
-                    }
-                  }}
-                >
-                  <BarChart data={revenuePerMonth} height={180}>
-                    <XAxis dataKey="month" />
-                    <YAxis allowDecimals={false}
-                      tickFormatter={v => formatCurrency(v)} />
-                    <Bar dataKey="revenue" fill="#16a34a" name="Revenue"
-                      label={{ position: "top", fill: "#16a34a", fontSize: 12 }}
-                    />
-                    <ChartTooltipContent
-                      formatter={(value) => formatCurrency(Number(value))}
-                    />
-                  </BarChart>
-                </ChartContainer>
-              )}
-            </div>
-          </div>
-          {/* Payment status breakdown */}
-          <div className="pt-8">
-            <h3 className="font-semibold mb-1 flex items-center gap-2 text-purple-700 dark:text-purple-300">
-              <ChartPie className="w-4 h-4" /> Payment Status Breakdown
-            </h3>
-            {paymentStatusData.length === 0 ? (
-              <div className="text-muted-foreground py-8">No data yet</div>
+    <div className="mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Invoice Status Pie Chart */}
+        <Card className="bg-white">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ChartPie className="w-5 h-5 text-purple-500" />
+              Invoice Status
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {invoiceStatusData.length === 0 ? (
+              <div className="text-muted-foreground py-8 text-center">No invoices yet</div>
             ) : (
               <ChartContainer
                 config={{
                   paid: { label: "Paid", color: "#22c55e" },
-                  unpaid: { label: "Unpaid", color: "#ef4444" }
+                  outstanding: { label: "Outstanding", color: "#ef4444" }
                 }}
               >
-                <ResponsiveContainer width="100%" height={210}>
+                <ResponsiveContainer width="100%" height={250}>
                   <PieChart>
                     <Pie
-                      data={paymentStatusData}
+                      data={invoiceStatusData}
                       dataKey="value"
                       nameKey="name"
                       cx="50%"
                       cy="50%"
-                      outerRadius={70}
-                      label={({ percent }) => percent > 0 ? `${(percent * 100).toFixed(0)}%` : ""}
+                      outerRadius={80}
+                      label={({ percent, name }) => percent > 0 ? `${name}: ${(percent * 100).toFixed(0)}%` : ""}
                     >
-                      {paymentStatusData.map((entry, idx) => (
-                        <Cell key={entry.name} fill={COLORS[idx % COLORS.length]} />
+                      {invoiceStatusData.map((entry, idx) => (
+                        <Cell key={entry.name} fill={entry.color} />
                       ))}
                     </Pie>
                     <ChartLegendContent
-                      payload={paymentStatusData.map((entry, idx) => ({
+                      payload={invoiceStatusData.map((entry) => ({
                         value: entry.name,
-                        color: COLORS[idx % COLORS.length],
+                        color: entry.color,
                         type: "square",
                       }))}
                       verticalAlign="bottom"
@@ -172,9 +114,45 @@ const AnalyticsDashboard = ({ savedInvoices, formatCurrency }: AnalyticsDashboar
                 </ResponsiveContainer>
               </ChartContainer>
             )}
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+
+        {/* Invoice Figures Bar Chart */}
+        <Card className="bg-white">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ChartBar className="w-5 h-5 text-blue-500" />
+              Invoice Figures
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {monthlyData.length === 0 ? (
+              <div className="text-muted-foreground py-8 text-center">No data yet</div>
+            ) : (
+              <ChartContainer
+                config={{
+                  invoices: { label: "Invoices", color: "#3b82f6" },
+                  payments: { label: "Payments", color: "#22c55e" },
+                  expenses: { label: "Expenses", color: "#ef4444" }
+                }}
+              >
+                <ResponsiveContainer width="100%" height={250}>
+                  <BarChart data={monthlyData}>
+                    <XAxis dataKey="month" />
+                    <YAxis tickFormatter={(value) => formatCurrency(value)} />
+                    <Bar dataKey="invoices" fill="#3b82f6" name="Invoices" />
+                    <Bar dataKey="payments" fill="#22c55e" name="Payments" />
+                    <Bar dataKey="expenses" fill="#ef4444" name="Expenses" />
+                    <ChartTooltipContent
+                      formatter={(value) => formatCurrency(Number(value))}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
