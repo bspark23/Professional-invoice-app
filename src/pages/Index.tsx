@@ -224,7 +224,7 @@ const Index = () => {
             </Link>
             <Button onClick={() => setViewMode('list')} variant="outline" className="hover:bg-blue-50 dark:hover:bg-blue-900/30">
               <Eye className="w-4 h-4 mr-2" />
-              {t("viewSaved", { count: savedInvoices.length }) || `View Saved (${savedInvoices.length})`}
+              {t("viewSaved") || `View Saved (${savedInvoices.length})`}
             </Button>
             <Button onClick={handleSaveInvoiceData} variant="outline" className="hover:bg-yellow-50 dark:hover:bg-yellow-900/30">
               <Save className="w-4 h-4 mr-2" />
