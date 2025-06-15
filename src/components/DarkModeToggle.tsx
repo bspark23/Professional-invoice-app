@@ -4,13 +4,16 @@ import { Sun, Moon } from "lucide-react";
 
 const STORAGE_KEY = "invoicer-pro-theme";
 
-const getInitialTheme = () => {
+const getInitialTheme = (): "light" | "dark" => {
   if (typeof window === "undefined") return "light";
-  return localStorage.getItem(STORAGE_KEY) || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  const stored = localStorage.getItem(STORAGE_KEY);
+  if (stored === "light" || stored === "dark") return stored;
+  if (window.matchMedia("(prefers-color-scheme: dark)").matches) return "dark";
+  return "light";
 };
 
 const DarkModeToggle: React.FC = () => {
-  const [theme, setTheme] = useState<"dark" | "light">(getInitialTheme());
+  const [theme, setTheme] = useState<"light" | "dark">(getInitialTheme);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
