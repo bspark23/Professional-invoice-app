@@ -1,6 +1,7 @@
 
 import React, { useEffect, useState } from "react";
 import { Sun, Moon } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const STORAGE_KEY = "invoicer-pro-theme";
 
@@ -21,14 +22,25 @@ const DarkModeToggle: React.FC = () => {
   }, [theme]);
 
   return (
-    <button
+    <Button
+      variant="ghost"
+      size="sm"
       aria-label="Toggle dark mode"
-      className="flex items-center px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 ml-2 hover:scale-105 transition"
+      className="flex items-center gap-2 h-9 px-3 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
       onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
     >
-      {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
-      <span className="ml-1 text-xs">{theme === "dark" ? "Light" : "Dark"}</span>
-    </button>
+      {theme === "dark" ? (
+        <>
+          <Sun className="h-4 w-4" />
+          <span className="text-sm font-medium">Light</span>
+        </>
+      ) : (
+        <>
+          <Moon className="h-4 w-4" />
+          <span className="text-sm font-medium">Dark</span>
+        </>
+      )}
+    </Button>
   );
 };
 

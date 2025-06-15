@@ -48,41 +48,42 @@
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 224 71% 4%;
+    --foreground: 213 31% 91%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 224 71% 4%;
+    --card-foreground: 213 31% 91%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 224 71% 4%;
+    --popover-foreground: 213 31% 91%;
 
     --primary: 210 40% 98%;
     --primary-foreground: 222.2 47.4% 11.2%;
 
-    --secondary: 217.2 32.6% 17.5%;
+    --secondary: 215 27.9% 16.9%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 215 27.9% 16.9%;
+    --muted-foreground: 217.9 10.6% 64.9%;
 
-    --accent: 217.2 32.6% 17.5%;
+    --accent: 215 27.9% 16.9%;
     --accent-foreground: 210 40% 98%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --border: 215 27.9% 16.9%;
+    --input: 215 27.9% 16.9%;
+    --ring: 216 34% 17%;
+    
+    --sidebar-background: 224 71% 4%;
+    --sidebar-foreground: 213 31% 91%;
+    --sidebar-primary: 210 40% 98%;
+    --sidebar-primary-foreground: 222.2 47.4% 11.2%;
+    --sidebar-accent: 215 27.9% 16.9%;
+    --sidebar-accent-foreground: 213 31% 91%;
+    --sidebar-border: 215 27.9% 16.9%;
+    --sidebar-ring: 216 34% 17%;
   }
 }
 
@@ -100,6 +101,105 @@
     @apply bg-background text-foreground;
     min-height: 100vh;
     overflow-x: hidden;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Professional dark mode adjustments */
+  .dark {
+    color-scheme: dark;
+  }
+
+  .dark .bg-gray-50 {
+    @apply bg-gray-900;
+  }
+
+  .dark .bg-white {
+    @apply bg-gray-800;
+  }
+
+  .dark .text-gray-900 {
+    @apply text-gray-100;
+  }
+
+  .dark .text-gray-800 {
+    @apply text-gray-200;
+  }
+
+  .dark .text-gray-700 {
+    @apply text-gray-300;
+  }
+
+  .dark .text-gray-600 {
+    @apply text-gray-400;
+  }
+
+  .dark .text-gray-500 {
+    @apply text-gray-500;
+  }
+
+  .dark .border-gray-200 {
+    @apply border-gray-700;
+  }
+
+  .dark .border-gray-300 {
+    @apply border-gray-600;
+  }
+
+  .dark .hover\:bg-gray-50:hover {
+    @apply bg-gray-700;
+  }
+
+  .dark .hover\:bg-gray-100:hover {
+    @apply bg-gray-700;
+  }
+
+  /* Professional button styling in dark mode */
+  .dark .bg-green-50 {
+    @apply bg-green-900/20;
+  }
+
+  .dark .bg-red-50 {
+    @apply bg-red-900/20;
+  }
+
+  .dark .bg-orange-50 {
+    @apply bg-orange-900/20;
+  }
+
+  .dark .border-green-200 {
+    @apply border-green-800;
+  }
+
+  .dark .border-red-200 {
+    @apply border-red-800;
+  }
+
+  .dark .border-orange-200 {
+    @apply border-orange-800;
+  }
+
+  .dark .text-green-800 {
+    @apply text-green-200;
+  }
+
+  .dark .text-green-600 {
+    @apply text-green-300;
+  }
+
+  .dark .text-red-800 {
+    @apply text-red-200;
+  }
+
+  .dark .text-red-600 {
+    @apply text-red-300;
+  }
+
+  .dark .text-orange-800 {
+    @apply text-orange-200;
+  }
+
+  .dark .text-orange-600 {
+    @apply text-orange-300;
   }
 
   /* Responsive typography */
@@ -169,6 +269,19 @@
   .text-responsive-small {
     @apply text-xs sm:text-sm lg:text-base;
   }
+
+  /* Professional dark mode shadows */
+  .dark .shadow-sm {
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+  }
+
+  .dark .shadow {
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.4);
+  }
+
+  .dark .shadow-lg {
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.4);
+  }
 }
 
 /* Print styles for invoice preview */
@@ -222,4 +335,30 @@
   .sidebar-mobile {
     @apply fixed inset-0 z-50 transform transition-transform duration-300 ease-in-out;
   }
+}
+
+/* Professional focus states for dark mode */
+.dark input:focus,
+.dark textarea:focus,
+.dark select:focus {
+  @apply ring-2 ring-blue-500 ring-offset-2 ring-offset-gray-800;
+}
+
+/* Professional scrollbar styling */
+.dark ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: rgb(31 41 55);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: rgb(75 85 99);
+  border-radius: 4px;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgb(107 114 128);
 }
