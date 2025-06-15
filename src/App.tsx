@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -11,6 +10,7 @@ import Invoices from "@/pages/Invoices";
 import LPO from "@/pages/LPO";
 import Clients from "@/pages/Clients";
 import Payments from "@/pages/Payments";
+import Receipts from "@/pages/Receipts";
 import Estimates from "@/pages/Estimates";
 import Projects from "@/pages/Projects";
 import TimeTracking from "@/pages/TimeTracking";
@@ -80,6 +80,14 @@ const App = () => (
               element={
                 <RequireLandingPage>
                   <Payments />
+                </RequireLandingPage>
+              }
+            />
+            <Route
+              path="/receipts"
+              element={
+                <RequireLandingPage>
+                  <Receipts />
                 </RequireLandingPage>
               }
             />

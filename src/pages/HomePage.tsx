@@ -10,10 +10,11 @@ const HomePage = () => {
     navigate('/dashboard');
   };
 
-  // Sample invoice data for the preview
+  // Sample invoice data for the preview - always show this regardless of user status
   const sampleInvoiceData = {
     businessName: "InvoiceCraft Pro",
-    invoiceNumber: "INV-001",
+    businessLogo: "",
+    invoiceNumber: "INV-2024-12-001",
     clientName: "Acme Corporation",
     total: "$2,500.00",
     status: 'paid' as const,
@@ -21,15 +22,18 @@ const HomePage = () => {
   };
 
   return (
-    <LandingPage
-      businessName={sampleInvoiceData.businessName}
-      invoiceNumber={sampleInvoiceData.invoiceNumber}
-      clientName={sampleInvoiceData.clientName}
-      total={sampleInvoiceData.total}
-      status={sampleInvoiceData.status}
-      currency={sampleInvoiceData.currency}
-      onGetStarted={handleGetStarted}
-    />
+    <div className="min-h-screen">
+      <LandingPage
+        businessName={sampleInvoiceData.businessName}
+        businessLogo={sampleInvoiceData.businessLogo}
+        invoiceNumber={sampleInvoiceData.invoiceNumber}
+        clientName={sampleInvoiceData.clientName}
+        total={sampleInvoiceData.total}
+        status={sampleInvoiceData.status}
+        currency={sampleInvoiceData.currency}
+        onGetStarted={handleGetStarted}
+      />
+    </div>
   );
 };
 
