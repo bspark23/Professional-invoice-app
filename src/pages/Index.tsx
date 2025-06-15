@@ -208,14 +208,26 @@ const Index = () => {
     );
   }
 
-  // Template and color change handlers
+  // Custom uploaded template state (image or HTML)
+  const [customTemplateContent, setCustomTemplateContent] = useState<string | null>(null);
+
+  // Add "custom" to the template options
   const templateOptions = [
-    { value: "minimalist", label: "Minimalist" },
-    { value: "bordered", label: "Bordered" },
-    { value: "modern", label: "Modern" }
+    { value: "minimalist", label: "Reference (Default)" },
+    { value: "classic", label: "Classic" },
+    { value: "modern", label: "Modern" },
+    { value: "bold", label: "Bold" },
+    { value: "elegant", label: "Elegant" },
+    { value: "horizontal", label: "Horizontal" },
+    { value: "custom", label: "Custom (Upload)" }
   ];
 
-  const colorThemeOptions = colorThemes;
+  // Only light color options
+  const colorThemeOptions = colorThemes.filter(opt =>
+    !opt.type || opt.type === "gradient"
+      ? !opt.color || (opt.color && /#(f|e)[a-f0-9]{5}/i.test(opt.color)) // only very light
+      : true
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/30 dark:bg-gradient-to-br dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-4">
@@ -318,12 +330,32 @@ const Index = () => {
             <select
               className="rounded border px-4 py-2 bg-gray-50 dark:bg-gray-700 focus:outline-none"
               value={invoiceData.template || "minimalist"}
-              onChange={e => setInvoiceData(prev => ({ ...prev, template: e.target.value as 'minimalist' | 'bordered' | 'modern' }))}
+              onChange={e => setInvoiceData(prev => ({ ...prev, template: e.target.value as any }))}
             >
               {templateOptions.map(opt => (
                 <option value={opt.value} key={opt.value}>{opt.label}</option>
               ))}
             </select>
+            {/* Show upload button if selecting custom */}
+            {invoiceData.template === "custom" && (
+              <div className="mt-2 space-y-2">
+                <input
+                  type="file"
+                  accept=".html,image/*"
+                  className="block"
+                  onChange={e => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = ev => {
+                      setCustomTemplateContent(ev.target?.result as string);
+                    };
+                    reader.readAsDataURL(file);
+                  }}
+                />
+                <p className="text-xs text-gray-500 mt-1">Upload a custom invoice template as an image (png, jpg) or HTML file.</p>
+              </div>
+            )}
           </div>
           <div>
             <label className="block text-sm font-semibold mb-1">Color Theme</label>
@@ -370,6 +402,7 @@ const Index = () => {
               calculateSubtotal={getCalculateSubtotal}
               calculateTax={getCalculateTax}
               calculateTotal={getCalculateTotal}
+              customTemplateContent={customTemplateContent}
             />
             <InvoiceActivityTimeline events={activity.events} />
           </div>
