@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -14,12 +13,16 @@ import ExpenseTracker from "./pages/ExpenseTracker";
 import CalendarView from "./pages/CalendarView";
 import { LanguageProvider } from "@/context/LanguageContext";
 import LanguageDropdown from "@/components/LanguageDropdown";
+import SignUp from "./pages/SignUp";
+import SignIn from "./pages/SignIn";
+import { useAuthLocal } from "@/hooks/useAuthLocal";
 
 const queryClient = new QueryClient();
 
 const AppContent = () => {
   const [showLandingPage, setShowLandingPage] = useState(true);
   const navigate = useNavigate();
+  const { user } = useAuthLocal();
 
   const handleGetStarted = () => {
     setShowLandingPage(false);
@@ -50,9 +53,12 @@ const AppContent = () => {
       <Routes>
         <Route path="/" element={<LanguageSelector />} />
         <Route path="/welcome" element={<Welcome />} />
-        <Route path="/dashboard" element={<Index />} />
-        <Route path="/expenses" element={<ExpenseTracker />} />
-        <Route path="/calendar" element={<CalendarView />} />
+        <Route path="/signup" element={<SignUp />} />
+        <Route path="/signin" element={<SignIn />} />
+        {/* Protected dashboard/expenses/calendar */}
+        <Route path="/dashboard" element={user ? <Index /> : <SignIn />} />
+        <Route path="/expenses" element={user ? <ExpenseTracker /> : <SignIn />} />
+        <Route path="/calendar" element={user ? <CalendarView /> : <SignIn />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </>
