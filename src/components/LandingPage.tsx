@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ import {
   ChevronRight
 } from "lucide-react";
 import VoluntaryContribution from "./VoluntaryContribution";
+import LanguageDropdown from "./LanguageDropdown";
 import { useNavigate } from "react-router-dom";
 
 interface LandingPageProps {
@@ -41,8 +43,9 @@ const LandingPage = ({
   status,
   currency,
   onGetStarted
-}: any) => {
+}: LandingPageProps) => {
   const navigate = useNavigate();
+  
   const features = [
     {
       icon: <Zap className="w-6 h-6 text-blue-600" />,
@@ -105,7 +108,12 @@ const LandingPage = ({
   ];
 
   return (
-    <div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      {/* Header with Language Selector */}
+      <div className="absolute top-4 right-4 z-50">
+        <LanguageDropdown />
+      </div>
+
       {/* Hero Section */}
       <div className="relative overflow-hidden">
         {/* Background decorative elements */}
@@ -162,7 +170,12 @@ const LandingPage = ({
                 Start Creating Invoices
                 <ChevronRight className="w-5 h-5 ml-2" />
               </Button>
-              <Button size="lg" variant="outline" className="px-8 py-4 text-lg rounded-full border-2 hover:bg-gray-50 dark:hover:bg-gray-800">
+              <Button 
+                size="lg" 
+                variant="outline" 
+                className="px-8 py-4 text-lg rounded-full border-2 hover:bg-gray-50 dark:hover:bg-gray-800"
+                onClick={() => navigate('/invoices')}
+              >
                 View Demo
               </Button>
             </div>
@@ -233,13 +246,21 @@ const LandingPage = ({
         </div>
       </div>
 
-      {/* Voluntary Contribution CTA - ONE button that navigates to the page */}
-      <div className="flex justify-center mt-8">
+      {/* Quick Actions */}
+      <div className="flex justify-center gap-4 mb-20">
+        <Button 
+          variant="secondary" 
+          size="lg" 
+          className="bg-green-500 text-white font-semibold px-8 py-4 rounded-full shadow-lg hover:bg-green-600 transition"
+          onClick={() => navigate("/invoices")}
+        >
+          Create Invoice
+        </Button>
         <Button 
           variant="secondary" 
           size="lg" 
           className="bg-pink-500 text-white font-semibold px-8 py-4 rounded-full shadow-lg hover:bg-pink-600 transition"
-          onClick={() => navigate("/voluntary-contribution")}
+          onClick={() => navigate("/contribution")}
         >
           Voluntary Contribution
         </Button>

@@ -18,10 +18,10 @@ import NotFound from "./pages/NotFound";
 import VoluntaryContributionPage from "./pages/VoluntaryContributionPage";
 import { LanguageProvider } from "./context/LanguageContext";
 import { Toaster } from "@/components/ui/toaster";
-import RequireLandingPage from "./components/RequireLandingPage";
 import Estimates from "./pages/Estimates";
 import TimeTracking from "./pages/TimeTracking";
 import Projects from "./pages/Projects";
+import LandingPage from "./components/LandingPage";
 
 function App() {
   return (
@@ -30,7 +30,8 @@ function App() {
         <Toaster />
         <LanguageProvider>
           <Routes>
-            <Route path="/" element={<RequireLandingPage><Welcome /></RequireLandingPage>} />
+            <Route path="/" element={<LandingPage businessName="InvoiceCraft Pro" invoiceNumber="INV-001" clientName="Acme Corporation" total="$2,500.00" status="paid" currency="USD" onGetStarted={() => window.location.href = '/dashboard'} />} />
+            <Route path="/welcome" element={<Welcome />} />
             <Route path="/signup" element={<SignUp />} />
             <Route path="/signin" element={<SignIn />} />
             <Route path="/dashboard" element={<Dashboard />} />
