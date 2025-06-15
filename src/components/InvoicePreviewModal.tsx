@@ -34,7 +34,10 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
   const { toast } = useToast();
 
   const handlePrint = () => {
-    window.print();
+    // Wait a bit for the modal content to be fully rendered
+    setTimeout(() => {
+      window.print();
+    }, 100);
   };
 
   const handleDownloadPDF = async () => {
@@ -46,6 +49,7 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
         description: "Invoice downloaded as PDF successfully!",
       });
     } catch (error) {
+      console.error('PDF download error:', error);
       toast({
         title: "Error",
         description: "Failed to download PDF. Please try again.",
@@ -63,6 +67,7 @@ const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
         description: `Invoice downloaded as ${format.toUpperCase()} successfully!`,
       });
     } catch (error) {
+      console.error(`${format.toUpperCase()} download error:`, error);
       toast({
         title: "Error",
         description: `Failed to download ${format.toUpperCase()}. Please try again.`,

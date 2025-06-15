@@ -10,6 +10,7 @@ import InvoiceTemplateElegant from "./invoice-templates/InvoiceTemplateElegant";
 import InvoiceTemplateHorizontal from "./invoice-templates/InvoiceTemplateHorizontal";
 import InvoiceTemplateCustom from "./invoice-templates/InvoiceTemplateCustom";
 import InvoiceTemplateCorporate from "./invoice-templates/InvoiceTemplateCorporate";
+import InvoiceTemplateMinimalist from "./invoice-templates/InvoiceTemplateMinimalist";
 
 interface InvoicePreviewProps {
   invoiceData: InvoiceData;
@@ -122,12 +123,16 @@ const InvoicePreview = ({
           invoiceData={invoiceData}
         />
       );
+    case "minimalist":
     default:
-      // Fallback: basic placeholder until template is implemented
       return (
-        <div className="p-6 bg-white rounded-lg text-gray-700 border border-gray-200 text-center">
-          Invoice preview template not available.
-        </div>
+        <InvoiceTemplateMinimalist
+          invoiceData={invoiceData}
+          formatCurrency={formatCurrency}
+          calculateSubtotal={calculateSubtotal}
+          calculateTax={calculateTax}
+          calculateTotal={calculateTotal}
+        />
       );
   }
 };
