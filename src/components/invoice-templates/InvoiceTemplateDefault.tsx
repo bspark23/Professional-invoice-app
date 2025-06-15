@@ -1,4 +1,3 @@
-
 import React from "react";
 import { InvoiceData } from "@/types/invoice";
 
@@ -78,15 +77,11 @@ const InvoiceTemplateDefault: React.FC<InvoiceTemplateProps> = ({
           {/* Terms */}
           <div className="flex-1 text-xs text-gray-600">
             <div className="font-semibold text-gray-900 mb-1">TERMS & CONDITIONS:</div>
-            <ul className="list-disc pl-5">
-              <li>Payment: Due within 30 days of invoice date.</li>
-              <li>Late Fee: 1.5% monthly on overdue amounts.</li>
-              <li>Discrepancies: Notify in writing within 7 days.</li>
-              <li>Returns/Refunds: Not accepted unless otherwise agreed.</li>
-            </ul>
-            {invoiceData.notes && (
-              <div className="mt-2">{invoiceData.notes}</div>
-            )}
+            {/* Use only user's notes/terms */}
+            {invoiceData.notes
+              ? <div className="whitespace-pre-line">{invoiceData.notes}</div>
+              : <span className="italic text-gray-400">No terms or notes provided.</span>
+            }
           </div>
           {/* Totals */}
           <div className="flex-1 max-w-xs ml-auto space-y-1">
@@ -138,4 +133,3 @@ const InvoiceTemplateDefault: React.FC<InvoiceTemplateProps> = ({
 };
 
 export default InvoiceTemplateDefault;
-
