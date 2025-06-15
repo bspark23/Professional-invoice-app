@@ -2,8 +2,10 @@ import { useState, useEffect } from "react";
 import { InvoiceData, LineItem } from "@/types/invoice";
 import { useToast } from "@/hooks/use-toast";
 
-export const useInvoiceData = () => {
+// New: Accept profileId and use it as a localStorage key prefix
+export const useInvoiceData = (profileId?: string | null) => {
   const { toast } = useToast();
+  const STORAGE_PREFIX = profileId ? `profile-${profileId}-` : "";
   const [savedInvoices, setSavedInvoices] = useState<InvoiceData[]>([]);
   const [invoiceData, setInvoiceData] = useState<InvoiceData>({
     clientName: "",
@@ -28,7 +30,6 @@ export const useInvoiceData = () => {
     colorTheme: 'blue'
   });
 
-  // Generate auto invoice number
   const generateInvoiceNumber = () => {
     const year = new Date().getFullYear();
     const month = String(new Date().getMonth() + 1).padStart(2, '0');
@@ -42,8 +43,10 @@ export const useInvoiceData = () => {
     return `INV-${year}-${month}-${nextNumber}`;
   };
 
+  // Update: Add profileId to localStorage keys
   useEffect(() => {
-    const savedData = localStorage.getItem('invoicer-pro-data');
+    if (!profileId) return;
+    const savedData = localStorage.getItem(`${STORAGE_PREFIX}invoicer-pro-data`);
     if (savedData) {
       try {
         const parsed = JSON.parse(savedData);
@@ -53,7 +56,7 @@ export const useInvoiceData = () => {
       }
     }
 
-    const savedInvoicesData = localStorage.getItem('invoicer-pro-invoices');
+    const savedInvoicesData = localStorage.getItem(`${STORAGE_PREFIX}invoicer-pro-invoices`);
     if (savedInvoicesData) {
       try {
         const parsed = JSON.parse(savedInvoicesData);
@@ -67,10 +70,10 @@ export const useInvoiceData = () => {
     if (!invoiceData.invoiceNumber) {
       setInvoiceData(prev => ({ ...prev, invoiceNumber: generateInvoiceNumber() }));
     }
-  }, []);
+  }, [profileId]);
 
   const saveInvoiceData = () => {
-    localStorage.setItem('invoicer-pro-data', JSON.stringify(invoiceData));
+    localStorage.setItem(`${STORAGE_PREFIX}invoicer-pro-data`, JSON.stringify(invoiceData));
     toast({
       title: "Invoice Data Saved",
       description: "Your current invoice data has been saved locally.",
@@ -94,7 +97,7 @@ export const useInvoiceData = () => {
     }
 
     setSavedInvoices(existingInvoices);
-    localStorage.setItem('invoicer-pro-invoices', JSON.stringify(existingInvoices));
+    localStorage.setItem(`${STORAGE_PREFIX}invoicer-pro-invoices`, JSON.stringify(existingInvoices));
     
     setInvoiceData(prev => ({ ...prev, id: invoiceToSave.id }));
     
@@ -115,7 +118,7 @@ export const useInvoiceData = () => {
   const deleteInvoice = (invoiceId: string) => {
     const updatedInvoices = savedInvoices.filter(inv => inv.id !== invoiceId);
     setSavedInvoices(updatedInvoices);
-    localStorage.setItem('invoicer-pro-invoices', JSON.stringify(updatedInvoices));
+    localStorage.setItem(`${STORAGE_PREFIX}invoicer-pro-invoices`, JSON.stringify(updatedInvoices));
     toast({
       title: "Invoice Deleted",
       description: "Invoice has been deleted successfully.",
@@ -129,7 +132,7 @@ export const useInvoiceData = () => {
         : inv
     );
     setSavedInvoices(updatedInvoices);
-    localStorage.setItem('invoicer-pro-invoices', JSON.stringify(updatedInvoices));
+    localStorage.setItem(`${STORAGE_PREFIX}invoicer-pro-invoices`, JSON.stringify(updatedInvoices));
     toast({
       title: "Status Updated",
       description: "Invoice status has been updated.",

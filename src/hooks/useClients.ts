@@ -3,12 +3,15 @@ import { useState, useEffect } from "react";
 import { Client, ClientFormData } from "@/types/client";
 import { useToast } from "@/hooks/use-toast";
 
-export const useClients = () => {
+// Add profileId param, use as localStorage key prefix
+export const useClients = (profileId?: string | null) => {
   const { toast } = useToast();
+  const STORAGE_PREFIX = profileId ? `profile-${profileId}-` : "";
   const [clients, setClients] = useState<Client[]>([]);
 
   useEffect(() => {
-    const savedClients = localStorage.getItem('invoicer-pro-clients');
+    if (!profileId) return;
+    const savedClients = localStorage.getItem(`${STORAGE_PREFIX}invoicer-pro-clients`);
     if (savedClients) {
       try {
         const parsed = JSON.parse(savedClients);
@@ -17,11 +20,12 @@ export const useClients = () => {
         console.log('Error loading saved clients:', error);
       }
     }
-  }, []);
+    // eslint-disable-next-line
+  }, [profileId]);
 
   const saveClients = (clientList: Client[]) => {
     setClients(clientList);
-    localStorage.setItem('invoicer-pro-clients', JSON.stringify(clientList));
+    localStorage.setItem(`${STORAGE_PREFIX}invoicer-pro-clients`, JSON.stringify(clientList));
   };
 
   const addClient = (clientData: ClientFormData) => {

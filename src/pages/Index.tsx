@@ -22,6 +22,8 @@ import SignatureInput from "@/components/SignatureInput";
 import { Link } from "react-router-dom"; // Add this import
 import InvoiceActivityTimeline from "@/components/InvoiceActivityTimeline";
 import { useInvoiceActivity } from "@/hooks/useInvoiceActivity";
+import { useProfiles } from "@/hooks/useProfiles";
+import ProfileSwitcher from "@/components/ProfileSwitcher";
 
 const Index = () => {
   const { toast } = useToast();
@@ -30,8 +32,26 @@ const Index = () => {
   const [viewMode, setViewMode] = useState<'create' | 'list' | 'print'>('create');
   const [isDarkMode, setIsDarkMode] = useState(false);
 
-  const activity = useInvoiceActivity();
+  // NEW: Use profile management
+  const { profiles, activeProfileId, activeProfile, setActiveProfile, createProfile, deleteProfile } = useProfiles();
 
+  // Updated: Only show dashboard if a profile is selected
+  if (!activeProfileId) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-8 max-w-sm w-full border border-gray-200 dark:border-gray-700 text-center">
+          <h2 className="text-2xl font-bold mb-4">{t("selectBusiness") || "Select or Add a Business Profile"}</h2>
+          <ProfileSwitcher />
+          {profiles.length === 0 && (
+            <p className="text-gray-600 mt-4">{t("noBusinessProfile") || "You don't have any business profiles yet. Add one above to get started!"}</p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Pass profileId to hooks to segregate their data
+  const activity = useInvoiceActivity();
   const {
     invoiceData,
     setInvoiceData,
@@ -45,7 +65,7 @@ const Index = () => {
     removeLineItem,
     updateLineItem,
     generateInvoiceNumber
-  } = useInvoiceData();
+  } = useInvoiceData(activeProfileId);
 
   // Toggle dark mode
   const toggleDarkMode = () => {
@@ -192,7 +212,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/30 dark:bg-gradient-to-br dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-4">
       <div className="max-w-6xl mx-auto space-y-6">
-        {/* Header with Calendar View button */}
+        {/* Header with Calendar View button and Profile Switcher */}
         <div className="flex items-center justify-between bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl p-6 shadow-xl border-0">
           <div className="flex items-center space-x-4">
             <div className="flex-shrink-0 w-14 h-14 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg flex items-center justify-center overflow-hidden">
@@ -208,7 +228,8 @@ const Index = () => {
               <p className="text-gray-600 dark:text-gray-300">{t("dashboardSubtitle") || "Create professional invoices"}</p>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
+            <ProfileSwitcher />
             <Button onClick={toggleDarkMode} variant="outline" size="sm" className="hover:bg-gray-100 dark:hover:bg-gray-700">
               {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </Button>
